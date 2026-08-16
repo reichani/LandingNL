@@ -25,7 +25,7 @@ export default function WorkPage() {
         </div>
         <h2 style={{ fontSize: 34, margin: 0 }}>{status.paidHours} / {status.targetHours} paid hours</h2>
         <p style={{ margin: 0 }}>{message}</p>
-        <button className="primary">Log a shift →</button>
+        <Link className="primary" href="/work/log-shift">Log a shift →</Link>
         <p className="muted" style={{ margin: 0, fontSize: 12 }}>Guidance only. DUO makes the eligibility decision.</p>
       </section>
 
@@ -41,7 +41,7 @@ export default function WorkPage() {
       <section className="card stack">
         <div className="row"><strong>Monthly evidence</strong><span className="pill">{evidenceReady}/{evidenceTotal} ready</span></div>
         <div className="row"><span>✓ Employment contract</span><span className="muted">Ready</span></div>
-        <div className="row"><span>○ Paid-hours record</span><span className="muted">Waiting</span></div>
+        <div className="row"><span>○ Paid-hours record</span><span className="muted">Track shifts</span></div>
         <div className="row"><span>○ Payslip</span><span className="muted">Waiting</span></div>
         <div className="row"><span>○ Salary bank evidence</span><span className="muted">Waiting</span></div>
       </section>
