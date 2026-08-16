@@ -1,16 +1,68 @@
 import Link from "next/link";
 import { summarizeWorkMonth } from "@/domain/work";
+import { createClient } from "@/lib/supabase/server";
 
-export default function WorkPage() {
-  const status = summarizeWorkMonth(26);
+const EVIDENCE_TYPES = ["contract", "paid_hours", "payslip", "salary_bank"] as const;
+
+function monthBounds(now = new Date()) {
+  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+  return {
+    month: start.toISOString().slice(0, 10),
+    start: start.toISOString().slice(0, 10),
+    end: end.toISOString().slice(0, 10),
+  };
+}
+
+export default async function WorkPage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const bounds = monthBounds();
+
+  let paidHours = 0;
+  let targetHours = 32;
+  const evidence = new Set<string>();
+
+  if (user) {
+    const [{ data: shifts }, { data: evidenceRows }, { data: ruleRows }] = await Promise.all([
+      supabase
+        .from("work_shifts")
+        .select("paid_hours")
+        .gte("shift_date", bounds.start)
+        .lt("shift_date", bounds.end),
+      supabase
+        .from("work_evidence")
+        .select("evidence_type")
+        .eq("month", bounds.month),
+      supabase
+        .from("rule_registry")
+        .select("value")
+        .eq("rule_key", "duo.eu_worker.monthly_hours")
+        .eq("status", "active")
+        .lte("effective_from", bounds.month)
+        .or(`effective_to.is.null,effective_to.gte.${bounds.month}`)
+        .order("version", { ascending: false })
+        .limit(1),
+    ]);
+
+    paidHours = (shifts ?? []).reduce((sum, row) => sum + Number(row.paid_hours ?? 0), 0);
+    (evidenceRows ?? []).forEach((row) => evidence.add(row.evidence_type));
+
+    const configured = ruleRows?.[0]?.value as { value?: number } | undefined;
+    if (typeof configured?.value === "number") targetHours = configured.value;
+  }
+
+  if (paidHours > 0) evidence.add("paid_hours");
+
+  const status = summarizeWorkMonth(paidHours, targetHours);
   const message = status.status === "target-reached"
     ? "Target reached for this month. Keep your payslip and salary evidence ready."
     : status.status === "review-zone"
       ? `${status.remainingHours} more paid hours to reach the current strong threshold.`
       : `${status.remainingHours} more paid hours to reach the current threshold.`;
 
-  const evidenceReady = 1;
-  const evidenceTotal = 4;
+  const evidenceReady = EVIDENCE_TYPES.filter((type) => evidence.has(type)).length;
+  const evidenceTotal = EVIDENCE_TYPES.length;
 
   return (
     <main className="shell">
@@ -40,10 +92,10 @@ export default function WorkPage() {
       <div style={{ height: 16 }} />
       <section className="card stack">
         <div className="row"><strong>Monthly evidence</strong><span className="pill">{evidenceReady}/{evidenceTotal} ready</span></div>
-        <div className="row"><span>✓ Employment contract</span><span className="muted">Ready</span></div>
-        <div className="row"><span>○ Paid-hours record</span><span className="muted">Track shifts</span></div>
-        <div className="row"><span>○ Payslip</span><span className="muted">Waiting</span></div>
-        <div className="row"><span>○ Salary bank evidence</span><span className="muted">Waiting</span></div>
+        <div className="row"><span>{evidence.has("contract") ? "✓" : "○"} Employment contract</span><span className="muted">{evidence.has("contract") ? "Ready" : "Waiting"}</span></div>
+        <div className="row"><span>{evidence.has("paid_hours") ? "✓" : "○"} Paid-hours record</span><span className="muted">{evidence.has("paid_hours") ? "Ready" : "Waiting"}</span></div>
+        <div className="row"><span>{evidence.has("payslip") ? "✓" : "○"} Payslip</span><span className="muted">{evidence.has("payslip") ? "Ready" : "Waiting"}</span></div>
+        <div className="row"><span>{evidence.has("salary_bank") ? "✓" : "○"} Salary bank evidence</span><span className="muted">{evidence.has("salary_bank") ? "Ready" : "Waiting"}</span></div>
       </section>
     </main>
   );
