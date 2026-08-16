@@ -1,8 +1,13 @@
 import Link from "next/link";
-import { getWorkHourStatus } from "@/domain/work";
+import { summarizeWorkMonth } from "@/domain/work";
 
 export default function WorkPage() {
-  const status = getWorkHourStatus(26);
+  const status = summarizeWorkMonth(26);
+  const message = status.status === "target-reached"
+    ? "Target reached for this month. Keep your payslip and salary evidence ready."
+    : status.status === "review-zone"
+      ? `${status.remainingHours} more paid hours to reach the current strong threshold.`
+      : `${status.remainingHours} more paid hours to reach the current threshold.`;
 
   return (
     <main className="shell">
@@ -12,8 +17,8 @@ export default function WorkPage() {
 
       <section className="focus stack">
         <span className="pill">THIS MONTH</span>
-        <h2 style={{ fontSize: 34, margin: 0 }}>{status.currentHours} / {status.targetHours} paid hours</h2>
-        <p style={{ margin: 0 }}>{status.message}</p>
+        <h2 style={{ fontSize: 34, margin: 0 }}>{status.paidHours} / {status.targetHours} paid hours</h2>
+        <p style={{ margin: 0 }}>{message}</p>
         <button className="primary">Log a shift →</button>
       </section>
 
