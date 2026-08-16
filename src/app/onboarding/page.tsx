@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
+import { saveOnboarding } from "./actions";
 
 type Answers = {
   city: string;
@@ -21,6 +22,8 @@ const initial: Answers = {
 export default function OnboardingPage() {
   const [answers, setAnswers] = useState(initial);
   const [step, setStep] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
   const fields = useMemo(() => ["city", "university", "citizenship", "arrivalDate", "housing"] as const, []);
   const key = fields[step];
   const progress = ((step + 1) / fields.length) * 100;
@@ -32,6 +35,19 @@ export default function OnboardingPage() {
     arrivalDate: "When do you arrive?",
     housing: "Do you already have housing?",
   };
+
+  function continueFlow() {
+    setError(null);
+    if (step < fields.length - 1) {
+      setStep((current) => current + 1);
+      return;
+    }
+
+    startTransition(async () => {
+      const result = await saveOnboarding(answers);
+      if (result && !result.ok) setError(result.error);
+    });
+  }
 
   return (
     <main className="shell">
@@ -55,9 +71,10 @@ export default function OnboardingPage() {
         )}
       </section>
       <div style={{ height: 18 }} />
-      <button className="primary" onClick={() => setStep((current) => Math.min(current + 1, fields.length - 1))}>
-        {step === fields.length - 1 ? "Build my plan →" : "Next →"}
+      <button className="primary" disabled={isPending} onClick={continueFlow}>
+        {isPending ? "Saving your plan…" : step === fields.length - 1 ? "Build my plan →" : "Next →"}
       </button>
+      {error ? <p role="alert" className="muted">{error}</p> : null}
     </main>
   );
 }
