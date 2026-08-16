@@ -9,8 +9,10 @@ export type WorkMonthSummary = {
   status: WorkMonthStatus;
 };
 
-export function summarizeWorkMonth(paidHours: number): WorkMonthSummary {
-  const targetHours = getRule(ruleRegistry.duoEuWorkerMonthlyHours);
+export function summarizeWorkMonth(
+  paidHours: number,
+  targetHours = getRule(ruleRegistry.duoEuWorkerMonthlyHours),
+): WorkMonthSummary {
   const remainingHours = Math.max(0, targetHours - paidHours);
 
   let status: WorkMonthStatus = "below-review-zone";
