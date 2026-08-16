@@ -1,3 +1,5 @@
+import EmployerPackActions from "./EmployerPackActions";
+
 const employerChecklist = [
   "Signed employment contract",
   "Clear employment start date",
@@ -27,7 +29,7 @@ export default function EmployerPackPage() {
         <span className="pill">SHARE WITH EMPLOYER</span>
         <h2 style={{ margin: 0 }}>What we need from the employment relationship</h2>
         {employerChecklist.map((item) => <div key={item}>✓ {item}</div>)}
-        <button className="primary">Copy employer message →</button>
+        <EmployerPackActions />
       </section>
 
       <div style={{ height: 16 }} />
