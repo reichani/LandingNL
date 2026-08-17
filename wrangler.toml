@@ -1,0 +1,10 @@
+name = "landingnl-v2"
+compatibility_date = "2026-08-17"
+pages_build_output_dir = "dist"
+
+# Production runtime bindings are configured in Cloudflare Pages:
+# DB                 -> D1 database binding
+# GOOGLE_CLIENT_ID   -> secret/plain environment variable
+# GOOGLE_CLIENT_SECRET -> encrypted secret
+# SESSION_SECRET     -> encrypted secret
+# OAUTH_REDIRECT_URI -> optional exact production callback override
