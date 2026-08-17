@@ -8,7 +8,7 @@ Target: Cloudflare Worker production preview
 - Cloudflare runtime variables contain valid `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` values.
 - Supabase Google provider contains the Google OAuth Client ID and Client Secret.
 - Supabase redirect allow-list includes the active Cloudflare `/auth/callback` URL.
-- Migrations `0005` through `0008` have been applied.
+- Migrations `0005` through `0010` have been applied.
 
 ## 1. Public homepage
 
@@ -30,17 +30,26 @@ Expected: no personal name, rent or student data is exposed to a guest.
 
 Expected: no `Invalid supabaseUrl`, redirect mismatch or callback loop.
 
-## 3. Onboarding persistence
+## 3. Onboarding persistence and privacy
 
 1. Enter city, university, citizenship status, arrival date and housing status.
 2. Complete setup.
 3. Return to `/`.
-4. Confirm Home uses the saved first-name/city context and housing status.
-5. Re-open `/onboarding` later and confirm the app still uses stored profile values elsewhere.
+4. Confirm Home uses saved profile context and housing status.
+5. Confirm setup never asks for passport number or BSN number.
 
-Expected: no demo Deren/Amsterdam values are injected into a new user.
+Expected: no demo Deren/Amsterdam values are injected; analytics is not automatically opted in.
 
-## 4. Journey Plan
+## 4. Housing readiness
+
+1. Open `/housing` signed in.
+2. Set housing secured, registrability, signed contract, rent, move-in date and commute.
+3. Save and reload.
+4. Open `/plan` and `/money`.
+
+Expected: housing readiness persists; Plan treats housing as complete when secured and Money reads rent. No exact address is requested.
+
+## 5. Journey Plan
 
 1. Open `/plan` signed in.
 2. Verify only the first unmet dependency is active.
@@ -51,7 +60,7 @@ Expected: no demo Deren/Amsterdam values are injected into a new user.
 
 Expected: Home primary action advances based on persisted `journey_tasks`; no BSN number itself is requested or stored.
 
-## 5. Money
+## 6. Money
 
 1. Open `/money` signed in.
 2. Confirm housing rent is read from the housing profile if present.
@@ -61,7 +70,7 @@ Expected: Home primary action advances based on persisted `journey_tasks`; no BS
 
 Expected: values persist through `budget_items`, total recalculates, and no bank credentials are requested.
 
-## 6. Wallet
+## 7. Wallet
 
 1. Open `/wallet` signed in before Municipality completion.
 2. Confirm Passport/ID, housing proof and appointment confirmation are surfaced as current-task documents.
@@ -70,7 +79,7 @@ Expected: values persist through `budget_items`, total recalculates, and no bank
 
 Expected: readiness persists; Wallet switches emphasis toward work evidence after the municipality dependency is complete. No document file contents are required in this MVP.
 
-## 7. Work + DUO
+## 8. Work + DUO hub
 
 1. Open `/work` logged out and confirm preview mode is usable.
 2. Sign in and open `/work/log-shift`.
@@ -80,7 +89,15 @@ Expected: readiness persists; Wallet switches emphasis toward work evidence afte
 
 Expected: no UI promises DUO eligibility; DUO remains the decision authority.
 
-## 8. Student CV
+## 9. Job applications
+
+1. Open `/work/applications` signed in.
+2. Add an employer, role and stage.
+3. Reload and return to `/work`.
+
+Expected: application persists and Work hub count increases.
+
+## 10. Student CV
 
 1. Open `/work/cv` signed in.
 2. Confirm name/city/education prefill only from the user's own profile where available.
@@ -89,9 +106,9 @@ Expected: no UI promises DUO eligibility; DUO remains the decision authority.
 5. Reload.
 6. Open `/plan`.
 
-Expected: CV fields persist, and the CV journey milestone is complete. No invented experience is auto-added.
+Expected: CV fields persist and the CV milestone completes. No invented experience is auto-added.
 
-## 9. Contract readiness
+## 11. Contract readiness
 
 1. Open `/work/contract` signed in.
 2. Fill employer, role, type, start date, hours, wage and optional work/pay details.
@@ -99,9 +116,26 @@ Expected: CV fields persist, and the CV journey milestone is complete. No invent
 4. Check both signature boxes and save again.
 5. Reload and open `/plan` and `/work`.
 
-Expected: contract fields persist; a sufficiently complete signed contract completes the contract milestone and creates contract evidence metadata.
+Expected: contract fields persist; a sufficiently complete signed contract completes the contract milestone and creates current-month contract evidence readiness.
 
-## 10. Trusted supporter
+## 12. Employer pack
+
+1. Open `/work/employer-pack`.
+2. Confirm copy-to-clipboard and email action work.
+3. Read the generated employer message.
+
+Expected: wording is nationality-neutral and does not promise or imply DUO eligibility.
+
+## 13. Monthly work evidence
+
+1. Open `/work/evidence` signed in.
+2. Confirm paid-hours readiness appears after at least one logged current-month shift.
+3. Mark payslip and salary evidence ready.
+4. Reload and return to `/work`.
+
+Expected: readiness persists and Work hub count reflects ready evidence only.
+
+## 14. Trusted supporter
 
 1. Open `/supporter` signed in.
 2. Enter one supporter email and create read-only access.
@@ -113,13 +147,22 @@ Expected: contract fields persist; a sufficiently complete signed contract compl
 
 Expected: revoked link no longer returns the snapshot. Creating a new supporter revokes any previous active supporter.
 
-## 11. RLS isolation
+## 15. Account controls
+
+1. Open `/account` signed in.
+2. Confirm profile summary is the current user's data.
+3. Follow Setup, Housing and Supporter links.
+4. Sign out.
+
+Expected: session clears and `/account` redirects to login on next visit.
+
+## 16. RLS isolation
 
 Repeat saved-feature checks with a second test user.
 
-Expected: user B cannot read or mutate user A's profile, housing, tasks, budget, wallet readiness, work records, CV, contract or supporter settings.
+Expected: user B cannot read or mutate user A's profile, housing, tasks, budget, wallet readiness, applications, work records, CV, contract or supporter settings.
 
-## 12. Regression / platform
+## 17. Regression / platform
 
 - `/` guest: HTTP 200
 - `/login`: HTTP 200
