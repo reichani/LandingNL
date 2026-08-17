@@ -11,7 +11,7 @@ LandingNL is a student landing operating system for the Netherlands: one move, o
 | Feature | Route | Current implementation | Data | Key test |
 |---|---|---|---|---|
 | Public homepage | `/` | Full responsive marketing homepage, feature navigation, product preview, CTA, SEO metadata | Public | Guest sees homepage, no demo student name/rent |
-| Google sign-in | `/login` → `/auth/google` → `/auth/callback` | Supabase Google OAuth with public project config pinned at build time; return path restricted to same-origin internal paths | Supabase Auth | Google consent returns to onboarding/home; protocol-relative `next` cannot escape origin |
+| Google sign-in | `/login` → browser Supabase OAuth → `/auth/callback` | Google OAuth starts in the browser with the Supabase client; PKCE code exchange happens only in the callback route; successful callback defaults to onboarding | Supabase Auth | Google account selection opens, callback creates the session, then onboarding opens |
 | 60-second onboarding | `/onboarding` | City, university, citizenship, arrival date, housing status; no analytics auto-opt-in; browser Supabase client saves directly under RLS, then performs a full navigation to Home | `profiles`, `housing_profiles` | Save reaches success state and Home without a Worker/server-action exception |
 | Home dashboard | `/` after auth | Personal name/city/housing plus persisted journey-driven primary action and contextual weekly focus | Supabase + Journey Engine | Signed-in user sees own profile, correct next milestone and no duplicate weekly CTA |
 | Weekly Focus / This Week | `/` after auth | Maximum two secondary checks derived from arrival timing, journey stage and known housing cost; primary action is never duplicated | Existing profile/journey/housing data | Change arrival/journey state and confirm weekly cards adapt while staying at two maximum |
@@ -30,7 +30,7 @@ LandingNL is a student landing operating system for the Netherlands: one move, o
 | Trusted supporter | `/supporter`, `/share/[token]` | One read-only supporter, bearer link, student revocation; no parent account | `trusted_supporters` | Create link, snapshot is limited, revoke invalidates link |
 | Account controls | `/account` | Student profile summary, setup links, supporter controls and sign-out | Auth + profile | Signed-in user can sign out and manage own settings |
 | Analytics privacy boundary | internal | Pseudonymous events only; no email/name/address/document contents; onboarding does not auto-grant consent | `analytics_events`, `consents` | Schema/payload review |
-| Automated quality gate | GitHub Actions | Bun install + TypeScript + ESLint + OpenNext Cloudflare build | Repository | PR cannot be considered release-ready until workflow is green |
+| Automated quality gate | GitHub Actions | Bun install + TypeScript + ESLint + permanent UX/architecture/auth invariants + OpenNext Cloudflare build | Repository | PR cannot be considered release-ready until workflow is green |
 
 ## Required database migrations added in this implementation pass
 
@@ -52,18 +52,26 @@ These migrations must be applied to Supabase before their respective persistent 
 - Employment contract fields now live in the separate `0009_employment_contracts.sql` migration.
 - Contract evidence writes use the canonical `work_evidence(user_id, month, evidence_type, status, reference)` shape.
 
+## Auth architecture invariant
+
+- Google OAuth initiation belongs to the authenticated browser surface, not a dedicated Cloudflare/Next server start route.
+- `/auth/google` must not exist.
+- `/auth/callback` is the single PKCE code-exchange boundary.
+- Production Redirect URLs must include the exact active-origin `/auth/callback` path.
+- Successful Google authentication defaults to `/onboarding`.
+
 ## Release gates
 
-1. GitHub Actions `LandingNL CI` succeeds: install, typecheck, lint, OpenNext Worker build.
+1. GitHub Actions `LandingNL CI` succeeds: install, typecheck, lint, permanent invariants, OpenNext Worker build.
 2. Cloudflare build succeeds on `feat/sprint-0-foundation` and auto-deploys the same head.
-3. Build environment contains valid `NEXT_PUBLIC_SUPABASE_URL` and publishable key values; production build fails if either is missing.
-4. Google provider has Client ID and Client Secret in Supabase.
-5. Supabase Site URL and redirect allow-list include the active Cloudflare URL.
-6. New SQL migrations are applied successfully.
-7. Guest routes never expose another user's data.
-8. RLS tests confirm each authenticated user can only manage their own records, including direct browser writes used by onboarding.
-9. Supporter snapshot exposes only limited progress, never exact address or document contents.
-10. OAuth return paths are same-origin only; `//external-host` style redirects are rejected.
+3. `/api/version` reports the same Git commit as the release candidate.
+4. Build environment contains valid `NEXT_PUBLIC_SUPABASE_URL` and publishable key values; production build fails if either is missing.
+5. Google provider has Client ID and Client Secret in Supabase.
+6. Supabase Site URL and exact redirect allow-list entry match the active Cloudflare origin and `/auth/callback`.
+7. New SQL migrations are applied successfully.
+8. Guest routes never expose another user's data.
+9. RLS tests confirm each authenticated user can only manage their own records, including direct browser writes used by onboarding.
+10. Supporter snapshot exposes only limited progress, never exact address or document contents.
 11. Mobile smoke test: 360px width, Samsung S24-class viewport, and desktop.
 12. Home keeps one primary action; Weekly Focus shows no more than two secondary checks and never duplicates the primary destination.
 13. No UI text promises DUO eligibility; rule guidance remains versioned and auditable.
