@@ -31,13 +31,13 @@ export default async function WorkPage() {
     if (user) {
       const [{ data: shifts }, { data: evidenceRows }, { data: ruleRows }, { count }] = await Promise.all([
         supabase.from("work_shifts").select("paid_hours").gte("shift_date", bounds.start).lt("shift_date", bounds.end),
-        supabase.from("work_evidence").select("evidence_type").eq("month", bounds.month),
+        supabase.from("work_evidence").select("evidence_type,status").eq("month", bounds.month),
         supabase.from("rule_registry").select("value").eq("rule_key", "duo.eu_worker.monthly_hours").eq("status", "active").lte("effective_from", bounds.month).or(`effective_to.is.null,effective_to.gte.${bounds.month}`).order("version", { ascending: false }).limit(1),
         supabase.from("job_applications").select("id", { count: "exact", head: true }).eq("user_id", user.id),
       ]);
 
       paidHours = (shifts ?? []).reduce((sum, row) => sum + Number(row.paid_hours ?? 0), 0);
-      (evidenceRows ?? []).forEach((row) => evidence.add(row.evidence_type));
+      (evidenceRows ?? []).filter((row) => ["ready","verified"].includes(row.status)).forEach((row) => evidence.add(row.evidence_type));
       applicationCount = count ?? 0;
       const configured = ruleRows?.[0]?.value as { value?: number } | undefined;
       if (typeof configured?.value === "number") targetHours = configured.value;
