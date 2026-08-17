@@ -21,6 +21,7 @@ const onboarding = read("src/app/onboarding/page.tsx");
 const nav = read("src/components/PrimaryNav.tsx");
 const foundation = read("supabase/migrations/0001_foundation.sql");
 const authBootstrap = read("supabase/migrations/0002_auth_profile_bootstrap.sql");
+const packageJson = JSON.parse(read("package.json"));
 
 // Geometry: permanent product cards must never be tilted/skewed.
 if (/\brotate\s*\(/i.test(css)) fail("UX geometry gate: rotate() is not allowed in product CSS.");
@@ -75,6 +76,17 @@ if (navItemCount !== 5) {
 }
 if (!/aria-current=/.test(nav)) {
   fail("Accessibility gate: active primary navigation item must expose aria-current.");
+}
+
+// Deployment identity: production must expose the exact build commit instead of relying on dashboard guesses.
+if (!exists("scripts/write-build-meta.mjs")) {
+  fail("Deployment identity gate: build metadata generator is missing.");
+}
+if (!exists("src/app/api/version/route.ts")) {
+  fail("Deployment identity gate: /api/version route is missing.");
+}
+if (!String(packageJson.scripts?.["build:worker"] ?? "").includes("build:meta")) {
+  fail("Deployment identity gate: build:worker must generate build metadata before OpenNext build.");
 }
 
 // User-facing production copy must not expose platform internals.
