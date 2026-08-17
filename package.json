@@ -1,36 +1,25 @@
 {
-  "name": "landingnl",
-  "version": "0.1.0",
+  "name": "landingnl-v2",
+  "version": "0.2.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build --webpack",
-    "build:meta": "node scripts/write-build-meta.mjs",
-    "build:worker": "bun run build:meta && opennextjs-cloudflare build",
-    "preview": "bun run build:meta && opennextjs-cloudflare build && opennextjs-cloudflare preview",
-    "deploy": "bun run build:meta && opennextjs-cloudflare build && opennextjs-cloudflare deploy",
-    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
-    "start": "next start",
-    "lint": "eslint .",
-    "typecheck": "tsc --noEmit",
-    "quality:invariants": "node scripts/quality-gates.mjs"
+    "dev": "vite --config vite.config.ts",
+    "build": "vite build --config vite.config.ts",
+    "preview": "vite preview --config vite.config.ts",
+    "typecheck": "tsc -p tsconfig.v2.json --noEmit",
+    "quality": "node scripts/v2-quality-gates.mjs"
   },
   "dependencies": {
-    "@supabase/ssr": "0.12.4",
-    "@supabase/supabase-js": "2.112.3",
-    "next": "16.1.6",
     "react": "19.2.8",
-    "react-dom": "19.2.8",
-    "zod": "4.4.3"
+    "react-dom": "19.2.8"
   },
   "devDependencies": {
-    "@opennextjs/cloudflare": "1.14.7",
-    "@types/node": "26.2.0",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.4",
-    "eslint": "9.39.5",
-    "eslint-config-next": "16.1.6",
+    "@vitejs/plugin-react": "^6.0.4",
     "typescript": "5.9.3",
+    "vite": "^8.0.0",
     "wrangler": "4.103.0"
   }
 }

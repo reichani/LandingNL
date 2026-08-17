@@ -1,52 +1,41 @@
-# LandingNL
+# LandingNL v2
 
-LandingNL is a mobile-first landing companion for international students moving to the Netherlands.
+LandingNL is a mobile-first landing operating system for international students in the Netherlands.
 
-## Product thesis
+## Active architecture
 
-**Land → Settle → Belong**
+`Cloudflare Pages + React/Vite + Pages Functions + D1 + direct Google OAuth`
 
-LandingNL helps students move from pre-arrival preparation to becoming operational and independent in the Netherlands, while keeping every screen focused on one clear next action.
+The v2 product is intentionally simple:
+- `/` — public website
+- `/app` — authenticated product
+- `/api/*` — Cloudflare Pages Functions
+- `d1/migrations/` — canonical database schema
 
-### Core journeys
-- Housing search and registrable address readiness
-- Arrival, municipality registration, BSN and DigiD
-- Budget, banking, mobility and essential setup
-- Part-time work, CV creation and paid-hours tracking
-- DUO and regulatory-aware guidance
-- Secure document wallet
-- Community: Ask, Meet, Share and Exchange
+Primary app navigation is **Home · Plan · Money · Work · Circle**.
 
-## Product principles
-- One Moment → One Focus → One Action
-- Mobile-first and future-facing for students born around 2008
-- Free users receive meaningful utility; Plus unlocks adaptive intelligence
-- Official-source-first regulatory guidance
-- No hard paywall on urgent government tasks
-- PII separated from analytics and product signals
-- Revenue-funded infrastructure: free tiers first, upgrade as real usage and revenue grow
+## Local build
 
-## Build strategy
+```bash
+bun install
+bun run typecheck
+bun run quality
+bun run build
+```
 
-The working application is the source of truth. Figma remains the visual specification and is updated at major UX milestones.
+Cloudflare Pages build output is `dist`.
 
-Planned stack:
-- Next.js + TypeScript
-- Responsive component system
-- Supabase/PostgreSQL
-- Google authentication
-- Event-driven journey engine
-- Entitlements and consent model
-- Versioned regulatory Rule Registry
-- Analytics event taxonomy
+## Runtime bindings
 
-## Delivery phases
+Configure in Cloudflare Pages:
+- `DB` — D1 binding
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
+- `SESSION_SECRET`
+- optional `OAUTH_REDIRECT_URI`
 
-### P0 — v0.1
-Auth + consent, Housing, Home/Plan, municipality → BSN → DigiD, Wallet, basic Budget, Work/CV, paid-hours tracker, analytics foundation.
+See `docs/V2_ARCHITECTURE_UX_FREEZE.md` and `docs/V2_RELEASE_RUNBOOK.md`.
 
-### P1
-DUO intelligence, insurance, dynamic budget, Regulatory Admin, Community core (`Ask / Meet / Share / Exchange`).
+## Legacy v1
 
-### P2
-Online sessions, IRL get-togethers, shared dinners, skills exchange matching, advanced community intelligence.
+The inherited Next/OpenNext/Supabase source remains temporarily in the branch history/repository only as migration reference. It is not part of the v2 build or runtime. Remove it after v2 production E2E and rollback observation are complete.
