@@ -20,12 +20,12 @@ A failed gate blocks merge.
 
 ## 2. Cloudflare environment
 
-Runtime/build environment must contain:
+Build environment must contain:
 
 - `NEXT_PUBLIC_SUPABASE_URL=https://iwzsewwnntfylryqaihu.supabase.co`
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<Supabase publishable key>`
 
-Do not put a service-role key in a `NEXT_PUBLIC_*` variable or in GitHub.
+The Next.js production build pins these public project values into the app configuration and fails if either is absent. Do not put a service-role key in a `NEXT_PUBLIC_*` variable or in GitHub.
 
 ## 3. Supabase migration order
 
@@ -41,6 +41,8 @@ Apply in SQL Editor in this exact order if they are not already present:
 8. `0008_student_cv.sql`
 9. `0009_employment_contracts.sql`
 10. `0010_job_applications.sql`
+
+Weekly Focus uses existing profile, journey and housing data and requires no new migration.
 
 Do not reintroduce removed/conflicting duplicate migrations.
 
@@ -113,16 +115,18 @@ Execute `docs/SMOKE_TESTS.md` against the active deployment. Minimum critical pa
 
 1. Public Home renders at 360px and desktop widths.
 2. Google sign-in returns through `/auth/callback`.
-3. Onboarding saves and reloads.
-4. Housing change updates Home/Plan/Money.
-5. Municipality → BSN → DigiD milestones advance sequentially.
-6. Money values persist after refresh.
-7. Wallet readiness persists after refresh.
-8. CV save completes the CV milestone.
-9. Job application persists and Work count changes.
-10. Contract/evidence/shift flows update Work status.
-11. Trusted supporter share + revoke passes.
-12. Account sign-out returns to a safe guest state.
+3. Onboarding saves, shows successful completion and reaches Home without a server-side exception.
+4. Home keeps one dominant NOW action and the CTA opens the correct destination.
+5. Weekly Focus shows at most two contextual secondary checks, never duplicates NOW, and reacts to arrival/journey state.
+6. Housing change updates Home/Plan/Money.
+7. Municipality → BSN → DigiD milestones advance sequentially.
+8. Money values persist after refresh.
+9. Wallet readiness persists after refresh.
+10. CV save completes the CV milestone.
+11. Job application persists and Work count changes.
+12. Contract/evidence/shift flows update Work status.
+13. Trusted supporter share + revoke passes.
+14. Account sign-out returns to a safe guest state.
 
 ## 7. Merge decision
 
@@ -132,6 +136,8 @@ Only mark PR #1 ready for review when:
 - Cloudflare build/deploy is green
 - Supabase migrations are applied
 - Google OAuth production smoke test passes
+- onboarding production completion passes without a server-side exception
+- Weekly Focus passes the two-card/no-duplicate UX gate
 - critical manual smoke tests pass
 - no P0/P1 security or data-isolation issue remains
 
