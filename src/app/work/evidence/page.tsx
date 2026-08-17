@@ -2,23 +2,34 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { markEvidenceReady } from "./actions";
 
-function currentMonthKey() {
+function monthBounds() {
   const now = new Date();
-  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString().slice(0, 10);
+  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+  return {
+    month: start.toISOString().slice(0, 10),
+    start: start.toISOString().slice(0, 10),
+    end: end.toISOString().slice(0, 10),
+  };
 }
 
 export default async function EvidencePage() {
   let signedIn = false;
   const ready = new Set<string>();
-  const month = currentMonthKey();
+  const bounds = monthBounds();
 
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     signedIn = Boolean(user);
     if (user) {
-      const { data } = await supabase.from("work_evidence").select("evidence_type,status").eq("user_id", user.id).eq("month", month);
-      (data ?? []).filter((row) => ["ready","verified"].includes(row.status)).forEach((row) => ready.add(row.evidence_type));
+      const [{ data: evidenceRows }, { data: shifts }] = await Promise.all([
+        supabase.from("work_evidence").select("evidence_type,status").eq("user_id", user.id).eq("month", bounds.month),
+        supabase.from("work_shifts").select("paid_hours").eq("user_id", user.id).gte("shift_date", bounds.start).lt("shift_date", bounds.end),
+      ]);
+      (evidenceRows ?? []).filter((row) => ["ready","verified"].includes(row.status)).forEach((row) => ready.add(row.evidence_type));
+      const paidHours = (shifts ?? []).reduce((sum, row) => sum + Number(row.paid_hours ?? 0), 0);
+      if (paidHours > 0) ready.add("paid_hours");
     }
   } catch {
     // Preview mode.
@@ -33,7 +44,7 @@ export default async function EvidencePage() {
       <p className="subtitle">A readiness tracker, not an eligibility decision. Keep the underlying official documents yourself.</p>
 
       <section className="focus stack">
-        <div className="row"><span className="pill">{month.slice(0,7)}</span><strong>{ready.size}/4 recorded</strong></div>
+        <div className="row"><span className="pill">{bounds.month.slice(0,7)}</span><strong>{ready.size}/4 recorded</strong></div>
         <h2 style={{ margin: 0, fontSize: 28 }}>Contract · hours · payslip · salary</h2>
         <p style={{ margin: 0 }}>LandingNL keeps these evidence categories visible together so missing proof is noticed early.</p>
       </section>
