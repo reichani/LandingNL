@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PrimaryNav } from "@/components/PrimaryNav";
 import { summarizeWorkMonth } from "@/domain/work";
 import { createClient } from "@/lib/supabase/server";
 
@@ -97,6 +98,8 @@ export default async function WorkPage() {
         <div className="row"><span>{evidence.has("payslip") ? "✓" : "○"} Payslip</span><span className="muted">{evidence.has("payslip") ? "Ready" : "Waiting"}</span></div>
         <div className="row"><span>{evidence.has("salary_bank") ? "✓" : "○"} Salary bank evidence</span><span className="muted">{evidence.has("salary_bank") ? "Ready" : "Waiting"}</span></div>
       </section>
+
+      <PrimaryNav active="Work" />
     </main>
   );
 }
