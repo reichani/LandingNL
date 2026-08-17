@@ -11,9 +11,10 @@ LandingNL is a student landing operating system for the Netherlands: one move, o
 | Feature | Route | Current implementation | Data | Key test |
 |---|---|---|---|---|
 | Public homepage | `/` | Full responsive marketing homepage, feature navigation, product preview, CTA, SEO metadata | Public | Guest sees homepage, no demo student name/rent |
-| Google sign-in | `/login` → `/auth/google` → `/auth/callback` | Server-side OAuth start; return path is restricted to same-origin internal paths | Supabase Auth | Google consent returns to onboarding/home; protocol-relative `next` cannot escape origin |
-| 60-second onboarding | `/onboarding` | City, university, citizenship, arrival date, housing status; no analytics auto-opt-in | `profiles`, `housing_profiles` | Save and reload profile |
-| Home dashboard | `/` after auth | Personal name/city/housing plus persisted journey-driven primary action and feature cards | Supabase + Journey Engine | Signed-in user sees own profile and correct next milestone |
+| Google sign-in | `/login` → `/auth/google` → `/auth/callback` | Supabase Google OAuth with public project config pinned at build time; return path restricted to same-origin internal paths | Supabase Auth | Google consent returns to onboarding/home; protocol-relative `next` cannot escape origin |
+| 60-second onboarding | `/onboarding` | City, university, citizenship, arrival date, housing status; no analytics auto-opt-in; save resolves before browser navigation | `profiles`, `housing_profiles` | Save reaches success state and Home without a server exception |
+| Home dashboard | `/` after auth | Personal name/city/housing plus persisted journey-driven primary action and contextual weekly focus | Supabase + Journey Engine | Signed-in user sees own profile, correct next milestone and no duplicate weekly CTA |
+| Weekly Focus / This Week | `/` after auth | Maximum two secondary checks derived from arrival timing, journey stage and known housing cost; primary action is never duplicated | Existing profile/journey/housing data | Change arrival/journey state and confirm weekly cards adapt while staying at two maximum |
 | Housing readiness | `/housing` | Registrability, housing status, rent, contract state, move-in date and commute; no exact address required | `housing_profiles` | Save housing readiness and see Plan/Home/Money react |
 | Plan / Journey Engine | `/plan` | Dependency-ordered steps with persisted completion for municipality, BSN, DigiD and work milestones | `journey_tasks`, `housing_profiles` | Mark step done and next step unlocks |
 | Money | `/money` | User-owned planning amounts plus housing rent | `budget_items`, `housing_profiles` | Save amount, refresh, total persists |
@@ -40,7 +41,9 @@ LandingNL is a student landing operating system for the Netherlands: one move, o
 - `0009_employment_contracts.sql`
 - `0010_job_applications.sql`
 
-These must be applied to Supabase before their respective persistent features can pass end-to-end tests.
+Weekly Focus adds no migration; it derives a small view from data already owned by the student.
+
+These migrations must be applied to Supabase before their respective persistent features can pass end-to-end tests.
 
 ## Migration hygiene fixed
 
@@ -52,8 +55,8 @@ These must be applied to Supabase before their respective persistent features ca
 ## Release gates
 
 1. GitHub Actions `LandingNL CI` succeeds: install, typecheck, lint, OpenNext Worker build.
-2. Cloudflare build succeeds on `feat/sprint-0-foundation`.
-3. Runtime has valid `NEXT_PUBLIC_SUPABASE_URL` and publishable key.
+2. Cloudflare build succeeds on `feat/sprint-0-foundation` and auto-deploys the same head.
+3. Build environment contains valid `NEXT_PUBLIC_SUPABASE_URL` and publishable key values; production build fails if either is missing.
 4. Google provider has Client ID and Client Secret in Supabase.
 5. Supabase Site URL and redirect allow-list include the active Cloudflare URL.
 6. New SQL migrations are applied successfully.
@@ -62,6 +65,7 @@ These must be applied to Supabase before their respective persistent features ca
 9. Supporter snapshot exposes only limited progress, never exact address or document contents.
 10. OAuth return paths are same-origin only; `//external-host` style redirects are rejected.
 11. Mobile smoke test: 360px width, Samsung S24-class viewport, and desktop.
-12. No UI text promises DUO eligibility; rule guidance remains versioned and auditable.
+12. Home keeps one primary action; Weekly Focus shows no more than two secondary checks and never duplicates the primary destination.
+13. No UI text promises DUO eligibility; rule guidance remains versioned and auditable.
 
 See `docs/RELEASE_RUNBOOK.md` for the exact release sequence and verification queries.
