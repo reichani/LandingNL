@@ -1,30 +1,4 @@
-"use client";
-
-import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
-
 export default function LoginPage() {
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  async function continueWithGoogle() {
-    setLoading(true);
-    setError(null);
-    try {
-      const supabase = createClient();
-      const redirectTo = `${window.location.origin}/auth/callback?next=/onboarding`;
-      const { error: signInError } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: { redirectTo },
-      });
-      if (signInError) setError(signInError.message);
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Unable to start sign in.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
   return (
     <main className="shell">
       <span className="eyebrow">LANDINGNL</span>
@@ -38,10 +12,9 @@ export default function LoginPage() {
       </section>
 
       <div style={{ height: 18 }} />
-      <button className="primary" disabled={loading} onClick={continueWithGoogle}>
-        {loading ? "Opening Google…" : "Continue with Google"}
-      </button>
-      {error ? <p role="alert" className="muted">{error}</p> : null}
+      <a className="primary" href="/auth/google?next=/onboarding" style={{ display: "block", textAlign: "center" }}>
+        Continue with Google
+      </a>
       <p className="muted" style={{ fontSize: 12, textAlign: "center" }}>No hard paywall on urgent government steps.</p>
     </main>
   );
