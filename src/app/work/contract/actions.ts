@@ -18,6 +18,11 @@ const schema = z.object({
   employerSigned: z.boolean(),
 });
 
+function currentMonthKey() {
+  const now = new Date();
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString().slice(0, 10);
+}
+
 export async function saveContract(formData: FormData) {
   const parsed = schema.safeParse({
     contractId: formData.get("contract_id") ?? "",
@@ -69,20 +74,14 @@ export async function saveContract(formData: FormData) {
       completed_at: new Date().toISOString(),
     }, { onConflict: "user_id,task_key" });
 
-    const { data: existingEvidence } = await supabase
-      .from("work_evidence")
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("evidence_type", "contract")
-      .is("work_month_id", null)
-      .limit(1);
-    if (!existingEvidence?.length) {
-      await supabase.from("work_evidence").insert({
-        user_id: user.id,
-        evidence_type: "contract",
-        received_at: new Date().toISOString(),
-      });
-    }
+    await supabase.from("work_evidence").upsert({
+      user_id: user.id,
+      month: currentMonthKey(),
+      evidence_type: "contract",
+      status: "ready",
+      reference: value.employerName,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: "user_id,month,evidence_type" });
   }
 
   revalidatePath("/work/contract");
