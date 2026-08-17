@@ -91,6 +91,7 @@ export default async function WorkPage() {
         <div className="row"><span>{evidence.has("paid_hours") ? "✓" : "○"} Paid-hours record</span><span className="muted">{evidence.has("paid_hours") ? "Ready" : "Waiting"}</span></div>
         <div className="row"><span>{evidence.has("payslip") ? "✓" : "○"} Payslip</span><span className="muted">{evidence.has("payslip") ? "Ready" : "Waiting"}</span></div>
         <div className="row"><span>{evidence.has("salary_bank") ? "✓" : "○"} Salary bank evidence</span><span className="muted">{evidence.has("salary_bank") ? "Ready" : "Waiting"}</span></div>
+        <Link className="secondary" href="/work/evidence">Manage monthly evidence →</Link>
       </section>
 
       <PrimaryNav active="Work" />
