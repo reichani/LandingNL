@@ -5,6 +5,7 @@ const items = [
   ["Plan", "/plan"],
   ["Money", "/money"],
   ["Wallet", "/wallet"],
+  ["Work", "/work"],
 ] as const;
 
 export function PrimaryNav({ active }: { active: (typeof items)[number][0] }) {
