@@ -2,6 +2,7 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "landingnl",
   "main": ".open-next/worker.js",
+  "workers_dev": true,
   "compatibility_date": "2026-08-16",
   "compatibility_flags": ["nodejs_compat"],
   "assets": {
