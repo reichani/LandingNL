@@ -1,0 +1,131 @@
+# LandingNL Smoke Tests
+
+Target: Cloudflare Worker production preview
+
+## Preconditions
+
+- Latest `feat/sprint-0-foundation` build is deployed.
+- Cloudflare runtime variables contain valid `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` values.
+- Supabase Google provider contains the Google OAuth Client ID and Client Secret.
+- Supabase redirect allow-list includes the active Cloudflare `/auth/callback` URL.
+- Migrations `0005` through `0008` have been applied.
+
+## 1. Public homepage
+
+1. Open `/` in an incognito window.
+2. Confirm there is a full marketing homepage, not a student demo dashboard.
+3. Confirm hero, product preview, feature grid, How it works, Work + DUO section and final CTA render.
+4. Click Plan, Money, Wallet and Work feature cards.
+5. Resize to ~360px width and confirm no horizontal overflow.
+
+Expected: no personal name, rent or student data is exposed to a guest.
+
+## 2. Google sign-in
+
+1. Open `/login`.
+2. Click Continue with Google.
+3. Complete Google consent with a test account allowed by the Google OAuth testing audience.
+4. Confirm Google returns through Supabase and then `/auth/callback`.
+5. Confirm final redirect reaches `/onboarding`.
+
+Expected: no `Invalid supabaseUrl`, redirect mismatch or callback loop.
+
+## 3. Onboarding persistence
+
+1. Enter city, university, citizenship status, arrival date and housing status.
+2. Complete setup.
+3. Return to `/`.
+4. Confirm Home uses the saved first-name/city context and housing status.
+5. Re-open `/onboarding` later and confirm the app still uses stored profile values elsewhere.
+
+Expected: no demo Deren/Amsterdam values are injected into a new user.
+
+## 4. Journey Plan
+
+1. Open `/plan` signed in.
+2. Verify only the first unmet dependency is active.
+3. If housing is secured, mark Municipality done.
+4. Reload; verify Municipality stays completed and BSN becomes active.
+5. Mark BSN and DigiD complete in sequence.
+6. Return to Home.
+
+Expected: Home primary action advances based on persisted `journey_tasks`; no BSN number itself is requested or stored.
+
+## 5. Money
+
+1. Open `/money` signed in.
+2. Confirm housing rent is read from the housing profile if present.
+3. Change Food, Phone & insurance, Transport or Other.
+4. Save each changed category.
+5. Reload.
+
+Expected: values persist through `budget_items`, total recalculates, and no bank credentials are requested.
+
+## 6. Wallet
+
+1. Open `/wallet` signed in before Municipality completion.
+2. Confirm Passport/ID, housing proof and appointment confirmation are surfaced as current-task documents.
+3. Mark each Ready and reload.
+4. Complete Municipality in Plan and return to Wallet.
+
+Expected: readiness persists; Wallet switches emphasis toward work evidence after the municipality dependency is complete. No document file contents are required in this MVP.
+
+## 7. Work + DUO
+
+1. Open `/work` logged out and confirm preview mode is usable.
+2. Sign in and open `/work/log-shift`.
+3. Save a valid paid shift.
+4. Return to `/work` and confirm monthly hours increase.
+5. Confirm displayed threshold comes from the approved Rule Registry when available.
+
+Expected: no UI promises DUO eligibility; DUO remains the decision authority.
+
+## 8. Student CV
+
+1. Open `/work/cv` signed in.
+2. Confirm name/city/education prefill only from the user's own profile where available.
+3. Enter languages, strengths, availability and truthful experience.
+4. Save at the final step.
+5. Reload.
+6. Open `/plan`.
+
+Expected: CV fields persist, and the CV journey milestone is complete. No invented experience is auto-added.
+
+## 9. Contract readiness
+
+1. Open `/work/contract` signed in.
+2. Fill employer, role, type, start date, hours, wage and optional work/pay details.
+3. Save once without signatures; confirm readiness is partial.
+4. Check both signature boxes and save again.
+5. Reload and open `/plan` and `/work`.
+
+Expected: contract fields persist; a sufficiently complete signed contract completes the contract milestone and creates contract evidence metadata.
+
+## 10. Trusted supporter
+
+1. Open `/supporter` signed in.
+2. Enter one supporter email and create read-only access.
+3. Copy the generated `/share/<token>` link and open it in an incognito window.
+4. Confirm only limited snapshot data is visible: first name, city, housing status and journey milestone statuses.
+5. Confirm exact address, document contents, private financial data and account controls are absent.
+6. Back as the student, revoke supporter access.
+7. Reload the share link.
+
+Expected: revoked link no longer returns the snapshot. Creating a new supporter revokes any previous active supporter.
+
+## 11. RLS isolation
+
+Repeat saved-feature checks with a second test user.
+
+Expected: user B cannot read or mutate user A's profile, housing, tasks, budget, wallet readiness, work records, CV, contract or supporter settings.
+
+## 12. Regression / platform
+
+- `/` guest: HTTP 200
+- `/login`: HTTP 200
+- `/work`: HTTP 200 in guest preview
+- Google callback: no 500/1101
+- Cloudflare Workers logs: no new uncaught runtime exception
+- Desktop Chrome: no layout overflow
+- Mobile 360px: no layout overflow
+- Keyboard navigation: CTA and form controls are reachable
