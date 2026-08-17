@@ -12,7 +12,7 @@ LandingNL is a student landing operating system for the Netherlands: one move, o
 |---|---|---|---|---|
 | Public homepage | `/` | Full responsive marketing homepage, feature navigation, product preview, CTA, SEO metadata | Public | Guest sees homepage, no demo student name/rent |
 | Google sign-in | `/login` → `/auth/google` → `/auth/callback` | Supabase Google OAuth with public project config pinned at build time; return path restricted to same-origin internal paths | Supabase Auth | Google consent returns to onboarding/home; protocol-relative `next` cannot escape origin |
-| 60-second onboarding | `/onboarding` | City, university, citizenship, arrival date, housing status; no analytics auto-opt-in; save resolves before browser navigation | `profiles`, `housing_profiles` | Save reaches success state and Home without a server exception |
+| 60-second onboarding | `/onboarding` | City, university, citizenship, arrival date, housing status; no analytics auto-opt-in; browser Supabase client saves directly under RLS, then performs a full navigation to Home | `profiles`, `housing_profiles` | Save reaches success state and Home without a Worker/server-action exception |
 | Home dashboard | `/` after auth | Personal name/city/housing plus persisted journey-driven primary action and contextual weekly focus | Supabase + Journey Engine | Signed-in user sees own profile, correct next milestone and no duplicate weekly CTA |
 | Weekly Focus / This Week | `/` after auth | Maximum two secondary checks derived from arrival timing, journey stage and known housing cost; primary action is never duplicated | Existing profile/journey/housing data | Change arrival/journey state and confirm weekly cards adapt while staying at two maximum |
 | Housing readiness | `/housing` | Registrability, housing status, rent, contract state, move-in date and commute; no exact address required | `housing_profiles` | Save housing readiness and see Plan/Home/Money react |
@@ -61,7 +61,7 @@ These migrations must be applied to Supabase before their respective persistent 
 5. Supabase Site URL and redirect allow-list include the active Cloudflare URL.
 6. New SQL migrations are applied successfully.
 7. Guest routes never expose another user's data.
-8. RLS tests confirm each authenticated user can only manage their own records.
+8. RLS tests confirm each authenticated user can only manage their own records, including direct browser writes used by onboarding.
 9. Supporter snapshot exposes only limited progress, never exact address or document contents.
 10. OAuth return paths are same-origin only; `//external-host` style redirects are rejected.
 11. Mobile smoke test: 360px width, Samsung S24-class viewport, and desktop.
