@@ -11,7 +11,9 @@
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
     "start": "next start",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "quality:invariants": "node scripts/quality-gates.mjs",
+    "quality": "bun run typecheck && bun run lint && bun run quality:invariants"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.4",
