@@ -20,6 +20,7 @@ export default async function WorkPage() {
   let signedIn = false;
   let paidHours = 0;
   let targetHours = 32;
+  let applicationCount = 0;
   const evidence = new Set<string>();
 
   try {
@@ -28,14 +29,16 @@ export default async function WorkPage() {
     signedIn = Boolean(user);
 
     if (user) {
-      const [{ data: shifts }, { data: evidenceRows }, { data: ruleRows }] = await Promise.all([
+      const [{ data: shifts }, { data: evidenceRows }, { data: ruleRows }, { count }] = await Promise.all([
         supabase.from("work_shifts").select("paid_hours").gte("shift_date", bounds.start).lt("shift_date", bounds.end),
         supabase.from("work_evidence").select("evidence_type").eq("month", bounds.month),
         supabase.from("rule_registry").select("value").eq("rule_key", "duo.eu_worker.monthly_hours").eq("status", "active").lte("effective_from", bounds.month).or(`effective_to.is.null,effective_to.gte.${bounds.month}`).order("version", { ascending: false }).limit(1),
+        supabase.from("job_applications").select("id", { count: "exact", head: true }).eq("user_id", user.id),
       ]);
 
       paidHours = (shifts ?? []).reduce((sum, row) => sum + Number(row.paid_hours ?? 0), 0);
       (evidenceRows ?? []).forEach((row) => evidence.add(row.evidence_type));
+      applicationCount = count ?? 0;
       const configured = ruleRows?.[0]?.value as { value?: number } | undefined;
       if (typeof configured?.value === "number") targetHours = configured.value;
     }
@@ -59,7 +62,7 @@ export default async function WorkPage() {
       {!signedIn ? (
         <section className="card stack">
           <div className="row"><strong>Preview mode</strong><span className="pill">NO ACCOUNT NEEDED</span></div>
-          <p className="muted" style={{ margin: 0 }}>Explore the full work journey first. Sign in when you want to save shifts and evidence.</p>
+          <p className="muted" style={{ margin: 0 }}>Explore the full work journey first. Sign in when you want to save applications, shifts and evidence.</p>
           <Link className="secondary" href="/login">Sign in with Google →</Link>
         </section>
       ) : null}
@@ -76,7 +79,7 @@ export default async function WorkPage() {
       <div style={{ height: 16 }} />
       <section className="card stack">
         <div className="row"><strong>Student CV</strong><Link className="pill" href="/work/cv">Build CV</Link></div>
-        <div className="row"><span>Applications</span><strong>0</strong></div>
+        <div className="row"><span>Applications</span><Link className="pill" href="/work/applications">{applicationCount} tracked</Link></div>
         <div className="row"><span>Employment contract</span><Link className="pill" href="/work/contract">Check contract</Link></div>
         <div className="row"><span>Employer pack</span><Link className="pill" href="/work/employer-pack">Open & share</Link></div>
       </section>
