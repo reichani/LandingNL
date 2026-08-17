@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
-function safeInternalPath(value: string | null, fallback = "/") {
+function safeInternalPath(value: string | null, fallback = "/onboarding") {
   if (!value) return fallback;
   if (!value.startsWith("/") || value.startsWith("//") || value.includes("\\")) return fallback;
   return value;
@@ -16,12 +16,21 @@ export async function GET(request: Request) {
     return NextResponse.redirect(new URL("/login?error=missing_code", url.origin));
   }
 
-  const supabase = await createClient();
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
 
-  if (error) {
+    if (error) {
+      console.error("google_oauth_code_exchange_failed", {
+        name: error.name,
+        message: error.message,
+      });
+      return NextResponse.redirect(new URL("/login?error=oauth_callback", url.origin));
+    }
+
+    return NextResponse.redirect(new URL(next, url.origin));
+  } catch (callbackError) {
+    console.error("google_oauth_callback_failed", callbackError);
     return NextResponse.redirect(new URL("/login?error=oauth_callback", url.origin));
   }
-
-  return NextResponse.redirect(new URL(next, url.origin));
 }
