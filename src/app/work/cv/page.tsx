@@ -1,65 +1,50 @@
-"use client";
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
+import { CVEditor } from "./CVEditor";
+import type { CVInput } from "./actions";
 
-import { useMemo, useState } from "react";
+export default async function CVWizardPage() {
+  let signedIn = false;
+  let initial: CVInput = {
+    name: "",
+    city: "",
+    education: "",
+    languages: "",
+    strengths: "",
+    availability: "",
+    experience: "",
+  };
 
-type CVData = {
-  name: string;
-  city: string;
-  education: string;
-  languages: string;
-  strengths: string;
-  availability: string;
-  experience: string;
-};
-
-const initial: CVData = {
-  name: "Deren",
-  city: "Amsterdam",
-  education: "University of Amsterdam",
-  languages: "Turkish, English, German",
-  strengths: "Communication, organisation, working with people",
-  availability: "Evenings and weekends",
-  experience: "No formal work experience yet",
-};
-
-export default function CVWizardPage() {
-  const [data, setData] = useState(initial);
-  const [step, setStep] = useState(0);
-  const fields = useMemo(() => Object.keys(initial) as (keyof CVData)[], []);
-  const field = fields[step];
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    signedIn = Boolean(user);
+    if (user) {
+      const [{ data: profile }, { data: cv }] = await Promise.all([
+        supabase.from("profiles").select("first_name,city,university").eq("id", user.id).maybeSingle(),
+        supabase.from("student_cvs").select("name,city,education,languages,strengths,availability,experience").eq("user_id", user.id).maybeSingle(),
+      ]);
+      initial = {
+        name: cv?.name ?? profile?.first_name ?? user.user_metadata?.name ?? "",
+        city: cv?.city ?? profile?.city ?? "",
+        education: cv?.education ?? profile?.university ?? "",
+        languages: cv?.languages ?? "",
+        strengths: cv?.strengths ?? "",
+        availability: cv?.availability ?? "",
+        experience: cv?.experience ?? "",
+      };
+    }
+  } catch {
+    // Empty preview is safer than inventing personal CV facts.
+  }
 
   return (
     <main className="shell">
-      <span className="eyebrow">CV WIZARD · {step + 1}/{fields.length}</span>
-      <h1 className="title">Your first student CV.</h1>
-      <p className="subtitle">No work experience is a normal starting point. We build around education, languages, strengths and availability.</p>
-
-      <section className="card stack">
-        <label htmlFor="cv-field"><strong>{field[0].toUpperCase() + field.slice(1)}</strong></label>
-        <textarea
-          id="cv-field"
-          className="input"
-          rows={4}
-          value={data[field]}
-          onChange={(event) => setData({ ...data, [field]: event.target.value })}
-        />
-      </section>
-
+      <Link className="text-link" href="/work">← Work journey</Link>
+      <div style={{ height: 20 }} />
+      {!signedIn ? <div className="card"><span className="muted">Preview the CV builder now. <Link className="text-link" href="/login">Sign in with Google</Link> to save it.</span></div> : null}
       <div style={{ height: 16 }} />
-      <button className="primary" onClick={() => setStep((current) => Math.min(current + 1, fields.length - 1))}>
-        {step === fields.length - 1 ? "Preview my CV →" : "Next →"}
-      </button>
-
-      <div style={{ height: 18 }} />
-      <section className="card stack" aria-label="CV preview">
-        <span className="eyebrow">LIVE PREVIEW</span>
-        <h2 style={{ margin: 0 }}>{data.name}</h2>
-        <span className="muted">{data.city} · {data.education}</span>
-        <strong>Languages</strong><span>{data.languages}</span>
-        <strong>Strengths</strong><span>{data.strengths}</span>
-        <strong>Availability</strong><span>{data.availability}</span>
-        <strong>Experience</strong><span>{data.experience}</span>
-      </section>
+      <CVEditor initial={initial} signedIn={signedIn} />
     </main>
   );
 }
