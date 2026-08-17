@@ -8,7 +8,9 @@ const items = [
   ["Account", "/account"],
 ] as const;
 
-export function PrimaryNav({ active }: { active: (typeof items)[number][0] | "" }) {
+type PrimaryNavLabel = (typeof items)[number][0] | "Wallet" | "";
+
+export function PrimaryNav({ active }: { active: PrimaryNavLabel }) {
   return (
     <nav className="bottom-nav" aria-label="Primary navigation" style={{ gridTemplateColumns: "repeat(5, minmax(0, 1fr))" }}>
       {items.map(([label, href]) => (
