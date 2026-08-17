@@ -115,8 +115,14 @@ export default function OnboardingPage() {
     startTransition(saveSetup);
   }
 
+  function retrySave() {
+    setError(null);
+    setErrorKind(null);
+    startTransition(saveSetup);
+  }
+
   return (
-    <main className="shell">
+    <main className="shell" data-onboarding-flow="browser-save-v2">
       <Link className="text-link" href="/">← Home</Link>
       <div style={{ height: 20 }} />
       <div className="row">
@@ -173,14 +179,19 @@ export default function OnboardingPage() {
           <div className="row">
             {step > 0 ? <button type="button" className="secondary" disabled={isPending} onClick={() => setStep((current) => current - 1)}>← Back</button> : <span />}
             <button className="primary" disabled={isPending} onClick={continueFlow}>
-              {isPending ? "Saving…" : step === fields.length - 1 ? "Build my plan →" : "Next →"}
+              {isPending ? "Saving your plan…" : step === fields.length - 1 ? "Build my plan →" : "Next →"}
             </button>
           </div>
           {error ? (
-            <div role="alert" className="card" style={{ marginTop: 14 }}>
-              <strong>{errorKind === "auth" ? "Sign in again to continue." : "We couldn’t finish that yet."}</strong>
-              <p className="muted" style={{ marginBottom: errorKind === "auth" ? 12 : 0 }}>{error}</p>
-              {errorKind === "auth" ? <Link className="secondary" href="/login?next=/onboarding">Continue with Google →</Link> : null}
+            <div role="alert" className="card stack" style={{ marginTop: 14 }}>
+              <strong>{errorKind === "auth" ? "Sign in again to continue." : "We couldn’t save your plan yet."}</strong>
+              <p className="muted" style={{ margin: 0 }}>{error}</p>
+              <p className="muted" style={{ margin: 0, fontSize: 12 }}>Your answers stay on this screen until the save succeeds.</p>
+              {errorKind === "auth" ? (
+                <Link className="secondary" href="/login?next=/onboarding">Continue with Google →</Link>
+              ) : (
+                <button type="button" className="secondary" disabled={isPending} onClick={retrySave}>{isPending ? "Trying again…" : "Try again"}</button>
+              )}
             </div>
           ) : null}
           <p className="muted" style={{ fontSize: 12 }}>You can update these answers later. Analytics is never turned on automatically during setup.</p>
