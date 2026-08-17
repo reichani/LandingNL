@@ -31,28 +31,30 @@ export type NextAction = {
   id: string;
   title: string;
   description: string;
+  href: string;
+  cta: string;
   blocking: boolean;
   entitlement: Entitlement;
 };
 
 export function getNextAction(state: JourneyState): NextAction {
   if (!state.housingSecured) {
-    return { id: "housing", title: "Secure a registrable address", description: "Housing unlocks your registration and real monthly budget.", blocking: true, entitlement: "guest" };
+    return { id: "housing", title: "Secure a registrable address", description: "Housing unlocks your registration and real monthly budget.", href: "/housing", cta: "Open housing →", blocking: true, entitlement: "guest" };
   }
   if (!state.municipalityComplete) {
-    return { id: "municipality", title: "Register with your municipality", description: "Bring the documents surfaced in your Wallet.", blocking: true, entitlement: "guest" };
+    return { id: "municipality", title: "Register with your municipality", description: "Bring the documents surfaced in your Wallet.", href: "/plan", cta: "Open registration task →", blocking: true, entitlement: "guest" };
   }
   if (!state.bsnReceived) {
-    return { id: "bsn", title: "Add your BSN", description: "Your BSN unlocks DigiD and the next setup steps.", blocking: true, entitlement: "free" };
+    return { id: "bsn", title: "Mark your BSN as received", description: "You never need to store the number here. Marking the milestone unlocks DigiD and the next setup steps.", href: "/plan", cta: "Update milestone →", blocking: true, entitlement: "free" };
   }
   if (!state.digidActive) {
-    return { id: "digid", title: "Activate DigiD", description: "Set up secure access to Dutch government services.", blocking: true, entitlement: "free" };
+    return { id: "digid", title: "Activate DigiD", description: "Set up secure access to Dutch government services.", href: "/plan", cta: "Open DigiD step →", blocking: true, entitlement: "free" };
   }
   if (!state.cvCreated) {
-    return { id: "cv", title: "Build your student CV", description: "Create a one-page CV and get ready for part-time applications.", blocking: false, entitlement: "free" };
+    return { id: "cv", title: "Build your student CV", description: "Create a one-page CV and get ready for part-time applications.", href: "/work/cv", cta: "Build my CV →", blocking: false, entitlement: "free" };
   }
   if (!state.contractSigned) {
-    return { id: "work", title: "Find your first part-time role", description: "Track applications and save your contract when you sign.", blocking: false, entitlement: "free" };
+    return { id: "work", title: "Find your first part-time role", description: "Track applications and save your contract when you sign.", href: "/work/applications", cta: "Open applications →", blocking: false, entitlement: "free" };
   }
-  return { id: "hours", title: "Track this month’s paid hours", description: "Keep your work evidence and monthly total current.", blocking: false, entitlement: "free" };
+  return { id: "hours", title: "Track this month’s paid hours", description: "Keep your work evidence and monthly total current.", href: "/work/log-shift", cta: "Log paid hours →", blocking: false, entitlement: "free" };
 }
