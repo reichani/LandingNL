@@ -12,8 +12,8 @@ LandingNL is a student landing operating system for the Netherlands: one move, o
 |---|---|---|---|---|
 | Public homepage | `/` | Full responsive marketing homepage, feature navigation, product preview, CTA, SEO metadata | Public | Guest sees homepage, no demo student name/rent |
 | Google sign-in | `/login` → `/auth/google` → `/auth/callback` | Server-side OAuth start to avoid browser env dependency | Supabase Auth | Google consent returns to onboarding/home |
-| 60-second onboarding | `/onboarding` | City, university, citizenship, arrival date, housing status | `profiles`, `housing_profiles`, `consents` | Save and reload profile |
-| Home dashboard | `/` after auth | Personal name/city/housing plus primary action and feature cards | Supabase + Journey Engine | Signed-in user sees own profile, not demo data |
+| 60-second onboarding | `/onboarding` | City, university, citizenship, arrival date, housing status; no analytics auto-opt-in | `profiles`, `housing_profiles` | Save and reload profile |
+| Home dashboard | `/` after auth | Personal name/city/housing plus persisted journey-driven primary action and feature cards | Supabase + Journey Engine | Signed-in user sees own profile and correct next milestone |
 | Plan / Journey Engine | `/plan` | Dependency-ordered steps with persisted completion for municipality, BSN, DigiD | `journey_tasks`, `housing_profiles` | Mark step done and next step unlocks |
 | Money | `/money` | User-owned planning amounts plus housing rent | `budget_items`, `housing_profiles` | Save amount, refresh, total persists |
 | Wallet | `/wallet` | Task-linked document readiness, no file contents required for MVP | `document_readiness`, `journey_tasks` | Mark ready, refresh, progress persists |
@@ -24,7 +24,7 @@ LandingNL is a student landing operating system for the Netherlands: one move, o
 | Paid-hours tracker | `/work/log-shift` | Server-side shift logging; no browser Supabase dependency | `work_shifts` | Log shift and Work monthly total increases |
 | DUO regulatory guidance | `/work`, `/admin/rules` | Versioned rule registry with approval boundary; guidance only | `rule_registry` | Active approved rule is used, no hard-coded threshold in UI |
 | Trusted supporter | `/supporter`, `/share/[token]` | One read-only supporter, bearer link, student revocation; no parent account | `trusted_supporters` | Create link, snapshot is limited, revoke invalidates link |
-| Analytics privacy boundary | internal | Pseudonymous events only; no email/name/address/document contents | `analytics_events` | Schema/comment/payload review |
+| Analytics privacy boundary | internal | Pseudonymous events only; no email/name/address/document contents; onboarding does not auto-grant consent | `analytics_events`, `consents` | Schema/payload review |
 
 ## Required database migrations added in this implementation pass
 
@@ -32,8 +32,16 @@ LandingNL is a student landing operating system for the Netherlands: one move, o
 - `0006_budget_items.sql`
 - `0007_document_readiness.sql`
 - `0008_student_cv.sql`
+- `0009_employment_contracts.sql`
 
 These must be applied to Supabase before their respective persistent features can pass end-to-end tests.
+
+## Migration hygiene fixed
+
+- Removed duplicate `0002_profile_bootstrap.sql`; `0002_auth_profile_bootstrap.sql` is the canonical auth-profile bootstrap.
+- Removed the conflicting old `0003_employment_evidence.sql`; `0003_work_evidence.sql` is the canonical `work_shifts` / `work_evidence` schema.
+- Employment contract fields now live in the separate `0009_employment_contracts.sql` migration.
+- Contract evidence writes use the canonical `work_evidence(user_id, month, evidence_type, status, reference)` shape.
 
 ## Release gates
 
