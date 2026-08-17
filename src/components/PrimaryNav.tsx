@@ -6,9 +6,10 @@ const items = [
   ["Money", "/money"],
   ["Wallet", "/wallet"],
   ["Work", "/work"],
+  ["Account", "/account"],
 ] as const;
 
-export function PrimaryNav({ active }: { active: (typeof items)[number][0] }) {
+export function PrimaryNav({ active }: { active: (typeof items)[number][0] | "" }) {
   return (
     <nav className="bottom-nav" aria-label="Primary navigation">
       {items.map(([label, href]) => (
