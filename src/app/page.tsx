@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 
 type HomeProfile = { first_name: string | null; city: string | null };
 type HousingProfile = { housing_status: string | null; monthly_rent_eur: number | null };
+type JourneyTaskRow = { task_key: string; status: string };
 
 const features = [
   ["Plan", "Housing → municipality → BSN → DigiD in the right dependency order.", "/plan", "LIVE"],
@@ -20,19 +21,22 @@ export default async function HomePage() {
   let firstName: string | null = null;
   let city: string | null = null;
   let housing: HousingProfile | null = null;
+  let journeyTasks: JourneyTaskRow[] = [];
 
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     userId = user?.id ?? null;
     if (user) {
-      const [{ data: profile }, { data: housingProfile }] = await Promise.all([
+      const [{ data: profile }, { data: housingProfile }, { data: taskRows }] = await Promise.all([
         supabase.from("profiles").select("first_name,city").eq("id", user.id).maybeSingle<HomeProfile>(),
         supabase.from("housing_profiles").select("housing_status,monthly_rent_eur").eq("user_id", user.id).maybeSingle<HousingProfile>(),
+        supabase.from("journey_tasks").select("task_key,status").eq("user_id", user.id),
       ]);
       firstName = profile?.first_name ?? user.user_metadata?.given_name ?? user.user_metadata?.name ?? null;
       city = profile?.city ?? null;
       housing = housingProfile ?? null;
+      journeyTasks = (taskRows ?? []) as JourneyTaskRow[];
     }
   } catch {
     // Public homepage must remain available if auth/data is temporarily unavailable.
@@ -112,15 +116,16 @@ export default async function HomePage() {
     );
   }
 
+  const completed = new Set(journeyTasks.filter((task) => task.status === "completed").map((task) => task.task_key));
   const journeyState: JourneyState = {
     housingSecured: housing?.housing_status === "secured",
-    municipalityComplete: false,
-    bsnReceived: false,
-    digidActive: false,
-    cvCreated: false,
-    contractSigned: false,
+    municipalityComplete: completed.has("municipality"),
+    bsnReceived: completed.has("bsn"),
+    digidActive: completed.has("digid"),
+    cvCreated: completed.has("cv"),
+    contractSigned: completed.has("contract"),
     paidHoursThisMonth: 0,
-    duoApplied: false,
+    duoApplied: completed.has("duo"),
   };
   const next = getNextAction(journeyState);
   const displayName = firstName || "there";
@@ -130,7 +135,7 @@ export default async function HomePage() {
   return (
     <main className="dashboard-shell">
       <header className="dashboard-header"><div><span className="eyebrow">LANDINGNL · HOME</span><h1>Hi {displayName}. You know what comes next.</h1><p>{displayCity} · your plan changes as your real-world status changes.</p></div><Link className="dashboard-profile" href="/onboarding">Update setup</Link></header>
-      <section className="dashboard-hero"><div className="dashboard-focus"><span className="pill">TODAY · PRIMARY FOCUS</span><p className="kicker">Your next action</p><h2>{next.title}</h2><p>{next.description}</p><Link className="button-primary wide" href="/plan">Open today’s task →</Link></div><div className="status-panel"><span className="eyebrow">MOVE STATUS</span><div className="status-line"><span>Housing</span><strong>{journeyState.housingSecured ? "Secured ✓" : "Needs attention"}</strong></div><div className="status-line"><span>City</span><strong>{displayCity}</strong></div>{typeof rent === "number" ? <div className="status-line"><span>Rent</span><strong>€{rent.toLocaleString("en-NL")} / mo</strong></div> : null}<Link className="text-link" href="/onboarding">Edit setup →</Link></div></section>
+      <section className="dashboard-hero"><div className="dashboard-focus"><span className="pill">TODAY · PRIMARY FOCUS</span><p className="kicker">Your next action</p><h2>{next.title}</h2><p>{next.description}</p><Link className="button-primary wide" href="/plan">Open today’s task →</Link></div><div className="status-panel"><span className="eyebrow">MOVE STATUS</span><div className="status-line"><span>Housing</span><strong>{journeyState.housingSecured ? "Secured ✓" : "Needs attention"}</strong></div><div className="status-line"><span>City</span><strong>{displayCity}</strong></div><div className="status-line"><span>Milestones</span><strong>{completed.size} complete</strong></div>{typeof rent === "number" ? <div className="status-line"><span>Rent</span><strong>€{rent.toLocaleString("en-NL")} / mo</strong></div> : null}<Link className="text-link" href="/onboarding">Edit setup →</Link></div></section>
       <section className="dashboard-grid">{features.slice(0,4).map(([title, copy, href]) => <Link className="dashboard-card" href={href} key={title}><span className="eyebrow">{title}</span><h3>{title === "Plan" ? next.title : title}</h3><p>{copy}</p><span className="text-link">Open →</span></Link>)}</section>
       <section className="supporter-banner"><div><span className="eyebrow">TRUSTED SUPPORTER</span><h3>Share progress without creating a parent account.</h3><p>One read-only supporter. Student-controlled. Revoke access at any time.</p></div><Link className="button-secondary" href="/supporter">Set up supporter →</Link></section>
       <PrimaryNav active="Home" />
