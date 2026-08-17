@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
-import { saveOnboarding } from "./actions";
+import { createClient } from "@/lib/supabase/client";
 
 type Answers = {
   city: string;
@@ -12,6 +11,8 @@ type Answers = {
   arrivalDate: string;
   housing: "secured" | "searching";
 };
+
+type SaveErrorKind = "auth" | "profile" | "housing" | "network" | null;
 
 const initial: Answers = {
   city: "",
@@ -22,10 +23,10 @@ const initial: Answers = {
 };
 
 export default function OnboardingPage() {
-  const router = useRouter();
   const [answers, setAnswers] = useState(initial);
   const [step, setStep] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [errorKind, setErrorKind] = useState<SaveErrorKind>(null);
   const [complete, setComplete] = useState(false);
   const [isPending, startTransition] = useTransition();
   const fields = useMemo(() => ["city", "university", "citizenship", "arrivalDate", "housing"] as const, []);
@@ -48,34 +49,70 @@ export default function OnboardingPage() {
     housing: "A registrable address changes which government steps can move next.",
   };
 
+  async function saveSetup() {
+    try {
+      const supabase = createClient();
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+      if (authError || !user) {
+        setErrorKind("auth");
+        setError("Your sign-in has expired. Sign in again, then we’ll bring you back to setup.");
+        return;
+      }
+
+      const { error: profileError } = await supabase.from("profiles").upsert({
+        id: user.id,
+        city: answers.city.trim(),
+        university: answers.university.trim(),
+        citizenship_country: answers.citizenship.trim(),
+        arrival_date: answers.arrivalDate,
+        updated_at: new Date().toISOString(),
+      });
+
+      if (profileError) {
+        console.error("onboarding_profile_save_failed", { code: profileError.code, message: profileError.message });
+        setErrorKind("profile");
+        setError("We couldn’t save your setup yet. Your answers are still here — try once more.");
+        return;
+      }
+
+      const { error: housingError } = await supabase.from("housing_profiles").upsert({
+        user_id: user.id,
+        housing_status: answers.housing,
+        updated_at: new Date().toISOString(),
+      });
+
+      if (housingError) {
+        console.error("onboarding_housing_save_failed", { code: housingError.code, message: housingError.message });
+        setErrorKind("housing");
+        setError("Your main setup is saved. We only need to save your housing status — try again.");
+        return;
+      }
+
+      setComplete(true);
+      window.setTimeout(() => window.location.assign("/"), 650);
+    } catch (saveError) {
+      console.error("onboarding_browser_save_failed", saveError);
+      setErrorKind("network");
+      setError("We couldn’t reach your account just now. Your answers are still here — check your connection and try again.");
+    }
+  }
+
   function continueFlow() {
     setError(null);
+    setErrorKind(null);
+
     if (key !== "housing" && !answers[key].trim()) {
       setError("Add an answer to continue.");
       return;
     }
+
     if (step < fields.length - 1) {
       setStep((current) => current + 1);
       return;
     }
 
-    startTransition(async () => {
-      try {
-        const result = await saveOnboarding(answers);
-        if (!result.ok) {
-          setError(result.error);
-          return;
-        }
-
-        setComplete(true);
-        window.setTimeout(() => {
-          router.replace("/");
-          router.refresh();
-        }, 650);
-      } catch {
-        setError("Something interrupted the save. Your answers are still here — please try again.");
-      }
-    });
+    startTransition(saveSetup);
   }
 
   return (
@@ -139,7 +176,13 @@ export default function OnboardingPage() {
               {isPending ? "Saving…" : step === fields.length - 1 ? "Build my plan →" : "Next →"}
             </button>
           </div>
-          {error ? <div role="alert" className="card" style={{ marginTop: 14 }}><strong>We couldn’t finish that yet.</strong><p className="muted" style={{ marginBottom: 0 }}>{error}</p></div> : null}
+          {error ? (
+            <div role="alert" className="card" style={{ marginTop: 14 }}>
+              <strong>{errorKind === "auth" ? "Sign in again to continue." : "We couldn’t finish that yet."}</strong>
+              <p className="muted" style={{ marginBottom: errorKind === "auth" ? 12 : 0 }}>{error}</p>
+              {errorKind === "auth" ? <Link className="secondary" href="/login?next=/onboarding">Continue with Google →</Link> : null}
+            </div>
+          ) : null}
           <p className="muted" style={{ fontSize: 12 }}>You can update these answers later. Analytics is never turned on automatically during setup.</p>
         </>
       ) : null}
