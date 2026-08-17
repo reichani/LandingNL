@@ -18,6 +18,8 @@ function walk(dir) {
 
 const css = read("src/app/globals.css");
 const onboarding = read("src/app/onboarding/page.tsx");
+const login = read("src/app/login/page.tsx");
+const callback = read("src/app/auth/callback/route.ts");
 const nav = read("src/components/PrimaryNav.tsx");
 const foundation = read("supabase/migrations/0001_foundation.sql");
 const authBootstrap = read("supabase/migrations/0002_auth_profile_bootstrap.sql");
@@ -35,6 +37,34 @@ if (/transform\s*:/i.test(hoverRule)) {
 const previewRule = css.match(/\.product-preview\s*\{([^}]*)\}/s)?.[1] ?? "";
 if (!/transform\s*:\s*none/i.test(previewRule)) {
   fail("UX geometry gate: .product-preview must explicitly remain transform: none.");
+}
+
+// Auth: Google OAuth starts in the browser, then PKCE code exchange happens only in the callback route.
+if (exists("src/app/auth/google/route.ts")) {
+  fail("Auth architecture gate: server-side /auth/google OAuth start route must not return.");
+}
+if (!exists("src/app/login/GoogleSignInButton.tsx")) {
+  fail("Auth architecture gate: browser Google sign-in component is missing.");
+} else {
+  const googleButton = read("src/app/login/GoogleSignInButton.tsx");
+  if (!/from\s+["']@\/lib\/supabase\/client["']/.test(googleButton)) {
+    fail("Auth architecture gate: Google OAuth must start with the browser Supabase client.");
+  }
+  if (!/signInWithOAuth\s*\(/.test(googleButton) || !/provider:\s*["']google["']/.test(googleButton)) {
+    fail("Auth architecture gate: browser Google sign-in must call signInWithOAuth for Google.");
+  }
+  if (!/\/auth\/callback/.test(googleButton)) {
+    fail("Auth architecture gate: Google OAuth must return through /auth/callback.");
+  }
+}
+if (/\/auth\/google/.test(login)) {
+  fail("Auth architecture gate: login page must not depend on the removed server OAuth start route.");
+}
+if (!/exchangeCodeForSession\s*\(/.test(callback)) {
+  fail("Auth architecture gate: callback must exchange the PKCE code for a session.");
+}
+if (!/fallback\s*=\s*["']\/onboarding["']/.test(callback)) {
+  fail("Auth UX gate: successful Google callback must default to onboarding.");
 }
 
 // Onboarding: persistence must stay on the browser Supabase client + RLS path.
