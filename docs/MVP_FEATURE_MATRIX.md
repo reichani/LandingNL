@@ -11,7 +11,7 @@ LandingNL is a student landing operating system for the Netherlands: one move, o
 | Feature | Route | Current implementation | Data | Key test |
 |---|---|---|---|---|
 | Public homepage | `/` | Full responsive marketing homepage, feature navigation, product preview, CTA, SEO metadata | Public | Guest sees homepage, no demo student name/rent |
-| Google sign-in | `/login` → `/auth/google` → `/auth/callback` | Server-side OAuth start to avoid browser env dependency | Supabase Auth | Google consent returns to onboarding/home |
+| Google sign-in | `/login` → `/auth/google` → `/auth/callback` | Server-side OAuth start; return path is restricted to same-origin internal paths | Supabase Auth | Google consent returns to onboarding/home; protocol-relative `next` cannot escape origin |
 | 60-second onboarding | `/onboarding` | City, university, citizenship, arrival date, housing status; no analytics auto-opt-in | `profiles`, `housing_profiles` | Save and reload profile |
 | Home dashboard | `/` after auth | Personal name/city/housing plus persisted journey-driven primary action and feature cards | Supabase + Journey Engine | Signed-in user sees own profile and correct next milestone |
 | Housing readiness | `/housing` | Registrability, housing status, rent, contract state, move-in date and commute; no exact address required | `housing_profiles` | Save housing readiness and see Plan/Home/Money react |
@@ -29,6 +29,7 @@ LandingNL is a student landing operating system for the Netherlands: one move, o
 | Trusted supporter | `/supporter`, `/share/[token]` | One read-only supporter, bearer link, student revocation; no parent account | `trusted_supporters` | Create link, snapshot is limited, revoke invalidates link |
 | Account controls | `/account` | Student profile summary, setup links, supporter controls and sign-out | Auth + profile | Signed-in user can sign out and manage own settings |
 | Analytics privacy boundary | internal | Pseudonymous events only; no email/name/address/document contents; onboarding does not auto-grant consent | `analytics_events`, `consents` | Schema/payload review |
+| Automated quality gate | GitHub Actions | Bun install + TypeScript + ESLint + OpenNext Cloudflare build | Repository | PR cannot be considered release-ready until workflow is green |
 
 ## Required database migrations added in this implementation pass
 
@@ -50,13 +51,17 @@ These must be applied to Supabase before their respective persistent features ca
 
 ## Release gates
 
-1. Cloudflare build succeeds on `feat/sprint-0-foundation`.
-2. Runtime has valid `NEXT_PUBLIC_SUPABASE_URL` and publishable key.
-3. Google provider has Client ID and Client Secret in Supabase.
-4. Supabase Site URL and redirect allow-list include the active Cloudflare URL.
-5. New SQL migrations are applied successfully.
-6. Guest routes never expose another user's data.
-7. RLS tests confirm each authenticated user can only manage their own records.
-8. Supporter snapshot exposes only limited progress, never exact address or document contents.
-9. Mobile smoke test: 360px width, Samsung S24-class viewport, and desktop.
-10. No UI text promises DUO eligibility; rule guidance remains versioned and auditable.
+1. GitHub Actions `LandingNL CI` succeeds: install, typecheck, lint, OpenNext Worker build.
+2. Cloudflare build succeeds on `feat/sprint-0-foundation`.
+3. Runtime has valid `NEXT_PUBLIC_SUPABASE_URL` and publishable key.
+4. Google provider has Client ID and Client Secret in Supabase.
+5. Supabase Site URL and redirect allow-list include the active Cloudflare URL.
+6. New SQL migrations are applied successfully.
+7. Guest routes never expose another user's data.
+8. RLS tests confirm each authenticated user can only manage their own records.
+9. Supporter snapshot exposes only limited progress, never exact address or document contents.
+10. OAuth return paths are same-origin only; `//external-host` style redirects are rejected.
+11. Mobile smoke test: 360px width, Samsung S24-class viewport, and desktop.
+12. No UI text promises DUO eligibility; rule guidance remains versioned and auditable.
+
+See `docs/RELEASE_RUNBOOK.md` for the exact release sequence and verification queries.
