@@ -89,7 +89,7 @@ where pg_namespace.nspname = 'public'
 order by relname;
 ```
 
-Expected: `relrowsecurity = true` for every user-owned table.
+Expected: `relrowsecurity = true` for every user-owned table. This is also the security boundary for onboarding, which writes from the authenticated browser client instead of a Cloudflare Server Action.
 
 ## 4. Supabase Auth / Google
 
@@ -105,6 +105,7 @@ Required production settings:
 - OAuth `next` parameter cannot redirect to another origin.
 - Guest pages contain no student PII.
 - User A cannot read or mutate User B rows.
+- Browser-side onboarding writes can only insert/update the authenticated user's `profiles` and `housing_profiles` rows through RLS.
 - Supporter link is read-only and contains no exact address, document content, BSN value, salary bank details, or private CV content.
 - Revoking a supporter invalidates the bearer link immediately.
 - No service-role key is exposed client-side.
@@ -115,7 +116,7 @@ Execute `docs/SMOKE_TESTS.md` against the active deployment. Minimum critical pa
 
 1. Public Home renders at 360px and desktop widths.
 2. Google sign-in returns through `/auth/callback`.
-3. Onboarding saves, shows successful completion and reaches Home without a server-side exception.
+3. Onboarding saves through the browser client, shows `SETUP COMPLETE`, then opens Home without a Worker exception.
 4. Home keeps one dominant NOW action and the CTA opens the correct destination.
 5. Weekly Focus shows at most two contextual secondary checks, never duplicates NOW, and reacts to arrival/journey state.
 6. Housing change updates Home/Plan/Money.
@@ -136,7 +137,7 @@ Only mark PR #1 ready for review when:
 - Cloudflare build/deploy is green
 - Supabase migrations are applied
 - Google OAuth production smoke test passes
-- onboarding production completion passes without a server-side exception
+- onboarding browser-save production smoke test passes
 - Weekly Focus passes the two-card/no-duplicate UX gate
 - critical manual smoke tests pass
 - no P0/P1 security or data-isolation issue remains
