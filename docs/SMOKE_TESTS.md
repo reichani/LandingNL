@@ -5,7 +5,7 @@ Target: Cloudflare Worker production preview
 ## Preconditions
 
 - Latest `feat/sprint-0-foundation` build is deployed.
-- Cloudflare runtime variables contain valid `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` values.
+- Cloudflare build variables contain valid `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` values; the production build fails if either is missing.
 - Supabase Google provider contains the Google OAuth Client ID and Client Secret.
 - Supabase redirect allow-list includes the active Cloudflare `/auth/callback` URL.
 - Migrations `0005` through `0010` have been applied.
@@ -16,7 +16,8 @@ Target: Cloudflare Worker production preview
 2. Confirm there is a full marketing homepage, not a student demo dashboard.
 3. Confirm hero, product preview, feature grid, How it works, Work + DUO section and final CTA render.
 4. Click Plan, Money, Wallet and Work feature cards.
-5. Resize to ~360px width and confirm no horizontal overflow.
+5. Confirm Weekly Focus appears as a product capability, not the setup flow itself.
+6. Resize to ~360px width and confirm no horizontal overflow.
 
 Expected: no personal name, rent or student data is exposed to a guest.
 
@@ -34,11 +35,13 @@ Expected: no `Invalid supabaseUrl`, redirect mismatch or callback loop.
 
 1. Enter city, university, citizenship status, arrival date and housing status.
 2. Complete setup.
-3. Return to `/`.
-4. Confirm Home uses saved profile context and housing status.
-5. Confirm setup never asks for passport number or BSN number.
+3. Confirm the client shows the successful completion state before navigation.
+4. Confirm Home opens without a generic server-side exception.
+5. Return to `/onboarding`, confirm setup can be updated, then return to `/`.
+6. Confirm Home uses saved profile context and housing status.
+7. Confirm setup never asks for passport number or BSN number.
 
-Expected: no demo Deren/Amsterdam values are injected; analytics is not automatically opted in.
+Expected: persistence resolves before browser navigation; no server redirect exception; no demo values are injected; analytics is not automatically opted in.
 
 ## 4. Housing readiness
 
@@ -58,7 +61,7 @@ Expected: housing readiness persists; Plan treats housing as complete when secur
 5. Mark BSN and DigiD complete in sequence.
 6. Return to Home.
 
-Expected: Home primary action advances based on persisted `journey_tasks`; no BSN number itself is requested or stored.
+Expected: Home primary action advances based on persisted `journey_tasks`; the primary CTA opens the correct destination; no BSN number itself is requested or stored.
 
 ## 6. Money
 
@@ -168,7 +171,21 @@ Expected: user B cannot read or mutate user A's profile, housing, tasks, budget,
 - `/login`: HTTP 200
 - `/work`: HTTP 200 in guest preview
 - Google callback: no 500/1101
+- Onboarding completion: no generic server-side exception
 - Cloudflare Workers logs: no new uncaught runtime exception
 - Desktop Chrome: no layout overflow
 - Mobile 360px: no layout overflow
 - Keyboard navigation: CTA and form controls are reachable
+
+## 18. Weekly Focus / This Week
+
+1. Sign in with an onboarding profile containing an arrival date within the next 7 days.
+2. Open Home and confirm `NOW · PRIMARY FOCUS` remains the single dominant action.
+3. Confirm the `THIS WEEK` section contains no more than two secondary cards.
+4. Confirm the primary destination is not repeated in Weekly Focus.
+5. Move the arrival date to 8–30 days away and confirm the wording changes to pre-arrival guidance when applicable.
+6. Complete journey milestones in sequence and return to Home after each meaningful stage.
+7. Confirm Weekly Focus shifts between document, money, work/contract or evidence checks as context changes.
+8. Confirm exact address, BSN value, document contents or private financial credentials never appear in Weekly Focus.
+
+Expected: Weekly Focus is contextual, calm and secondary to NOW; it uses existing student-owned data and requires no new migration.
