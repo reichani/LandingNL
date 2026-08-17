@@ -1,16 +1,26 @@
 import fs from "node:fs";
+import path from "node:path";
 
 const failures = [];
-const read = (path) => fs.readFileSync(path, "utf8");
-const exists = (path) => fs.existsSync(path);
+const read = (filePath) => fs.readFileSync(filePath, "utf8");
+const exists = (filePath) => fs.existsSync(filePath);
 
 function fail(message) {
   failures.push(message);
 }
 
+function walk(dir) {
+  return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const fullPath = path.join(dir, entry.name);
+    return entry.isDirectory() ? walk(fullPath) : [fullPath];
+  });
+}
+
 const css = read("src/app/globals.css");
 const onboarding = read("src/app/onboarding/page.tsx");
 const nav = read("src/components/PrimaryNav.tsx");
+const foundation = read("supabase/migrations/0001_foundation.sql");
+const authBootstrap = read("supabase/migrations/0002_auth_profile_bootstrap.sql");
 
 // Geometry: permanent product cards must never be tilted/skewed.
 if (/\brotate\s*\(/i.test(css)) fail("UX geometry gate: rotate() is not allowed in product CSS.");
@@ -40,6 +50,23 @@ if (!/supabase\.from\(["']profiles["']\)/.test(onboarding) || !/supabase\.from\(
   fail("Onboarding architecture gate: profile and housing persistence must remain explicit and auditable.");
 }
 
+// RLS: the browser onboarding architecture is only valid while own-row policies remain explicit.
+if (!/alter table public\.profiles enable row level security/i.test(foundation)) {
+  fail("RLS gate: profiles must have row level security enabled.");
+}
+if (!/alter table public\.housing_profiles enable row level security/i.test(foundation)) {
+  fail("RLS gate: housing_profiles must have row level security enabled.");
+}
+if (!/users update own profile/i.test(foundation) || !/auth\.uid\(\)\s*=\s*id/i.test(foundation)) {
+  fail("RLS gate: profiles must retain an own-row update policy.");
+}
+if (!/users insert own profile/i.test(authBootstrap) || !/auth\.uid\(\)\s*=\s*id/i.test(authBootstrap)) {
+  fail("RLS gate: profiles must retain an own-row insert policy.");
+}
+if (!/users manage own housing/i.test(foundation) || !/with check\s*\(auth\.uid\(\)\s*=\s*user_id\)/i.test(foundation)) {
+  fail("RLS gate: housing_profiles must retain an own-row write policy with check.");
+}
+
 // Navigation: keep primary mobile navigation intentionally small.
 const navItemsBlock = nav.match(/const items = \[([\s\S]*?)\] as const;/)?.[1] ?? "";
 const navItemCount = [...navItemsBlock.matchAll(/\[\s*["'][^"']+["']\s*,\s*["'][^"']+["']\s*\]/g)].length;
@@ -57,10 +84,17 @@ const userFacingFiles = [
   "src/app/onboarding/page.tsx",
 ].filter(exists);
 const forbiddenCopy = [/Cloudflare runtime/i, /Invalid supabaseUrl/i, /server-side exception/i];
-for (const path of userFacingFiles) {
-  const content = read(path);
+for (const filePath of userFacingFiles) {
+  const content = read(filePath);
   for (const pattern of forbiddenCopy) {
-    if (pattern.test(content)) fail(`UX copy gate: ${path} contains technical user-facing copy matching ${pattern}.`);
+    if (pattern.test(content)) fail(`UX copy gate: ${filePath} contains technical user-facing copy matching ${pattern}.`);
+  }
+}
+
+// Secret boundary: client/application source must never contain service-role credentials or labels.
+for (const filePath of walk("src").filter((item) => /\.(ts|tsx|js|jsx)$/.test(item))) {
+  if (/service[_-]?role/i.test(read(filePath))) {
+    fail(`Secret boundary gate: ${filePath} references a service-role credential.`);
   }
 }
 
