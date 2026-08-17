@@ -35,13 +35,14 @@ Expected: no `Invalid supabaseUrl`, redirect mismatch or callback loop.
 
 1. Enter city, university, citizenship status, arrival date and housing status.
 2. Complete setup.
-3. Confirm the client shows the successful completion state before navigation.
+3. Confirm the browser shows the successful completion state before navigation.
 4. Confirm Home opens without a generic server-side exception.
-5. Return to `/onboarding`, confirm setup can be updated, then return to `/`.
+5. Return to `/onboarding`, update setup, and complete it again.
 6. Confirm Home uses saved profile context and housing status.
 7. Confirm setup never asks for passport number or BSN number.
+8. If the session is expired, confirm the page offers a clear Google sign-in recovery action instead of a generic failure.
 
-Expected: persistence resolves before browser navigation; no server redirect exception; no demo values are injected; analytics is not automatically opted in.
+Expected: the authenticated browser client writes `profiles` then `housing_profiles` directly under RLS, shows `SETUP COMPLETE`, then performs a full navigation to Home. No onboarding Server Action/Worker persistence path is involved; no demo values are injected; analytics is not automatically opted in.
 
 ## 4. Housing readiness
 
@@ -163,7 +164,7 @@ Expected: session clears and `/account` redirects to login on next visit.
 
 Repeat saved-feature checks with a second test user.
 
-Expected: user B cannot read or mutate user A's profile, housing, tasks, budget, wallet readiness, applications, work records, CV, contract or supporter settings.
+Expected: user B cannot read or mutate user A's profile, housing, tasks, budget, wallet readiness, applications, work records, CV, contract or supporter settings. Direct browser writes from onboarding must also remain limited to the authenticated user's rows.
 
 ## 17. Regression / platform
 
