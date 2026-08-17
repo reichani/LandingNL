@@ -87,12 +87,29 @@ Required checks:
 - community trust and abuse controls are designed before open interaction;
 - data minimisation remains the default.
 
+### 7. Auth Integration & Production Journey Guardian
+Owns the cross-system boundary that no single code repository can prove alone: Browser ↔ LandingNL ↔ Supabase Auth ↔ Google OAuth ↔ Cloudflare.
+
+Required checks:
+- identify the exact deployed Git SHA before testing auth;
+- verify Google Cloud Authorized redirect URI is the Supabase provider callback, never the LandingNL callback;
+- verify Supabase Google provider is enabled with an active Client ID and Client Secret;
+- verify Supabase Site URL is the production LandingNL origin;
+- verify Supabase Redirect URLs includes the exact production `/auth/callback` URL;
+- execute the production journey: click Google → account selection/consent → Supabase callback → LandingNL `/auth/callback` → PKCE code exchange → `/onboarding`;
+- classify failures by boundary (deployment, app config, Supabase provider, Google redirect, callback exchange, session cookie) instead of changing code blindly;
+- attach evidence from the failing boundary before requesting a code change.
+
+Stop-the-line conditions: auth config is unverified, deployed SHA is unknown, callback returns without a session, redirect mismatch, provider disabled, or production Google journey has not passed.
+
+This role is intentionally separate from Auth/Data and Platform because OAuth is a cross-system integration. A green repository build cannot prove the external provider configuration or the real browser redirect chain.
+
 ## Four-eyes rule
 
 A change touching auth, persistence, migrations, RLS, release configuration or a primary user journey requires at least two distinct perspectives:
 
 1. implementation owner; and
-2. independent guardian (UX, data/security, platform or test depending on risk).
+2. independent guardian (UX, data/security, platform, auth-integration or test depending on risk).
 
 The Release Manager cannot waive a P0/P1 stop-the-line finding without documenting the risk and rollback.
 
@@ -109,6 +126,6 @@ Every meaningful release handoff contains:
 
 ## Release sequence
 
-`Architecture/Data review → UX review → implementation → automated gates → Cloudflare deploy identity → production E2E → Release Manager sign-off`
+`Architecture/Data review → UX review → implementation → automated gates → Cloudflare deploy identity → Auth Integration verification → production E2E → Release Manager sign-off`
 
 New feature work pauses whenever a P0 journey or security blocker is open.
