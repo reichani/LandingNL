@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { PrimaryNav } from "@/components/PrimaryNav";
 import { getNextAction, type JourneyState } from "@/domain/journey";
+import { getWeeklyFocus } from "@/domain/weekly-focus";
 import { createClient } from "@/lib/supabase/server";
 
-type HomeProfile = { first_name: string | null; city: string | null };
+type HomeProfile = { first_name: string | null; city: string | null; arrival_date: string | null };
 type HousingProfile = { housing_status: string | null; monthly_rent_eur: number | null };
 type JourneyTaskRow = { task_key: string; status: string };
 
@@ -12,7 +13,7 @@ const features = [
   ["Money", "A clear monthly landing-cost view for housing, daily life and recurring costs.", "/money", "LIVE"],
   ["Wallet", "Only the documents connected to the task in front of you.", "/wallet", "LIVE"],
   ["Work + DUO", "CV, contract, employer pack, paid hours and evidence readiness in one flow.", "/work", "LIVE"],
-  ["60-second setup", "City, university, citizenship, arrival date and housing status personalise the journey.", "/onboarding", "LIVE"],
+  ["Weekly focus", "A calm two-item view of what deserves attention around your real move.", "/login", "LIVE"],
   ["Trusted supporter", "One read-only supporter, controlled and revocable by the student.", "/supporter", "NEXT"],
 ] as const;
 
@@ -20,6 +21,7 @@ export default async function HomePage() {
   let userId: string | null = null;
   let firstName: string | null = null;
   let city: string | null = null;
+  let arrivalDate: string | null = null;
   let housing: HousingProfile | null = null;
   let journeyTasks: JourneyTaskRow[] = [];
 
@@ -29,12 +31,13 @@ export default async function HomePage() {
     userId = user?.id ?? null;
     if (user) {
       const [{ data: profile }, { data: housingProfile }, { data: taskRows }] = await Promise.all([
-        supabase.from("profiles").select("first_name,city").eq("id", user.id).maybeSingle<HomeProfile>(),
+        supabase.from("profiles").select("first_name,city,arrival_date").eq("id", user.id).maybeSingle<HomeProfile>(),
         supabase.from("housing_profiles").select("housing_status,monthly_rent_eur").eq("user_id", user.id).maybeSingle<HousingProfile>(),
         supabase.from("journey_tasks").select("task_key,status").eq("user_id", user.id),
       ]);
       firstName = profile?.first_name ?? user.user_metadata?.given_name ?? user.user_metadata?.name ?? null;
       city = profile?.city ?? null;
+      arrivalDate = profile?.arrival_date ?? null;
       housing = housingProfile ?? null;
       journeyTasks = (taskRows ?? []) as JourneyTaskRow[];
     }
@@ -101,7 +104,7 @@ export default async function HomePage() {
           <div className="how-grid">
             <div><span className="how-number">1</span><h3>Tell us the essentials</h3><p>City, university, citizenship, arrival date and housing status.</p></div>
             <div><span className="how-number">2</span><h3>We order dependencies</h3><p>Housing, municipality, BSN, DigiD, work and funding milestones stay connected.</p></div>
-            <div><span className="how-number">3</span><h3>You act on one thing</h3><p>Home surfaces one primary action while Plan, Wallet, Money and Work remain aligned.</p></div>
+            <div><span className="how-number">3</span><h3>You act on one thing</h3><p>Home surfaces one primary action plus two calm weekly checks while Plan, Wallet, Money and Work stay aligned.</p></div>
           </div>
         </section>
 
@@ -131,6 +134,12 @@ export default async function HomePage() {
   const displayName = firstName || "there";
   const displayCity = city || "Netherlands";
   const rent = housing?.monthly_rent_eur;
+  const weeklyFocus = getWeeklyFocus({
+    state: journeyState,
+    arrivalDate,
+    hasRent: typeof rent === "number",
+    primaryHref: next.href,
+  });
 
   return (
     <main className="dashboard-shell">
@@ -161,11 +170,24 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section style={{ marginTop: 28 }}>
-        <div className="row"><div><span className="eyebrow">KEEP READY</span><h2 style={{ marginBottom: 0 }}>Two things to keep aligned.</h2></div></div>
+      <section style={{ marginTop: 28 }} aria-labelledby="weekly-focus-heading">
+        <div className="row">
+          <div>
+            <span className="eyebrow">THIS WEEK</span>
+            <h2 id="weekly-focus-heading" style={{ marginBottom: 0 }}>Keep the rest light.</h2>
+            <p className="muted" style={{ marginTop: 6 }}>Two useful checks, chosen from your arrival timing and current journey stage.</p>
+          </div>
+          <span className="pill">2 MAX</span>
+        </div>
         <div className="dashboard-grid" style={{ marginTop: 14 }}>
-          <Link className="dashboard-card" href="/wallet"><span className="eyebrow">WALLET</span><h3>Documents for the task ahead</h3><p>See only what your current journey step may require.</p><span className="text-link">Check readiness →</span></Link>
-          <Link className="dashboard-card" href="/money"><span className="eyebrow">MONEY</span><h3>Keep your monthly picture current</h3><p>Housing and recurring costs stay connected to your landing plan.</p><span className="text-link">Review budget →</span></Link>
+          {weeklyFocus.map((item) => (
+            <Link className="dashboard-card" href={item.href} key={item.id}>
+              <span className="eyebrow">{item.label}</span>
+              <h3>{item.title}</h3>
+              <p>{item.description}</p>
+              <span className="text-link">{item.cta}</span>
+            </Link>
+          ))}
         </div>
       </section>
 
