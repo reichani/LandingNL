@@ -40,12 +40,7 @@ export async function saveOnboarding(input: OnboardingInput) {
   });
   if (housingError) return { ok: false as const, error: "Could not save your housing status yet." };
 
-  await supabase.from("consents").upsert({
-    user_id: user.id,
-    consent_key: "product_analytics",
-    granted: true,
-    policy_version: "2026-08-v1",
-  }, { onConflict: "user_id,consent_key,policy_version" });
-
+  // Product analytics consent is intentionally not auto-granted here.
+  // If analytics becomes opt-in, it must be presented as a separate explicit choice.
   redirect("/");
 }
