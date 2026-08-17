@@ -14,7 +14,7 @@ type Step = {
 };
 
 const steps: Step[] = [
-  { key: "housing", title: "Secure registrable housing", description: "A registrable address unlocks municipality registration.", href: "/onboarding" },
+  { key: "housing", title: "Secure registrable housing", description: "A registrable address unlocks municipality registration.", href: "/housing" },
   { key: "municipality", title: "Register with your municipality", description: "Bring the task-specific documents shown in Wallet.", manuallyCompletable: true },
   { key: "bsn", title: "Receive your BSN", description: "Record only that it arrived; LandingNL does not need to store the BSN number.", manuallyCompletable: true },
   { key: "digid", title: "Activate DigiD", description: "Secure access to Dutch government services.", manuallyCompletable: true },
