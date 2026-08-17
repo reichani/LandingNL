@@ -24,7 +24,7 @@ create or replace function public.create_trusted_supporter(p_email text, p_token
 returns uuid
 language plpgsql
 security invoker
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   new_id uuid;
@@ -38,7 +38,7 @@ begin
     where user_id = auth.uid() and status = 'active';
 
   insert into public.trusted_supporters(user_id, supporter_email, token_hash)
-  values (auth.uid(), lower(trim(p_email)), digest(p_token, 'sha256'))
+  values (auth.uid(), lower(trim(p_email)), extensions.digest(p_token, 'sha256'))
   returning id into new_id;
 
   return new_id;
@@ -50,7 +50,7 @@ returns jsonb
 language sql
 stable
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
   select jsonb_build_object(
     'student_first_name', p.first_name,
@@ -67,7 +67,7 @@ as $$
   join public.profiles p on p.id = ts.user_id
   left join public.housing_profiles h on h.user_id = p.id
   where ts.status = 'active'
-    and ts.token_hash = digest(p_token, 'sha256')
+    and ts.token_hash = extensions.digest(p_token, 'sha256')
   limit 1;
 $$;
 
