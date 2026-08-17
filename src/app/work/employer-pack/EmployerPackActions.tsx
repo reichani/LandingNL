@@ -4,11 +4,11 @@ import { useState } from "react";
 
 const message = `Hello,
 
-I am an EU student studying in the Netherlands. I may use my paid employment as supporting evidence for my Dutch DUO student-finance application.
+I am a student studying in the Netherlands and I am keeping my employment documentation organised for my own administrative and, where applicable, student-finance records.
 
 Could you please ensure that I receive a signed employment contract and a monthly payslip? Where your payroll system supports it, it would also be helpful if the payslip clearly states the number of paid hours worked in that month.
 
-I will retain my contract, monthly payslips and salary-payment records for my own DUO documentation.
+I will retain my contract, monthly payslips and salary-payment records for my own records.
 
 Thank you.`;
 
