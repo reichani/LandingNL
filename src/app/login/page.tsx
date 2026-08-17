@@ -1,8 +1,7 @@
 import Link from "next/link";
+import { GoogleSignInButton } from "./GoogleSignInButton";
 
 const errorMessages: Record<string, string> = {
-  oauth_start: "Google sign-in couldn’t start. Please try again.",
-  supabase_config: "Google sign-in couldn’t start. Please try again.",
   missing_code: "Google didn’t return a sign-in code. Please try again.",
   oauth_callback: "We couldn’t finish signing you in. Please try again.",
 };
@@ -31,7 +30,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           <span className="pill">FREE ACCOUNT</span>
           <h2 style={{ marginBottom: 0 }}>Continue with Google</h2>
           <p>Use the Google account you want connected to your LandingNL profile.</p>
-          <a className="button-primary" href="/auth/google?next=/onboarding">Continue with Google →</a>
+          <GoogleSignInButton />
           {error ? <div className="card" role="alert" style={{ color: "#8f2334" }}>{error}</div> : null}
           <div className="preview-steps">
             <div className="preview-step"><span>1</span><div><strong>Sign in</strong><small>Continue securely with Google</small></div></div>
