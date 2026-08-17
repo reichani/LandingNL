@@ -134,10 +134,49 @@ export default async function HomePage() {
 
   return (
     <main className="dashboard-shell">
-      <header className="dashboard-header"><div><span className="eyebrow">LANDINGNL · HOME</span><h1>Hi {displayName}. You know what comes next.</h1><p>{displayCity} · your plan changes as your real-world status changes.</p></div><Link className="dashboard-profile" href="/onboarding">Update setup</Link></header>
-      <section className="dashboard-hero"><div className="dashboard-focus"><span className="pill">TODAY · PRIMARY FOCUS</span><p className="kicker">Your next action</p><h2>{next.title}</h2><p>{next.description}</p><Link className="button-primary wide" href="/plan">Open today’s task →</Link></div><div className="status-panel"><span className="eyebrow">MOVE STATUS</span><div className="status-line"><span>Housing</span><strong>{journeyState.housingSecured ? "Secured ✓" : "Needs attention"}</strong></div><div className="status-line"><span>City</span><strong>{displayCity}</strong></div><div className="status-line"><span>Milestones</span><strong>{completed.size} complete</strong></div>{typeof rent === "number" ? <div className="status-line"><span>Rent</span><strong>€{rent.toLocaleString("en-NL")} / mo</strong></div> : null}<Link className="text-link" href="/onboarding">Edit setup →</Link></div></section>
-      <section className="dashboard-grid">{features.slice(0,4).map(([title, copy, href]) => <Link className="dashboard-card" href={href} key={title}><span className="eyebrow">{title}</span><h3>{title === "Plan" ? next.title : title}</h3><p>{copy}</p><span className="text-link">Open →</span></Link>)}</section>
-      <section className="supporter-banner"><div><span className="eyebrow">TRUSTED SUPPORTER</span><h3>Share progress without creating a parent account.</h3><p>One read-only supporter. Student-controlled. Revoke access at any time.</p></div><Link className="button-secondary" href="/supporter">Set up supporter →</Link></section>
+      <header className="dashboard-header">
+        <div>
+          <span className="eyebrow">LANDINGNL · HOME</span>
+          <h1>Hi {displayName}. Here’s what matters now.</h1>
+          <p>{displayCity} · your plan updates as your real-world status changes.</p>
+        </div>
+        <Link className="dashboard-profile" href="/onboarding">Update setup</Link>
+      </header>
+
+      <section className="dashboard-hero">
+        <div className="dashboard-focus">
+          <span className="pill">NOW · PRIMARY FOCUS</span>
+          <p className="kicker">Your next action</p>
+          <h2>{next.title}</h2>
+          <p>{next.description}</p>
+          <Link className="button-primary wide" href={next.href}>{next.cta}</Link>
+        </div>
+        <div className="status-panel">
+          <span className="eyebrow">MOVE STATUS</span>
+          <div className="status-line"><span>Housing</span><strong>{journeyState.housingSecured ? "Secured ✓" : "Needs attention"}</strong></div>
+          <div className="status-line"><span>City</span><strong>{displayCity}</strong></div>
+          <div className="status-line"><span>Milestones</span><strong>{completed.size} complete</strong></div>
+          {typeof rent === "number" ? <div className="status-line"><span>Rent</span><strong>€{rent.toLocaleString("en-NL")} / mo</strong></div> : null}
+          <Link className="text-link" href="/plan">See full plan →</Link>
+        </div>
+      </section>
+
+      <section style={{ marginTop: 28 }}>
+        <div className="row"><div><span className="eyebrow">KEEP READY</span><h2 style={{ marginBottom: 0 }}>Two things to keep aligned.</h2></div></div>
+        <div className="dashboard-grid" style={{ marginTop: 14 }}>
+          <Link className="dashboard-card" href="/wallet"><span className="eyebrow">WALLET</span><h3>Documents for the task ahead</h3><p>See only what your current journey step may require.</p><span className="text-link">Check readiness →</span></Link>
+          <Link className="dashboard-card" href="/money"><span className="eyebrow">MONEY</span><h3>Keep your monthly picture current</h3><p>Housing and recurring costs stay connected to your landing plan.</p><span className="text-link">Review budget →</span></Link>
+        </div>
+      </section>
+
+      <section style={{ marginTop: 28 }}>
+        <span className="eyebrow">YOUR LIFE</span>
+        <div className="dashboard-grid" style={{ marginTop: 14 }}>
+          <Link className="dashboard-card" href="/work"><span className="eyebrow">WORK</span><h3>Applications, CV and evidence</h3><p>Move from first application to contract and paid-hours evidence without losing the thread.</p><span className="text-link">Open Work →</span></Link>
+          <Link className="dashboard-card" href="/supporter"><span className="eyebrow">TRUSTED SUPPORTER</span><h3>Share progress, not private data</h3><p>One read-only supporter. Student-controlled and revocable at any time.</p><span className="text-link">Manage supporter →</span></Link>
+        </div>
+      </section>
+
       <PrimaryNav active="Home" />
     </main>
   );
