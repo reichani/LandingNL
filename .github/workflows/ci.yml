@@ -32,5 +32,8 @@ jobs:
       - name: Lint
         run: bun run lint
 
+      - name: Permanent UX and architecture gates
+        run: bun run quality:invariants
+
       - name: Build Cloudflare Worker
         run: bun run build:worker
