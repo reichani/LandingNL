@@ -18,9 +18,11 @@ if (!exists("d1/migrations/0001_v2_core.sql")) fail("Data gate: canonical D1 v2 
 if (!exists("functions/api/auth/google.js") || !exists("functions/api/auth/callback.js")) fail("Auth gate: direct Google OAuth endpoints are missing.");
 if (!exists("scripts/write-v2-version.mjs")) fail("Deployment identity gate: build-time version generator is missing.");
 if (!String(packageJson.scripts?.build || "").includes("write-v2-version.mjs")) fail("Deployment identity gate: build must generate version.json before Vite build.");
+if (!exists("playwright.config.ts") || !exists("e2e-v2/app.spec.ts")) fail("Regression gate: browser E2E suite is missing.");
 
 const app = exists("v2/src/App.tsx") ? read("v2/src/App.tsx") : "";
 const css = exists("v2/src/styles.css") ? read("v2/src/styles.css") : "";
+const browserSpec = exists("e2e-v2/app.spec.ts") ? read("e2e-v2/app.spec.ts") : "";
 const runtime = ["v2", "functions"].flatMap((root) => {
   if (!exists(root)) return [];
   const walk = (dir) => fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
@@ -42,6 +44,8 @@ if (/\brotate\s*\(/i.test(css) || /\bskew(?:X|Y)?\s*\(/i.test(css)) fail("UX geo
 if (!/const PRIMARY_NAV = \["Home", "Plan", "Money", "Work", "Circle"\] as const;/.test(app)) fail("Navigation gate: v2 primary navigation must be Home · Plan · Money · Work · Circle.");
 if (!/const ONBOARDING_STEPS = 3;/.test(app)) fail("Onboarding gate: v2 onboarding must remain three screens.");
 if (!/NOW/.test(app) || !/THIS WEEK/.test(app)) fail("Home gate: authenticated Home must preserve NOW + THIS WEEK hierarchy.");
+if (!/width: 360/.test(browserSpec) || !/scrollWidth/.test(browserSpec)) fail("Responsive gate: browser suite must include 360px overflow coverage.");
+if (!/toHaveCount\(5\)/.test(browserSpec) || !/1\/3/.test(browserSpec) || !/3\/3/.test(browserSpec)) fail("Journey gate: browser suite must protect five-tab navigation and three-screen onboarding.");
 
 const callback = exists("functions/api/auth/callback.js") ? read("functions/api/auth/callback.js") : "";
 if (!/openidconnect\.googleapis\.com\/v1\/userinfo/.test(callback)) fail("Auth gate: callback must resolve identity from Google's UserInfo endpoint.");
@@ -71,4 +75,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log("LandingNL v2 permanent architecture, privacy and UX gates passed.");
+console.log("LandingNL v2 permanent architecture, privacy, UX and regression gates passed.");

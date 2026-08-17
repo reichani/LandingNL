@@ -33,3 +33,9 @@ jobs:
 
       - name: Assert deploy artifact and build identity
         run: test -f dist/index.html && test -f dist/version.json && grep -q "$GITHUB_SHA" dist/version.json
+
+      - name: Install Chromium for browser regression
+        run: bunx playwright install --with-deps chromium
+
+      - name: Browser UX regression
+        run: bun run test:e2e
