@@ -1,3 +1,4 @@
+import Link from "next/link";
 import EmployerPackActions from "./EmployerPackActions";
 
 const employerChecklist = [
@@ -11,23 +12,25 @@ const employerChecklist = [
 ];
 
 const studentChecklist = [
-  "BSN",
-  "Dutch address",
-  "Passport or EU identity document",
+  "Required identity / right-to-work documentation for your situation",
+  "BSN when required for payroll onboarding",
+  "Address details required by payroll",
   "Bank account for salary",
-  "Payroll-tax information / loonheffingen",
+  "Payroll-tax information / loonheffingen where applicable",
 ];
 
 export default function EmployerPackPage() {
   return (
     <main className="shell">
+      <Link className="text-link" href="/work">← Work journey</Link>
+      <div style={{ height: 20 }} />
       <span className="eyebrow">WORK · EMPLOYER PACK</span>
-      <h1 className="title">Make the job DUO-evidence ready.</h1>
-      <p className="subtitle">A simple checklist the student can share with payroll or HR. Regulatory thresholds stay in LandingNL&apos;s Rule Registry.</p>
+      <h1 className="title">Make the job evidence-ready.</h1>
+      <p className="subtitle">A practical checklist the student can share with payroll or HR. It does not tell the employer that the student qualifies for DUO.</p>
 
       <section className="focus stack">
         <span className="pill">SHARE WITH EMPLOYER</span>
-        <h2 style={{ margin: 0 }}>What we need from the employment relationship</h2>
+        <h2 style={{ margin: 0 }}>Employment documentation to keep clear</h2>
         {employerChecklist.map((item) => <div key={item}>✓ {item}</div>)}
         <EmployerPackActions />
       </section>
@@ -35,15 +38,14 @@ export default function EmployerPackPage() {
       <div style={{ height: 16 }} />
       <section className="card stack">
         <h2 style={{ margin: 0 }}>Student payroll onboarding</h2>
-        {studentChecklist.map((item) => <div className="row" key={item}><span>{item}</span><span className="muted">Prepare</span></div>)}
+        {studentChecklist.map((item) => <div className="row" key={item}><span>{item}</span><span className="muted">Prepare if applicable</span></div>)}
       </section>
 
       <div style={{ height: 16 }} />
       <section className="card stack">
-        <h2 style={{ margin: 0 }}>Employer message</h2>
-        <p style={{ margin: 0 }}>Hello, I am an EU student studying in the Netherlands. I may use my paid employment as supporting evidence for my Dutch DUO student-finance application.</p>
-        <p style={{ margin: 0 }}>Could you please ensure that I receive a signed employment contract and a monthly payslip? Where your payroll system supports it, it would also be helpful if the payslip clearly states the number of paid hours worked in that month.</p>
-        <p className="muted" style={{ margin: 0, fontSize: 12 }}>LandingNL helps organize evidence. It does not determine DUO eligibility.</p>
+        <h2 style={{ margin: 0 }}>What the message says</h2>
+        <p style={{ margin: 0 }}>It asks for a signed contract, monthly payslip and — where payroll supports it — visible paid hours. It deliberately avoids claims about nationality-specific eligibility or a guaranteed funding outcome.</p>
+        <p className="muted" style={{ margin: 0, fontSize: 12 }}>LandingNL organizes evidence. Official authorities and the employer remain responsible for their own legal and eligibility decisions.</p>
       </section>
     </main>
   );
