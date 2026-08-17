@@ -31,5 +31,5 @@ jobs:
       - name: Build static Pages app
         run: bun run build
 
-      - name: Assert deploy artifact
-        run: test -f dist/index.html
+      - name: Assert deploy artifact and build identity
+        run: test -f dist/index.html && test -f dist/version.json && grep -q "$GITHUB_SHA" dist/version.json

@@ -16,6 +16,8 @@ if (!exists("v2/src/App.tsx")) fail("UX gate: v2/src/App.tsx is missing.");
 if (!exists("v2/src/styles.css")) fail("UX gate: v2 styles are missing.");
 if (!exists("d1/migrations/0001_v2_core.sql")) fail("Data gate: canonical D1 v2 schema is missing.");
 if (!exists("functions/api/auth/google.js") || !exists("functions/api/auth/callback.js")) fail("Auth gate: direct Google OAuth endpoints are missing.");
+if (!exists("scripts/write-v2-version.mjs")) fail("Deployment identity gate: build-time version generator is missing.");
+if (!String(packageJson.scripts?.build || "").includes("write-v2-version.mjs")) fail("Deployment identity gate: build must generate version.json before Vite build.");
 
 const app = exists("v2/src/App.tsx") ? read("v2/src/App.tsx") : "";
 const css = exists("v2/src/styles.css") ? read("v2/src/styles.css") : "";

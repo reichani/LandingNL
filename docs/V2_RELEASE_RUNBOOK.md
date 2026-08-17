@@ -7,6 +7,8 @@
 - Build output directory: `dist`
 - Functions directory: repository `functions/` (Cloudflare Pages convention)
 
+The build writes the exact `CF_PAGES_COMMIT_SHA` into `/version.json`. This static file is the canonical deployment identity; do not infer the served commit from an old dashboard row.
+
 ## 2. D1
 Create one D1 database for LandingNL v2 and bind it to Pages as `DB` for Preview and Production.
 Apply `d1/migrations/0001_v2_core.sql` before OAuth E2E.
@@ -36,7 +38,7 @@ Redirect `www.landing.nl` → `https://landing.nl`.
 Only after v2 production E2E passes, redirect the legacy workers.dev host to the apex domain.
 
 ## 6. Production E2E
-Fresh browser:
+First open `/version.json` and confirm `commit` equals the GitHub release candidate SHA. Then use a fresh browser:
 1. Open `landing.nl`.
 2. Build my plan / Continue with Google.
 3. Google account selection returns to `/api/auth/callback`.
