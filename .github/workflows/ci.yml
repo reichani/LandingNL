@@ -35,5 +35,8 @@ jobs:
       - name: Permanent UX and architecture gates
         run: bun run quality:invariants
 
+      - name: Live Google OAuth provider probe
+        run: node scripts/check-google-oauth-provider.mjs
+
       - name: Build Cloudflare Worker
         run: bun run build:worker
