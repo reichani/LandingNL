@@ -1,9 +1,17 @@
 import Link from "next/link";
 import { PrimaryNav } from "@/components/PrimaryNav";
+import { ruleRegistry } from "@/domain/rules";
 import { summarizeWorkMonth } from "@/domain/work";
 import { createClient } from "@/lib/supabase/server";
 
 const EVIDENCE_TYPES = ["contract", "paid_hours", "payslip", "salary_bank"] as const;
+const DUO_RULE_KEYS = [
+  "duo.eu_worker.monthly_hours",
+  "duo.eu_worker.review_average_hours",
+  "duo.eu_worker.review_months",
+  "duo.eu_worker.income_threshold_21_plus_2026",
+  "duo.eu_worker.income_threshold_under_21_2026",
+] as const;
 
 function monthBounds(now = new Date()) {
   const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
@@ -19,7 +27,11 @@ export default async function WorkPage() {
   const bounds = monthBounds();
   let signedIn = false;
   let paidHours = 0;
-  let targetHours = 32;
+  let targetHours = ruleRegistry.duoEuWorkerMonthlyHours.value;
+  let reviewHours = ruleRegistry.duoEuWorkerReviewAverageHours.value;
+  let reviewMonths = ruleRegistry.duoEuWorkerReviewMonths.value;
+  let income21Plus = ruleRegistry.duoEuWorkerIncomeThreshold21Plus.value;
+  let incomeUnder21 = ruleRegistry.duoEuWorkerIncomeThresholdUnder21.value;
   let applicationCount = 0;
   const evidence = new Set<string>();
 
@@ -30,27 +42,39 @@ export default async function WorkPage() {
 
     if (user) {
       const [{ data: shifts }, { data: evidenceRows }, { data: ruleRows }, { count }] = await Promise.all([
-        supabase.from("work_shifts").select("paid_hours").gte("shift_date", bounds.start).lt("shift_date", bounds.end),
-        supabase.from("work_evidence").select("evidence_type,status").eq("month", bounds.month),
-        supabase.from("rule_registry").select("value").eq("rule_key", "duo.eu_worker.monthly_hours").eq("status", "active").lte("effective_from", bounds.month).or(`effective_to.is.null,effective_to.gte.${bounds.month}`).order("version", { ascending: false }).limit(1),
+        supabase.from("work_shifts").select("paid_hours").eq("user_id", user.id).gte("shift_date", bounds.start).lt("shift_date", bounds.end),
+        supabase.from("work_evidence").select("evidence_type,status").eq("user_id", user.id).eq("month", bounds.month),
+        supabase.from("rule_registry").select("rule_key,value").in("rule_key", [...DUO_RULE_KEYS]).eq("status", "active").lte("effective_from", bounds.month).or(`effective_to.is.null,effective_to.gte.${bounds.month}`).order("version", { ascending: false }),
         supabase.from("job_applications").select("id", { count: "exact", head: true }).eq("user_id", user.id),
       ]);
 
       paidHours = (shifts ?? []).reduce((sum, row) => sum + Number(row.paid_hours ?? 0), 0);
       (evidenceRows ?? []).filter((row) => ["ready","verified"].includes(row.status)).forEach((row) => evidence.add(row.evidence_type));
       applicationCount = count ?? 0;
-      const configured = ruleRows?.[0]?.value as { value?: number } | undefined;
-      if (typeof configured?.value === "number") targetHours = configured.value;
+
+      const ruleValues = new Map<string, number>();
+      for (const row of ruleRows ?? []) {
+        if (ruleValues.has(row.rule_key)) continue;
+        const configured = row.value as { value?: number } | undefined;
+        if (typeof configured?.value === "number") ruleValues.set(row.rule_key, configured.value);
+      }
+      targetHours = ruleValues.get("duo.eu_worker.monthly_hours") ?? targetHours;
+      reviewHours = ruleValues.get("duo.eu_worker.review_average_hours") ?? reviewHours;
+      reviewMonths = ruleValues.get("duo.eu_worker.review_months") ?? reviewMonths;
+      income21Plus = ruleValues.get("duo.eu_worker.income_threshold_21_plus_2026") ?? income21Plus;
+      incomeUnder21 = ruleValues.get("duo.eu_worker.income_threshold_under_21_2026") ?? incomeUnder21;
     }
   } catch {
-    // Work remains browsable in preview mode if auth/runtime config is unavailable.
+    // Work remains browsable in preview mode with the last reviewed in-code rule snapshot.
   }
 
   if (paidHours > 0) evidence.add("paid_hours");
-  const status = summarizeWorkMonth(paidHours, targetHours);
-  const message = status.status === "target-reached"
-    ? "Current configured threshold reached for this month. Keep your payslip and salary evidence ready."
-    : `${status.remainingHours} more paid hours to reach the current configured threshold.`;
+  const status = summarizeWorkMonth(paidHours, targetHours, reviewHours);
+  const message = status.status === "standard-hours-indicator"
+    ? `You reached the ${targetHours}-hour monthly work indicator. This is not an eligibility decision; DUO also considers the full conditions and may use income as an alternative worker indicator.`
+    : status.status === "review-zone"
+      ? `${paidHours} hours is within DUO’s ${reviewHours}–${targetHours - 1} hour review zone. Where work continues for ${reviewMonths} months or more, DUO may assess the average hours worked.`
+      : `This month is below the ${reviewHours}-hour review threshold. Other migrant-worker evidence and the income route may still matter, so do not treat this number alone as an eligibility result.`;
   const evidenceReady = EVIDENCE_TYPES.filter((type) => evidence.has(type)).length;
 
   return (
@@ -69,11 +93,16 @@ export default async function WorkPage() {
 
       <div style={{ height: 16 }} />
       <section className="focus stack">
-        <div className="row"><span className="pill">DUO WORK STATUS</span><strong>{signedIn ? (status.status === "target-reached" ? "On track" : status.status === "review-zone" ? "Attention" : "Track hours") : "Preview"}</strong></div>
-        <h2 style={{ fontSize: 34, margin: 0 }}>{paidHours} / {targetHours} paid hours</h2>
+        <div className="row"><span className="pill">DUO EVIDENCE VIEW</span><strong>{signedIn ? (status.status === "standard-hours-indicator" ? "32h indicator" : status.status === "review-zone" ? "Review zone" : "Build evidence") : "Preview"}</strong></div>
+        <h2 style={{ fontSize: 34, margin: 0 }}>{paidHours} paid hours this month</h2>
         <p style={{ margin: 0 }}>{message}</p>
+        <div className="card stack" style={{ marginTop: 4 }}>
+          <strong>2026 income indicator is separate</strong>
+          <span>DUO also states that monthly income of at least €{income21Plus.toLocaleString("en-NL")} can be sufficient for the worker condition; for students under 21 the published 2026 amount is €{incomeUnder21.toLocaleString("en-NL")}.</span>
+          <span className="muted" style={{ fontSize: 12 }}>LandingNL does not currently calculate this income test and does not determine student-finance eligibility.</span>
+        </div>
         <Link className="primary" href={signedIn ? "/work/log-shift" : "/login"}>{signedIn ? "Log a shift →" : "Sign in to track →"}</Link>
-        <p className="muted" style={{ margin: 0, fontSize: 12 }}>Guidance only. LandingNL reads the currently approved rule registry; DUO makes the eligibility decision.</p>
+        <p className="muted" style={{ margin: 0, fontSize: 12 }}>Guidance only. Rules are versioned and reviewed; DUO makes the eligibility decision.</p>
       </section>
 
       <div style={{ height: 16 }} />
