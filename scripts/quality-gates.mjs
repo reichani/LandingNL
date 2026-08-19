@@ -24,6 +24,10 @@ const oauthStartPath = "src/app/auth/google/route.ts";
 const oauthStart = exists(oauthStartPath) ? read(oauthStartPath) : "";
 const googleButtonPath = "src/app/login/GoogleSignInButton.tsx";
 const googleButton = exists(googleButtonPath) ? read(googleButtonPath) : "";
+const emailActionPath = "src/app/login/actions.ts";
+const emailAction = exists(emailActionPath) ? read(emailActionPath) : "";
+const emailFormPath = "src/app/login/EmailSignInForm.tsx";
+const emailForm = exists(emailFormPath) ? read(emailFormPath) : "";
 const nav = read("src/components/PrimaryNav.tsx");
 const foundation = read("supabase/migrations/0001_foundation.sql");
 const authBootstrap = read("supabase/migrations/0002_auth_profile_bootstrap.sql");
@@ -83,8 +87,26 @@ if (!exists(googleButtonPath)) {
 if (!/exchangeCodeForSession\s*\(/.test(callback)) {
   fail("Auth architecture gate: callback must exchange the PKCE code for a session.");
 }
+
+// Email auth: passwordless server start must reuse the PKCE callback and avoid account enumeration.
+if (!exists(emailActionPath) || !exists(emailFormPath)) {
+  fail("Auth architecture gate: passwordless email sign-in is required alongside Google.");
+} else {
+  if (!/signInWithOtp\s*\(/.test(emailAction) || !/emailRedirectTo/.test(emailAction)) {
+    fail("Auth architecture gate: email sign-in must use Supabase OTP with an explicit callback URL.");
+  }
+  if (!/shouldCreateUser:\s*true/.test(emailAction)) {
+    fail("Auth UX gate: email sign-in must support first-time users without a separate registration flow.");
+  }
+  if (!/safeParse\s*\(/.test(emailAction) || !/\.email\(\)/.test(emailAction)) {
+    fail("Auth validation gate: email sign-in must validate input server-side.");
+  }
+  if (!/useActionState\s*\(/.test(emailForm) || !/type=["']email["']/.test(emailForm)) {
+    fail("Auth UX gate: login must expose an accessible email sign-in form.");
+  }
+}
 if (!/fallback\s*=\s*["']\/onboarding["']/.test(callback)) {
-  fail("Auth UX gate: successful Google callback must default to onboarding.");
+  fail("Auth UX gate: successful auth callback must default to onboarding.");
 }
 
 // Onboarding: profile creation belongs to the auth trigger; browser writes are update-only + RLS.

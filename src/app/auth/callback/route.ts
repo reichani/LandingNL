@@ -21,7 +21,7 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (error) {
-      console.error("google_oauth_code_exchange_failed", {
+      console.error("auth_code_exchange_failed", {
         name: error.name,
         message: error.message,
       });
@@ -30,7 +30,7 @@ export async function GET(request: Request) {
 
     return NextResponse.redirect(new URL(next, url.origin));
   } catch (callbackError) {
-    console.error("google_oauth_callback_failed", callbackError);
+    console.error("auth_callback_failed", callbackError);
     return NextResponse.redirect(new URL("/login?error=oauth_callback", url.origin));
   }
 }

@@ -6,9 +6,15 @@ Owner: Auth Integration & Production Journey Guardian
 
 Google sign-in crosses four systems. Repository CI proves the application code/build; it does not prove the production provider configuration or browser redirect chain.
 
-Critical path:
+Google critical path:
 
 `Browser → LandingNL login → Supabase signInWithOAuth → Google → Supabase /auth/v1/callback → LandingNL /auth/callback → exchangeCodeForSession → onboarding`
+
+Email critical path:
+
+`Browser → LandingNL login → server-validated email → Supabase signInWithOtp → secure email link → LandingNL /auth/callback → exchangeCodeForSession → onboarding`
+
+Email sign-in is passwordless and supports both first-time and returning users. It must remain available alongside Google so a Google provider incident does not block account access.
 
 ## Canonical production values
 
