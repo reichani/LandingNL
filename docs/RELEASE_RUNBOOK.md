@@ -1,6 +1,6 @@
 # LandingNL Sprint 0 Release Runbook
 
-Updated: 2026-08-17
+Updated: 2026-08-19
 
 ## Release rule
 
@@ -14,18 +14,20 @@ Required:
 - dependency install succeeds
 - `bun run typecheck` succeeds
 - `bun run lint` succeeds
+- permanent UX/architecture gates succeed
 - `bun run build:worker` succeeds
 
 A failed gate blocks merge.
 
-## 2. Cloudflare environment
+## 2. Public Supabase application config
 
-Build environment must contain:
+LandingNL uses one canonical Supabase project for this MVP. The public project URL and publishable browser key live in `src/lib/supabase/public-config.ts`.
 
-- `NEXT_PUBLIC_SUPABASE_URL=https://iwzsewwnntfylryqaihu.supabase.co`
-- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<Supabase publishable key>`
+This is intentional: both values are public client credentials and authorization is enforced by Supabase Auth + RLS. Keeping them canonical in source removes Cloudflare build/runtime environment drift from the Google sign-in critical path.
 
-The Next.js production build pins these public project values into the app configuration and fails if either is absent. Do not put a service-role key in a `NEXT_PUBLIC_*` variable or in GitHub.
+Never place a privileged secret key in client/application source.
+
+Cloudflare environment variables are therefore not required for the public Supabase URL or publishable key in this release candidate.
 
 ## 3. Supabase migration order
 
@@ -41,6 +43,8 @@ Apply in SQL Editor in this exact order if they are not already present:
 8. `0008_student_cv.sql`
 9. `0009_employment_contracts.sql`
 10. `0010_job_applications.sql`
+11. `0011_security_hardening.sql`
+12. `0012_authorization_integrity_hardening.sql`
 
 Weekly Focus uses existing profile, journey and housing data and requires no new migration.
 
@@ -89,7 +93,7 @@ where pg_namespace.nspname = 'public'
 order by relname;
 ```
 
-Expected: `relrowsecurity = true` for every user-owned table. This is also the security boundary for onboarding, which writes from the authenticated browser client instead of a Cloudflare Server Action.
+Expected: `relrowsecurity = true` for every user-owned table. Profile creation belongs to the auth trigger; onboarding updates only the authenticated user's safe profile fields and housing row.
 
 ## 4. Supabase Auth / Google
 
@@ -105,17 +109,18 @@ Required production settings:
 - OAuth `next` parameter cannot redirect to another origin.
 - Guest pages contain no student PII.
 - User A cannot read or mutate User B rows.
-- Browser-side onboarding writes can only insert/update the authenticated user's `profiles` and `housing_profiles` rows through RLS.
+- Browser-side onboarding can update only the authenticated user's allow-listed profile fields and own housing row through RLS.
+- A normal authenticated student cannot change authorization-sensitive membership/admin state.
 - Supporter link is read-only and contains no exact address, document content, BSN value, salary bank details, or private CV content.
-- Revoking a supporter invalidates the bearer link immediately.
-- No service-role key is exposed client-side.
+- Revoking a supporter invalidates the bearer link immediately and remains available after refresh.
+- No privileged secret key is exposed client-side.
 
 ## 6. Product smoke gates
 
 Execute `docs/SMOKE_TESTS.md` against the active deployment. Minimum critical path:
 
 1. Public Home renders at 360px and desktop widths.
-2. Google sign-in returns through `/auth/callback`.
+2. Google sign-in leaves LandingNL, reaches Google through Supabase and returns through `/auth/callback`.
 3. Onboarding saves through the browser client, shows `SETUP COMPLETE`, then opens Home without a Worker exception.
 4. Home keeps one dominant NOW action and the CTA opens the correct destination.
 5. Weekly Focus shows at most two contextual secondary checks, never duplicates NOW, and reacts to arrival/journey state.
@@ -123,10 +128,10 @@ Execute `docs/SMOKE_TESTS.md` against the active deployment. Minimum critical pa
 7. Municipality → BSN → DigiD milestones advance sequentially.
 8. Money values persist after refresh.
 9. Wallet readiness persists after refresh.
-10. CV save completes the CV milestone.
+10. CV save completes the CV milestone only for a minimally valid CV.
 11. Job application persists and Work count changes.
-12. Contract/evidence/shift flows update Work status.
-13. Trusted supporter share + revoke passes.
+12. Contract/evidence/shift flows update Work status and reverse derived readiness when source data becomes incomplete.
+13. Trusted supporter share + refresh + revoke passes.
 14. Account sign-out returns to a safe guest state.
 
 ## 7. Merge decision
@@ -134,7 +139,7 @@ Execute `docs/SMOKE_TESTS.md` against the active deployment. Minimum critical pa
 Only mark PR #1 ready for review when:
 
 - automated CI is green
-- Cloudflare build/deploy is green
+- Cloudflare build/deploy is green on the exact release candidate SHA
 - Supabase migrations are applied
 - Google OAuth production smoke test passes
 - onboarding browser-save production smoke test passes
