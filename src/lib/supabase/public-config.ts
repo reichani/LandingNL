@@ -2,7 +2,7 @@
 // Both values are public browser credentials: the publishable key is not a secret
 // and authorization is enforced by Supabase Auth + Row Level Security.
 // Keeping them canonical here removes Cloudflare build/runtime env drift from the
-// authentication critical path. Never add a service-role or secret key here.
+// authentication critical path. Never add a privileged secret key here.
 export const SUPABASE_URL = "https://iwzsewwnntfylryqaihu.supabase.co";
 export const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_l461HYfQDcU2_FIw3pzZFw_Lyf3mcmX";
 
