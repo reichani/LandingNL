@@ -1,16 +1,16 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import {
+  assertPublicSupabaseConfig,
+  SUPABASE_PUBLISHABLE_KEY,
+  SUPABASE_URL,
+} from "./public-config";
 
 export async function createClient() {
+  assertPublicSupabaseConfig();
   const cookieStore = await cookies();
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
-  if (!url || !publishableKey) {
-    throw new Error("Supabase public environment variables are not configured.");
-  }
-
-  return createServerClient(url, publishableKey, {
+  return createServerClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     cookies: {
       getAll() {
         return cookieStore.getAll();
@@ -20,7 +20,7 @@ export async function createClient() {
           cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options));
         } catch {
           // Server Components cannot always persist refreshed cookies directly.
-          // A request proxy can be added when protected routes are enabled.
+          // The root request proxy refreshes auth cookies before render.
         }
       },
     },
