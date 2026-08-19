@@ -1,5 +1,15 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+export const metadata: Metadata = {
+  title: "Trusted supporter snapshot",
+  robots: { index: false, follow: false, nocache: true },
+  referrer: "no-referrer",
+};
 
 type Snapshot = {
   student_first_name?: string | null;
@@ -15,10 +25,14 @@ export default async function SupporterSnapshotPage({ params }: { params: Promis
 
   try {
     const supabase = await createClient();
-    const { data } = await supabase.rpc("get_supporter_snapshot", { p_token: token });
-    snapshot = (data as Snapshot | null) ?? null;
-  } catch {
-    snapshot = null;
+    const { data, error } = await supabase.rpc("get_supporter_snapshot", { p_token: token });
+    if (error) {
+      console.error("supporter_snapshot_load_failed", { code: error.code, message: error.message });
+    } else {
+      snapshot = (data as Snapshot | null) ?? null;
+    }
+  } catch (loadError) {
+    console.error("supporter_snapshot_runtime_failed", loadError);
   }
 
   if (!snapshot) {
