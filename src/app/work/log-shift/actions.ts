@@ -16,7 +16,7 @@ export async function saveShift(formData: FormData) {
     paidHours: formData.get("paid_hours"),
     employerName: formData.get("employer_name") ?? "",
   });
-  if (!parsed.success) return;
+  if (!parsed.success) throw new Error("Please check the shift date and paid hours.");
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -29,13 +29,20 @@ export async function saveShift(formData: FormData) {
     employer_name: parsed.data.employerName || null,
   });
 
-  if (!error) {
-    await supabase.from("journey_tasks").upsert({
-      user_id: user.id,
-      task_key: "work_hours_started",
-      status: "completed",
-      completed_at: new Date().toISOString(),
-    }, { onConflict: "user_id,task_key" });
+  if (error) {
+    console.error("work_shift_save_failed", { code: error.code, message: error.message });
+    throw new Error("The paid shift could not be saved. Please try again.");
+  }
+
+  const { error: milestoneError } = await supabase.from("journey_tasks").upsert({
+    user_id: user.id,
+    task_key: "work_hours_started",
+    status: "completed",
+    completed_at: new Date().toISOString(),
+  }, { onConflict: "user_id,task_key" });
+
+  if (milestoneError) {
+    console.error("work_shift_milestone_save_failed", { code: milestoneError.code, message: milestoneError.message });
   }
 
   redirect("/work");
