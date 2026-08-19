@@ -16,19 +16,24 @@ export async function addApplication(formData: FormData) {
     roleTitle: formData.get("role_title"),
     status: formData.get("status"),
   });
-  if (!parsed.success) return;
+  if (!parsed.success) throw new Error("Please check the application fields and try again.");
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return;
+  if (!user) throw new Error("Sign in to track an application.");
 
-  await supabase.from("job_applications").insert({
+  const { error } = await supabase.from("job_applications").insert({
     user_id: user.id,
     employer_name: parsed.data.employerName,
     role_title: parsed.data.roleTitle,
     status: parsed.data.status,
     applied_at: parsed.data.status === "applied" ? new Date().toISOString().slice(0, 10) : null,
   });
+
+  if (error) {
+    console.error("job_application_save_failed", { code: error.code, message: error.message });
+    throw new Error("The application could not be saved. Please try again.");
+  }
 
   revalidatePath("/work/applications");
   revalidatePath("/work");
