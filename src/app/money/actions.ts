@@ -21,14 +21,14 @@ export async function saveBudgetItem(formData: FormData) {
     category: formData.get("category"),
     amount: formData.get("amount"),
   });
-  if (!parsed.success) return;
+  if (!parsed.success) throw new Error("Please check the budget amount and try again.");
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return;
+  if (!user) throw new Error("Sign in to save your budget.");
 
   const { category, amount } = parsed.data;
-  await supabase.from("budget_items").upsert({
+  const { error } = await supabase.from("budget_items").upsert({
     user_id: user.id,
     category,
     label: labels[category],
@@ -36,6 +36,11 @@ export async function saveBudgetItem(formData: FormData) {
     source: "user",
     updated_at: new Date().toISOString(),
   }, { onConflict: "user_id,category" });
+
+  if (error) {
+    console.error("budget_item_save_failed", { code: error.code, message: error.message });
+    throw new Error("Your budget could not be saved. Please try again.");
+  }
 
   revalidatePath("/money");
   revalidatePath("/");
