@@ -2,6 +2,7 @@ import Link from "next/link";
 import { GoogleSignInButton } from "./GoogleSignInButton";
 
 const errorMessages: Record<string, string> = {
+  oauth_start: "We couldn’t open Google sign-in. Please try again.",
   missing_code: "Google didn’t return a sign-in code. Please try again.",
   oauth_callback: "We couldn’t finish signing you in. Please try again.",
 };
