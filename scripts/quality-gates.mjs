@@ -23,6 +23,13 @@ const callback = read("src/app/auth/callback/route.ts");
 const nav = read("src/components/PrimaryNav.tsx");
 const foundation = read("supabase/migrations/0001_foundation.sql");
 const authBootstrap = read("supabase/migrations/0002_auth_profile_bootstrap.sql");
+const authHardeningPath = "supabase/migrations/0012_authorization_integrity_hardening.sql";
+const authHardening = exists(authHardeningPath) ? read(authHardeningPath) : "";
+const sharePage = read("src/app/share/[token]/page.tsx");
+const supporterPage = read("src/app/supporter/page.tsx");
+const supporterActions = read("src/app/supporter/actions.ts");
+const adminRules = read("src/app/admin/rules/page.tsx");
+const nextConfig = read("next.config.ts");
 const packageJson = JSON.parse(read("package.json"));
 
 // Geometry: permanent product cards must never be tilted/skewed.
@@ -67,7 +74,7 @@ if (!/fallback\s*=\s*["']\/onboarding["']/.test(callback)) {
   fail("Auth UX gate: successful Google callback must default to onboarding.");
 }
 
-// Onboarding: persistence must stay on the browser Supabase client + RLS path.
+// Onboarding: profile creation belongs to the auth trigger; browser writes are update-only + RLS.
 if (exists("src/app/onboarding/actions.ts")) {
   fail("Onboarding architecture gate: server action persistence must not be reintroduced.");
 }
@@ -77,25 +84,63 @@ if (/from\s+["']\.\/actions["']/.test(onboarding)) {
 if (!/from\s+["']@\/lib\/supabase\/client["']/.test(onboarding)) {
   fail("Onboarding architecture gate: onboarding must use the browser Supabase client.");
 }
-if (!/supabase\.from\(["']profiles["']\)/.test(onboarding) || !/supabase\.from\(["']housing_profiles["']\)/.test(onboarding)) {
-  fail("Onboarding architecture gate: profile and housing persistence must remain explicit and auditable.");
+if (/from\(["']profiles["']\)[\s\S]{0,120}\.upsert\s*\(/.test(onboarding)) {
+  fail("Authorization gate: onboarding must never upsert/insert profiles from the browser.");
+}
+if (!/from\(["']profiles["']\)[\s\S]{0,160}\.update\s*\(/.test(onboarding) || !/\.eq\(["']id["']\s*,\s*user\.id\)/.test(onboarding)) {
+  fail("Authorization gate: onboarding profile persistence must be an own-id update.");
+}
+if (!/supabase\.from\(["']housing_profiles["']\)/.test(onboarding)) {
+  fail("Onboarding architecture gate: housing persistence must remain explicit and auditable.");
+}
+if (!/create trigger on_auth_user_created/i.test(authBootstrap) || !/handle_new_user/i.test(authBootstrap)) {
+  fail("Auth bootstrap gate: profile creation trigger is missing.");
 }
 
-// RLS: the browser onboarding architecture is only valid while own-row policies remain explicit.
+// RLS + authorization hardening.
 if (!/alter table public\.profiles enable row level security/i.test(foundation)) {
   fail("RLS gate: profiles must have row level security enabled.");
 }
 if (!/alter table public\.housing_profiles enable row level security/i.test(foundation)) {
   fail("RLS gate: housing_profiles must have row level security enabled.");
 }
-if (!/users update own profile/i.test(foundation) || !/auth\.uid\(\)\s*=\s*id/i.test(foundation)) {
-  fail("RLS gate: profiles must retain an own-row update policy.");
-}
-if (!/users insert own profile/i.test(authBootstrap) || !/auth\.uid\(\)\s*=\s*id/i.test(authBootstrap)) {
-  fail("RLS gate: profiles must retain an own-row insert policy.");
-}
 if (!/users manage own housing/i.test(foundation) || !/with check\s*\(auth\.uid\(\)\s*=\s*user_id\)/i.test(foundation)) {
   fail("RLS gate: housing_profiles must retain an own-row write policy with check.");
+}
+if (!exists(authHardeningPath)) {
+  fail("Authorization gate: 0012 authorization hardening migration is missing.");
+} else {
+  if (!/drop policy if exists ["']users insert own profile["']/i.test(authHardening)) {
+    fail("Authorization gate: self-service profile insert policy must be removed.");
+  }
+  if (!/revoke insert, update, delete[\s\S]*on table public\.profiles from authenticated/i.test(authHardening)) {
+    fail("Authorization gate: authenticated users must lose table-wide profile mutation privileges.");
+  }
+  if (!/grant update \(first_name, city, university, citizenship_country, arrival_date, birth_year, updated_at\)/i.test(authHardening)) {
+    fail("Authorization gate: profile updates must use an explicit safe column allow-list.");
+  }
+  if (/grant update \([^)]*membership/i.test(authHardening)) {
+    fail("Authorization gate: membership must never be user-updatable.");
+  }
+  if (!/alter table public\.analytics_events enable row level security/i.test(authHardening) || !/revoke all on table public\.analytics_events from anon, authenticated/i.test(authHardening)) {
+    fail("Privacy gate: analytics ingestion must stay closed until consent-bound persistence exists.");
+  }
+}
+
+// Admin: route must be both authenticated and membership-gated.
+if (!/supabase\.auth\.getUser\s*\(/.test(adminRules) || !/membership/.test(adminRules) || !/["']admin["']/.test(adminRules)) {
+  fail("Authorization gate: /admin/rules must verify authenticated admin membership server-side.");
+}
+
+// Trusted supporter: revoke must survive refresh and bearer snapshots must not be indexed/cached/referrer-leaked.
+if (!/getActiveSupporter/.test(supporterActions) || !/getActiveSupporter/.test(supporterPage)) {
+  fail("Supporter privacy gate: active supporter state must reload so revoke remains available after refresh.");
+}
+if (!/robots:\s*\{\s*index:\s*false/i.test(sharePage) || !/referrer:\s*["']no-referrer["']/i.test(sharePage)) {
+  fail("Supporter privacy gate: share pages must declare noindex and no-referrer metadata.");
+}
+if (!/source:\s*["']\/share\/:path\*["']/.test(nextConfig) || !/no-store/i.test(nextConfig) || !/X-Robots-Tag/i.test(nextConfig)) {
+  fail("Supporter privacy gate: share responses must be no-store and carry X-Robots-Tag headers.");
 }
 
 // Navigation: keep primary mobile navigation intentionally small.
