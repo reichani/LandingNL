@@ -13,25 +13,19 @@ export async function updateSession(request: NextRequest) {
       getAll() {
         return request.cookies.getAll();
       },
-      setAll(cookiesToSet) {
+      setAll(cookiesToSet, headers) {
         cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
         response = NextResponse.next({ request });
         cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
+        Object.entries(headers).forEach(([key, value]) => response.headers.set(key, value));
       },
     },
   });
 
-  const { data } = await supabase.auth.getClaims();
-  const isAuthenticated = Boolean(data?.claims?.sub);
-  const protectedPrefixes = ["/plan", "/money", "/wallet", "/work", "/admin"];
-  const needsAuth = protectedPrefixes.some((prefix) => request.nextUrl.pathname.startsWith(prefix));
-
-  if (needsAuth && !isAuthenticated) {
-    const login = request.nextUrl.clone();
-    login.pathname = "/login";
-    login.searchParams.set("next", request.nextUrl.pathname);
-    return NextResponse.redirect(login);
-  }
+  // Refresh/validate the token before Server Components read it. Authorization
+  // still happens in RLS and on genuinely private server routes; guest Plan,
+  // Money, Wallet and Work guidance must remain browsable.
+  await supabase.auth.getClaims();
 
   return response;
 }
