@@ -60,14 +60,18 @@ export default function OnboardingPage() {
         return;
       }
 
-      const { error: profileError } = await supabase.from("profiles").upsert({
-        id: user.id,
-        city: answers.city.trim(),
-        university: answers.university.trim(),
-        citizenship_country: answers.citizenship.trim(),
-        arrival_date: answers.arrivalDate,
-        updated_at: new Date().toISOString(),
-      });
+      // Profile creation belongs exclusively to the trusted auth trigger. The browser may
+      // update only the authenticated user's safe profile columns under RLS/column grants.
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({
+          city: answers.city.trim(),
+          university: answers.university.trim(),
+          citizenship_country: answers.citizenship.trim(),
+          arrival_date: answers.arrivalDate,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", user.id);
 
       if (profileError) {
         console.error("onboarding_profile_save_failed", { code: profileError.code, message: profileError.message });
@@ -80,7 +84,7 @@ export default function OnboardingPage() {
         user_id: user.id,
         housing_status: answers.housing,
         updated_at: new Date().toISOString(),
-      });
+      }, { onConflict: "user_id" });
 
       if (housingError) {
         console.error("onboarding_housing_save_failed", { code: housingError.code, message: housingError.message });
@@ -122,7 +126,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <main className="shell" data-onboarding-flow="browser-save-v2">
+    <main className="shell" data-onboarding-flow="browser-update-v3">
       <Link className="text-link" href="/">← Home</Link>
       <div style={{ height: 20 }} />
       <div className="row">
