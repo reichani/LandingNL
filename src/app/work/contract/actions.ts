@@ -37,11 +37,11 @@ export async function saveContract(formData: FormData) {
     employeeSigned: formData.get("employee_signed") === "on",
     employerSigned: formData.get("employer_signed") === "on",
   });
-  if (!parsed.success) return;
+  if (!parsed.success) throw new Error("Please check the contract fields and try again.");
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return;
+  if (!user) throw new Error("Sign in to save contract readiness.");
 
   const value = parsed.data;
   const payload = {
@@ -59,29 +59,60 @@ export async function saveContract(formData: FormData) {
     updated_at: new Date().toISOString(),
   };
 
-  if (value.contractId) {
-    await supabase.from("employment_contracts").update(payload).eq("id", value.contractId).eq("user_id", user.id);
-  } else {
-    await supabase.from("employment_contracts").insert(payload);
+  const mutation = value.contractId
+    ? await supabase.from("employment_contracts").update(payload).eq("id", value.contractId).eq("user_id", user.id)
+    : await supabase.from("employment_contracts").insert(payload);
+
+  if (mutation.error) {
+    console.error("employment_contract_save_failed", { code: mutation.error.code, message: mutation.error.message });
+    throw new Error("Contract readiness could not be saved. Please try again.");
   }
 
-  const ready = Boolean(value.employerName && value.contractType && value.startDate && value.weeklyHours > 0 && value.grossHourlyWage > 0 && value.employeeSigned && value.employerSigned);
-  if (ready) {
-    await supabase.from("journey_tasks").upsert({
-      user_id: user.id,
-      task_key: "contract",
-      status: "completed",
-      completed_at: new Date().toISOString(),
-    }, { onConflict: "user_id,task_key" });
+  const ready = Boolean(
+    value.employerName && value.contractType && value.startDate &&
+    value.weeklyHours > 0 && value.grossHourlyWage > 0 &&
+    value.employeeSigned && value.employerSigned
+  );
+  const month = currentMonthKey();
 
-    await supabase.from("work_evidence").upsert({
-      user_id: user.id,
-      month: currentMonthKey(),
-      evidence_type: "contract",
-      status: "ready",
-      reference: value.employerName,
-      updated_at: new Date().toISOString(),
-    }, { onConflict: "user_id,month,evidence_type" });
+  if (ready) {
+    const [{ error: taskError }, { error: evidenceError }] = await Promise.all([
+      supabase.from("journey_tasks").upsert({
+        user_id: user.id,
+        task_key: "contract",
+        status: "completed",
+        completed_at: new Date().toISOString(),
+      }, { onConflict: "user_id,task_key" }),
+      supabase.from("work_evidence").upsert({
+        user_id: user.id,
+        month,
+        evidence_type: "contract",
+        status: "ready",
+        reference: value.employerName,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "user_id,month,evidence_type" }),
+    ]);
+
+    if (taskError || evidenceError) {
+      console.error("contract_readiness_projection_failed", {
+        task: taskError ? { code: taskError.code, message: taskError.message } : null,
+        evidence: evidenceError ? { code: evidenceError.code, message: evidenceError.message } : null,
+      });
+      throw new Error("The contract was saved, but journey readiness could not be synchronized. Please try again.");
+    }
+  } else {
+    const [{ error: taskError }, { error: evidenceError }] = await Promise.all([
+      supabase.from("journey_tasks").delete().eq("user_id", user.id).eq("task_key", "contract"),
+      supabase.from("work_evidence").delete().eq("user_id", user.id).eq("month", month).eq("evidence_type", "contract"),
+    ]);
+
+    if (taskError || evidenceError) {
+      console.error("contract_readiness_reset_failed", {
+        task: taskError ? { code: taskError.code, message: taskError.message } : null,
+        evidence: evidenceError ? { code: evidenceError.code, message: evidenceError.message } : null,
+      });
+      throw new Error("The contract was saved, but readiness could not be synchronized. Please try again.");
+    }
   }
 
   revalidatePath("/work/contract");
