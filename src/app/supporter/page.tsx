@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, useTransition } from "react";
-import { createSupporter, revokeSupporter } from "./actions";
+import { useEffect, useMemo, useState, useTransition } from "react";
+import { createSupporter, getActiveSupporter, revokeSupporter } from "./actions";
 
 export default function SupporterPage() {
   const [email, setEmail] = useState("");
   const [token, setToken] = useState<string | null>(null);
-  const [sharedEmail, setSharedEmail] = useState<string | null>(null);
+  const [activeEmail, setActiveEmail] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -15,6 +15,17 @@ export default function SupporterPage() {
     if (!token || typeof window === "undefined") return null;
     return `${window.location.origin}/share/${token}`;
   }, [token]);
+
+  useEffect(() => {
+    startTransition(async () => {
+      const result = await getActiveSupporter();
+      if (!result.ok) {
+        setMessage(result.error);
+        return;
+      }
+      setActiveEmail(result.supporter?.email ?? null);
+    });
+  }, []);
 
   function createLink() {
     setMessage(null);
@@ -25,7 +36,8 @@ export default function SupporterPage() {
         return;
       }
       setToken(result.token);
-      setSharedEmail(result.email);
+      setActiveEmail(result.email);
+      setEmail("");
       setMessage("Read-only supporter access is ready. Share this link only with the person you trust.");
     });
   }
@@ -39,7 +51,7 @@ export default function SupporterPage() {
         return;
       }
       setToken(null);
-      setSharedEmail(null);
+      setActiveEmail(null);
       setMessage("Supporter access revoked immediately.");
     });
   }
@@ -66,19 +78,26 @@ export default function SupporterPage() {
 
       <div style={{ height: 16 }} />
       <section className="card stack">
-        <label htmlFor="supporter-email"><strong>Supporter email</strong></label>
+        <label htmlFor="supporter-email"><strong>{activeEmail ? "Replace active supporter" : "Supporter email"}</strong></label>
         <input id="supporter-email" className="input" type="email" value={email} placeholder="parent@example.com" onChange={(event) => setEmail(event.target.value)} />
-        <button className="primary" disabled={isPending || !email} onClick={createLink}>{isPending ? "Creating access…" : "Create read-only access →"}</button>
+        <button className="primary" disabled={isPending || !email} onClick={createLink}>{isPending ? "Saving access…" : activeEmail ? "Replace and rotate link →" : "Create read-only access →"}</button>
+        {activeEmail ? <span className="muted" style={{ fontSize: 12 }}>Creating a new supporter automatically revokes the previous active link.</span> : null}
       </section>
 
-      {shareUrl ? (
+      {activeEmail ? (
         <>
           <div style={{ height: 16 }} />
           <section className="card stack">
             <div className="row"><strong>Active supporter</strong><span className="pill">READ ONLY</span></div>
-            <span className="muted">{sharedEmail}</span>
-            <input className="input" readOnly value={shareUrl} aria-label="Trusted supporter share link" />
-            <button className="secondary" onClick={copyLink}>Copy share link</button>
+            <span className="muted">{activeEmail}</span>
+            {shareUrl ? (
+              <>
+                <input className="input" readOnly value={shareUrl} aria-label="Trusted supporter share link" />
+                <button className="secondary" onClick={copyLink}>Copy share link</button>
+              </>
+            ) : (
+              <p className="muted" style={{ margin: 0, fontSize: 12 }}>For security, an existing bearer link is not redisplayed after refresh. You can still revoke it immediately, or replace the supporter to rotate the link.</p>
+            )}
             <button className="secondary" disabled={isPending} onClick={revoke}>Revoke access now</button>
           </section>
         </>
