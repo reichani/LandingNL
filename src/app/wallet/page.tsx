@@ -59,9 +59,9 @@ export default async function WalletPage() {
 
   return (
     <main className="shell">
-      <span className="eyebrow">WALLET</span>
+      <span className="eyebrow">PLAN · WALLET</span>
       <h1 className="title">Bring the right things.</h1>
-      <p className="subtitle">Wallet is task-linked readiness, not a giant document dump. File contents are not required for this MVP.</p>
+      <p className="subtitle">Wallet is task-linked readiness inside your Plan, not a giant document dump. File contents are not required for this MVP.</p>
 
       <section className="focus stack">
         <div className="row"><span className="pill">CURRENT TASK</span><strong>{readyCount}/{currentDocs.length} ready</strong></div>
@@ -85,7 +85,7 @@ export default async function WalletPage() {
 
       {!signedIn ? <p className="muted" style={{ fontSize: 12 }}>Sign in to save readiness. You can browse the required documents without an account.</p> : <p className="muted" style={{ fontSize: 12 }}>Only readiness metadata is stored here. Exact document contents and exact home address are outside this MVP wallet.</p>}
       <Link className="text-link" href="/plan">See why these documents are needed →</Link>
-      <PrimaryNav active="Wallet" />
+      <PrimaryNav active="Plan" />
     </main>
   );
 }
