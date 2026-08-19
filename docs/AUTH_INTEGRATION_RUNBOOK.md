@@ -4,7 +4,7 @@ Owner: Auth Integration & Production Journey Guardian
 
 ## Purpose
 
-Google sign-in crosses four systems. Repository CI proves only the application code/build; it does not prove the production provider configuration or browser redirect chain.
+Google sign-in crosses four systems. Repository CI proves the application code/build; it does not prove the production provider configuration or browser redirect chain.
 
 Critical path:
 
@@ -28,7 +28,9 @@ Google Cloud Authorized redirect URI:
 
 `https://iwzsewwnntfylryqaihu.supabase.co/auth/v1/callback`
 
-Important: Google Cloud should point to the Supabase callback. Supabase Redirect URLs should allow the LandingNL application callback. These are different URLs and must not be swapped.
+Important: Google Cloud points to the Supabase callback. Supabase Redirect URLs allow the LandingNL application callback. These are different URLs and must not be swapped.
+
+The Supabase project URL and publishable browser key are canonicalized in `src/lib/supabase/public-config.ts`. They are public client credentials; Cloudflare environment variables are not part of the production Google-start critical path.
 
 ## Gate A — deployment identity
 
@@ -38,6 +40,7 @@ Open production `/api/version` and confirm the returned commit equals the GitHub
 
 Expected implementation:
 - Login starts OAuth from the browser Supabase client with provider `google`.
+- Browser Supabase client uses the canonical public project config from source, not Cloudflare env injection.
 - `redirectTo` is `${window.location.origin}/auth/callback`.
 - No `/auth/google` server OAuth-start route exists.
 - `/auth/callback` exchanges the returned PKCE code with `exchangeCodeForSession`.
@@ -73,7 +76,7 @@ Do not configure the LandingNL `/auth/callback` as Google's authorized redirect 
 Start in a fresh/incognito browser and record the first failing boundary:
 
 1. `/login` renders.
-2. Continue with Google changes the page to a Google/Supabase authorization URL.
+2. Continue with Google changes the page to a Supabase authorization URL and then Google.
 3. Google account selection/consent renders.
 4. After Google, browser reaches Supabase callback.
 5. Supabase redirects to LandingNL `/auth/callback?code=...`.
@@ -81,11 +84,11 @@ Start in a fresh/incognito browser and record the first failing boundary:
 7. Browser reaches `/onboarding` as authenticated user.
 
 Failure classification:
-- Button never leaves LandingNL → browser public config/client issue.
+- Button stays on LandingNL and shows `Google sign-in couldn’t start` → browser Supabase client/config failure. Check deployed SHA first; production config is source-canonicalized in the current release candidate.
 - Supabase error before Google → provider/client configuration issue.
 - Google `redirect_uri_mismatch` → Google Cloud authorized redirect URI issue.
 - Google succeeds but returns to wrong app URL → Supabase Site URL/Redirect URLs issue.
-- LandingNL callback returns `oauth_callback` → PKCE/session exchange issue; inspect Worker logs for `google_oauth_code_exchange_failed`.
+- LandingNL callback returns `oauth_callback` → PKCE/session exchange issue; inspect Worker/auth logs.
 - Onboarding says sign-in expired → callback/session cookie did not persist.
 
 ## Release evidence
