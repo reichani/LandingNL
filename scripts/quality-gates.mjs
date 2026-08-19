@@ -20,6 +20,10 @@ const css = read("src/app/globals.css");
 const onboarding = read("src/app/onboarding/page.tsx");
 const login = read("src/app/login/page.tsx");
 const callback = read("src/app/auth/callback/route.ts");
+const oauthStartPath = "src/app/auth/google/route.ts";
+const oauthStart = exists(oauthStartPath) ? read(oauthStartPath) : "";
+const googleButtonPath = "src/app/login/GoogleSignInButton.tsx";
+const googleButton = exists(googleButtonPath) ? read(googleButtonPath) : "";
 const nav = read("src/components/PrimaryNav.tsx");
 const foundation = read("supabase/migrations/0001_foundation.sql");
 const authBootstrap = read("supabase/migrations/0002_auth_profile_bootstrap.sql");
@@ -46,26 +50,35 @@ if (!/transform\s*:\s*none/i.test(previewRule)) {
   fail("UX geometry gate: .product-preview must explicitly remain transform: none.");
 }
 
-// Auth: Google OAuth starts in the browser, then PKCE code exchange happens only in the callback route.
-if (exists("src/app/auth/google/route.ts")) {
-  fail("Auth architecture gate: server-side /auth/google OAuth start route must not return.");
-}
-if (!exists("src/app/login/GoogleSignInButton.tsx")) {
-  fail("Auth architecture gate: browser Google sign-in component is missing.");
+// Auth: OAuth starts in a server route so browser bundle/config failures cannot block the first redirect.
+if (!exists(oauthStartPath)) {
+  fail("Auth architecture gate: server-side /auth/google OAuth start route is required.");
 } else {
-  const googleButton = read("src/app/login/GoogleSignInButton.tsx");
-  if (!/from\s+["']@\/lib\/supabase\/client["']/.test(googleButton)) {
-    fail("Auth architecture gate: Google OAuth must start with the browser Supabase client.");
+  if (!/from\s+["']@\/lib\/supabase\/server["']/.test(oauthStart)) {
+    fail("Auth architecture gate: /auth/google must use the SSR server Supabase client.");
   }
-  if (!/signInWithOAuth\s*\(/.test(googleButton) || !/provider:\s*["']google["']/.test(googleButton)) {
-    fail("Auth architecture gate: browser Google sign-in must call signInWithOAuth for Google.");
+  if (!/signInWithOAuth\s*\(/.test(oauthStart) || !/provider:\s*["']google["']/.test(oauthStart)) {
+    fail("Auth architecture gate: /auth/google must call signInWithOAuth for Google.");
   }
-  if (!/\/auth\/callback/.test(googleButton)) {
-    fail("Auth architecture gate: Google OAuth must return through /auth/callback.");
+  if (!/skipBrowserRedirect:\s*true/.test(oauthStart)) {
+    fail("Auth architecture gate: server OAuth start must request a URL instead of browser auto-redirect.");
+  }
+  if (!/\/auth\/callback/.test(oauthStart) || !/NextResponse\.redirect\s*\(/.test(oauthStart)) {
+    fail("Auth architecture gate: server OAuth start must redirect through the LandingNL callback.");
+  }
+  if (!/no-store/i.test(oauthStart)) {
+    fail("Auth cache gate: OAuth start responses must be private/no-store.");
   }
 }
-if (/\/auth\/google/.test(login)) {
-  fail("Auth architecture gate: login page must not depend on the removed server OAuth start route.");
+if (!exists(googleButtonPath)) {
+  fail("Auth architecture gate: Google sign-in control is missing.");
+} else {
+  if (/supabase\/client/.test(googleButton) || /signInWithOAuth\s*\(/.test(googleButton)) {
+    fail("Auth architecture gate: login UI must not start OAuth from the browser client.");
+  }
+  if (!/href=["']\/auth\/google["']/.test(googleButton)) {
+    fail("Auth architecture gate: Google sign-in control must navigate to /auth/google.");
+  }
 }
 if (!/exchangeCodeForSession\s*\(/.test(callback)) {
   fail("Auth architecture gate: callback must exchange the PKCE code for a session.");
