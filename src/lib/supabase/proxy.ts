@@ -1,14 +1,16 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import {
+  assertPublicSupabaseConfig,
+  SUPABASE_PUBLISHABLE_KEY,
+  SUPABASE_URL,
+} from "./public-config";
 
 export async function updateSession(request: NextRequest) {
+  assertPublicSupabaseConfig();
   let response = NextResponse.next({ request });
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
-  if (!url || !publishableKey) return response;
-
-  const supabase = createServerClient(url, publishableKey, {
+  const supabase = createServerClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     cookies: {
       getAll() {
         return request.cookies.getAll();
@@ -24,7 +26,7 @@ export async function updateSession(request: NextRequest) {
 
   // Refresh/validate the token before Server Components read it. Authorization
   // still happens in RLS and on genuinely private server routes; guest Plan,
-  // Money, Wallet and Work guidance must remain browsable.
+  // Money, Wallet and Work guidance remain browsable.
   await supabase.auth.getClaims();
 
   return response;
