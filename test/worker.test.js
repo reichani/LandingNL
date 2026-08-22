@@ -35,7 +35,7 @@ const PAGE_HASHES = new Map([
   ['/', 'a17866c0e38a2bd841d4bd2c5f4fb089b4e59319830aa28a89f4286dbe32a171'],
   ['/login', '1b46e366a392579600f9c0503b79d1990875ac97e9fb549e665e1ac73299a522'],
   ['/onboarding', '523ea18e03087c9388c50598f11a7dfb79b28df46b3abc95c8aa4c8d98b6513c'],
-  ['/dashboard', 'b1b2aed392124794736001ecfc78bd9acc386603cd60047d7999583ee5720914'],
+  ['/dashboard', '4a37ee80c7b775a34b116134454d0fb49a650a738e88669f38e06047f3db8d73'],
 ]);
 
 test('returning Google users are updated by scalar user id', async () => {
@@ -107,6 +107,15 @@ test('dashboard resource actions use real links instead of simulated redirect al
   assert.match(source, /link\.rel = 'noopener noreferrer'/);
   assert.match(source, /belastingdienst\.nl\/wps\/wcm\/connect\/nl\/zorgtoeslag/);
   assert.doesNotMatch(source, /btn\.onclick = function\(\) \{ alert\(actionMsg\); \}/);
+});
+
+test('completed journey actions are disabled until an editable value changes', async () => {
+  const source = await readFile(new URL('../src/ui/scripts/dashboard.js', import.meta.url), 'utf8');
+  assert.match(source, /button\\.disabled = disabled/);
+  assert.match(source, /setActionState\\(btn1, step >= 1\\)/);
+  assert.match(source, /setActionState\\(btn2, step < 1 \\|\\| step >= 2\\)/);
+  assert.match(source, /changed \\? 'Değişikliği Kaydet ➔' : '✓ Tarih Kaydedildi'/);
+  assert.doesNotMatch(source, /dateInput\\.addEventListener\\('change', function\\(\\) \\{\\s*triggerBsnSave\\(\\)/);
 });
 
 test('protected pages redirect unauthenticated requests to login', async () => {
