@@ -6,6 +6,7 @@ import vm from 'node:vm';
 
 import worker from '../src/index.js';
 import legacyUi from '../src/legacy-ui.js';
+import { upsertUser } from '../src/repositories/users.js';
 
 function createDb(overrides = {}) {
   return {
@@ -36,6 +37,36 @@ const PAGE_HASHES = new Map([
   ['/onboarding', '523ea18e03087c9388c50598f11a7dfb79b28df46b3abc95c8aa4c8d98b6513c'],
   ['/dashboard', 'b1b2aed392124794736001ecfc78bd9acc386603cd60047d7999583ee5720914'],
 ]);
+
+test('returning Google users are updated by scalar user id', async () => {
+  const writes = [];
+  const returningUserEnv = {
+    DB: createDb({
+      first(sql) {
+        if (sql.includes('FROM users')) {
+          return { id: 'user-1', onboardingCompletedAt: '2026-08-22T00:00:00.000Z' };
+        }
+        return null;
+      },
+      run(sql, values) {
+        writes.push({ sql, values });
+        return { success: true };
+      },
+    }),
+  };
+
+  const result = await upsertUser(returningUserEnv, {
+    provider: 'google',
+    subject: 'google-subject',
+    email: 'student@example.com',
+    name: 'Student',
+  });
+
+  assert.deepEqual(result, { userId: 'user-1', onboardingCompleted: true });
+  assert.equal(writes.length, 1);
+  assert.equal(writes[0].values[3], 'user-1');
+  assert.equal(typeof writes[0].values[3], 'string');
+});
 
 test('rendered pages remain byte-for-byte identical to their approved baselines', async () => {
   for (const [path, expectedHash] of PAGE_HASHES) {
