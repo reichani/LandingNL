@@ -147,7 +147,7 @@ export function renderDashboardPage() {
       <div class="grid">
         <div class="card" style="border-left: 4px solid var(--mint);">
           <div class="card-title">📄 Evrak & BSN Tarihi</div>
-          <p style="font-size:0.8rem; color:var(--muted); margin-bottom:12px;">BSN / Randevu tarihini seçin (otomatik kaydedilir).</p>
+          <p style="font-size:0.8rem; color:var(--muted); margin-bottom:12px;">BSN / Randevu tarihini seçip onaylayın. Daha sonra tarihi düzenleyebilirsiniz.</p>
           <input type="date" id="bsn-date" style="width:100%; padding:10px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.12); border-radius:8px; color:white; font-size:0.9rem; margin-bottom:10px; outline:none; cursor:pointer;" />
           <button class="btn-act btn-act-full" id="btn-save-bsn-date">Tarihi Onayla & BSN Tamamla ➔</button>
         </div>
