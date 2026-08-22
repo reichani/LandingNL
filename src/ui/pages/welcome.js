@@ -1,10 +1,10 @@
-export function renderWelcomePage() {
+export function renderWelcomePage(releaseLabel = 'v1.0.5 · local') {
   return `<!DOCTYPE html>
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LandingNL • Student Journey v1.0.4</title>
+  <title>LandingNL • Student Journey ${releaseLabel}</title>
   <style>
     :root { --primary: #3b82f6; --bg: #080c14; --card: #111827; --text: #f8fafc; --muted: #94a3b8; --border: rgba(255,255,255,0.08); }
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -22,7 +22,7 @@ export function renderWelcomePage() {
 </head>
 <body>
   <nav>
-    <div class="logo">LandingNL <span class="v-badge">v1.0.4</span></div>
+    <div class="logo">LandingNL <span class="v-badge">${releaseLabel}</span></div>
   </nav>
 
   <section class="hero">
