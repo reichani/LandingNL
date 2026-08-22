@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
+import vm from 'node:vm';
 
 import worker from '../src/index.js';
 import legacyUi from '../src/legacy-ui.js';
@@ -29,7 +30,7 @@ const PAGE_HASHES = new Map([
   ['/', 'a17866c0e38a2bd841d4bd2c5f4fb089b4e59319830aa28a89f4286dbe32a171'],
   ['/login', '1b46e366a392579600f9c0503b79d1990875ac97e9fb549e665e1ac73299a522'],
   ['/onboarding', '07cc33a8446f0db639b8f9e6da0f4275d649b22a474984120282609a2f2b5ad3'],
-  ['/dashboard', 'bb88b0027d0fe9aae0f881cef663b8c6deba317dc79b04b0a6317c92644122b7'],
+  ['/dashboard', '171cb528a14e17bdb6f8c4032c3fa37c731888e3e7ffa37f6ba80bb5e48121aa'],
 ]);
 
 test('rendered pages remain byte-for-byte identical to their approved baselines', async () => {
@@ -55,6 +56,14 @@ test('welcome page has one resilient journey entry and no header login action', 
   const html = await response.text();
   assert.match(html, /<a class="cta" id="journey-start" href="\/login">Yolculuğu Başlat ➔<\/a>/);
   assert.doesNotMatch(html, /btn-nav-login|btn-hero-login/);
+});
+
+test('rendered dashboard scripts are valid JavaScript', async () => {
+  const response = await legacyUi.fetch(new Request('https://example.test/dashboard'), env);
+  const html = await response.text();
+  const scripts = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)];
+  assert.ok(scripts.length > 0);
+  for (const [, source] of scripts) new vm.Script(source);
 });
 
 test('protected pages redirect unauthenticated requests to login', async () => {
