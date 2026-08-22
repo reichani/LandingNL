@@ -11,6 +11,11 @@
       "head_sampling_rate": 1
     }
   },
+  // Add the environment-specific D1 IDs returned by `wrangler d1 create`
+  // before the first staging deployment. Never reuse the production DB in staging.
+  // "d1_databases": [
+  //   { "binding": "DB", "database_name": "landingnl-db", "database_id": "<D1_DATABASE_ID>", "migrations_dir": "migrations" }
+  // ],
   "env": {
     "staging": {
       "name": "landingnl-staging"

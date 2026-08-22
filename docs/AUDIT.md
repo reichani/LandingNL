@@ -6,6 +6,10 @@ Source snapshot SHA-256: `0934d62a46e32a7b1be5a348f99b81659d6f23e7d1fa211ca08e58
 
 The file is a useful interactive prototype, but it is not yet a secure multi-user application. The production-critical gap is identity: both Google and email flows create a client-side marker without verifying the user. All state is device-local, and community content has a stored DOM injection path.
 
+## Remediation status
+
+The secure-foundation implementation resolves the eight findings in code: server-side Google verification, email ownership proof, opaque HttpOnly sessions, protected routes, D1-backed cross-device state, safe community rendering, a versioned regulatory rule registry, and authenticated root redirect. Activation remains gated on creating the staging/production D1 databases and configuring Google/Brevo environment values.
+
 ## Findings
 
 ### CRITICAL — Authentication can be forged

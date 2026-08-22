@@ -7,6 +7,9 @@
     "dev": "wrangler dev --local",
     "test": "node --test",
     "check": "npm test && wrangler deploy --dry-run --keep-vars",
+    "db:migrate:local": "wrangler d1 migrations apply landingnl-db --local",
+    "db:migrate:staging": "wrangler d1 migrations apply landingnl-db-staging --remote",
+    "db:migrate:production": "wrangler d1 migrations apply landingnl-db --remote",
     "deploy:staging": "wrangler deploy --env staging --keep-vars",
     "deploy:production": "wrangler deploy --env production --keep-vars"
   },
