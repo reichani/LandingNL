@@ -10,14 +10,18 @@ import legacyUi from '../src/legacy-ui.js';
 function createDb(overrides = {}) {
   return {
     prepare(sql) {
+      let values = [];
       const statement = {
-        bind() { return statement; },
+        bind(...args) { values = args; return statement; },
         async first(column) {
-          if (overrides.first) return overrides.first(sql, column);
+          if (overrides.first) return overrides.first(sql, column, values);
           return null;
         },
         async all() { return { results: [] }; },
-        async run() { return { success: true }; },
+        async run() {
+          if (overrides.run) return overrides.run(sql, values);
+          return { success: true };
+        },
       };
       return statement;
     },
@@ -29,7 +33,7 @@ const env = { DB: createDb(), GOOGLE_CLIENT_ID: 'test-client-id.apps.googleuserc
 const PAGE_HASHES = new Map([
   ['/', 'a17866c0e38a2bd841d4bd2c5f4fb089b4e59319830aa28a89f4286dbe32a171'],
   ['/login', '1b46e366a392579600f9c0503b79d1990875ac97e9fb549e665e1ac73299a522'],
-  ['/onboarding', '07cc33a8446f0db639b8f9e6da0f4275d649b22a474984120282609a2f2b5ad3'],
+  ['/onboarding', '523ea18e03087c9388c50598f11a7dfb79b28df46b3abc95c8aa4c8d98b6513c'],
   ['/dashboard', 'b1b2aed392124794736001ecfc78bd9acc386603cd60047d7999583ee5720914'],
 ]);
 
@@ -87,7 +91,7 @@ test('authenticated root redirects to dashboard', async () => {
     ...env,
     DB: createDb({
       first(sql) {
-        if (sql.includes('FROM sessions')) return { userId: 'user-1', email: 'student@example.com', displayName: 'Student' };
+        if (sql.includes('FROM sessions')) return { userId: 'user-1', email: 'student@example.com', displayName: 'Student', onboardingCompletedAt: '2026-08-22T00:00:00.000Z' };
         return null;
       },
     }),
@@ -97,6 +101,97 @@ test('authenticated root redirects to dashboard', async () => {
   }), authenticatedEnv);
   assert.equal(response.status, 303);
   assert.equal(response.headers.get('location'), 'https://example.test/dashboard');
+});
+
+test('authenticated incomplete users resume onboarding and completed users cannot repeat it', async () => {
+  const incompleteEnv = {
+    ...env,
+    DB: createDb({
+      first(sql) {
+        if (sql.includes('FROM sessions')) return { userId: 'user-1', email: 'student@example.com', onboardingCompletedAt: null };
+        return null;
+      },
+    }),
+  };
+  const incomplete = await worker.fetch(new Request('https://example.test/dashboard', {
+    headers: { Cookie: 'landingnl_session=opaque-session-token' },
+  }), incompleteEnv);
+  assert.equal(incomplete.status, 303);
+  assert.equal(incomplete.headers.get('location'), 'https://example.test/onboarding');
+
+  const completedEnv = {
+    ...env,
+    DB: createDb({
+      first(sql) {
+        if (sql.includes('FROM sessions')) return { userId: 'user-1', email: 'student@example.com', onboardingCompletedAt: '2026-08-22T00:00:00.000Z' };
+        return null;
+      },
+    }),
+  };
+  const completed = await worker.fetch(new Request('https://example.test/onboarding', {
+    headers: { Cookie: 'landingnl_session=opaque-session-token' },
+  }), completedEnv);
+  assert.equal(completed.status, 303);
+  assert.equal(completed.headers.get('location'), 'https://example.test/dashboard');
+});
+
+test('validated onboarding completion persists state and marks the account complete', async () => {
+  const writes = [];
+  const onboardingEnv = {
+    ...env,
+    DB: createDb({
+      first(sql) {
+        if (sql.includes('FROM sessions')) return { userId: 'user-1', email: 'student@example.com', onboardingCompletedAt: null };
+        if (sql.includes('SELECT payload_json')) return null;
+        return null;
+      },
+      run(sql, values) {
+        writes.push({ sql, values });
+        return { success: true };
+      },
+    }),
+  };
+  const response = await worker.fetch(new Request('https://example.test/api/onboarding/complete', {
+    method: 'PUT',
+    headers: {
+      Cookie: 'landingnl_session=opaque-session-token',
+      Origin: 'https://example.test',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ age: '18', status: 'eu', city: 'Amsterdam', program: 'UvA - PPLE', housing: 'yes' }),
+  }), onboardingEnv);
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).next, '/dashboard');
+  assert.ok(writes.some(({ sql }) => sql.includes('INSERT INTO user_state')));
+  assert.ok(writes.some(({ sql }) => sql.includes('UPDATE users SET onboarding_completed_at')));
+});
+
+test('invalid onboarding profile cannot mark an account complete', async () => {
+  const writes = [];
+  const onboardingEnv = {
+    ...env,
+    DB: createDb({
+      first(sql) {
+        if (sql.includes('FROM sessions')) return { userId: 'user-1', email: 'student@example.com', onboardingCompletedAt: null };
+        return null;
+      },
+      run(sql, values) {
+        writes.push({ sql, values });
+        return { success: true };
+      },
+    }),
+  };
+  const response = await worker.fetch(new Request('https://example.test/api/onboarding/complete', {
+    method: 'PUT',
+    headers: {
+      Cookie: 'landingnl_session=opaque-session-token',
+      Origin: 'https://example.test',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ age: '18', status: 'invalid', city: 'Amsterdam', program: 'UvA', housing: 'yes' }),
+  }), onboardingEnv);
+  assert.equal(response.status, 400);
+  assert.equal(writes.length, 0);
 });
 
 test('email login cannot create a session without ownership verification', async () => {

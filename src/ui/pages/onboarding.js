@@ -134,14 +134,15 @@ export function renderOnboardingPage() {
           housing: localStorage.getItem('landingnl_housing') || ''
         };
         try {
-          var response = await fetch('/api/state', {
-            method: 'PATCH',
+          var response = await fetch('/api/onboarding/complete', {
+            method: 'PUT',
             credentials: 'same-origin',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(state)
           });
           if (!response.ok) throw new Error('Profil kaydedilemedi.');
-          location.href = '/dashboard';
+          var result = await response.json();
+          location.href = result.next || '/dashboard';
         } catch (error) {
           alert(error.message || 'Profil kaydedilemedi. Lütfen tekrar deneyin.');
         }
@@ -151,4 +152,3 @@ export function renderOnboardingPage() {
 </body>
 </html>`;
 }
-

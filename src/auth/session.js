@@ -17,7 +17,8 @@ export async function getSession(request, env) {
   if (!token) return null;
   const tokenHash = await sha256(token);
   return env.DB.prepare(
-    `SELECT s.user_id AS userId, u.email, u.display_name AS displayName
+    `SELECT s.user_id AS userId, u.email, u.display_name AS displayName,
+            u.onboarding_completed_at AS onboardingCompletedAt
        FROM sessions s JOIN users u ON u.id = s.user_id
       WHERE s.token_hash = ?1 AND s.revoked_at IS NULL AND s.expires_at > ?2`,
   ).bind(tokenHash, Math.floor(Date.now() / 1000)).first();

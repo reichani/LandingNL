@@ -2,8 +2,8 @@ import legacyUi from './legacy-ui.js';
 import { verifyGoogleCredential } from './auth/google.js';
 import { createSession, getSession, revokeSession } from './auth/session.js';
 import { sendMagicLink } from './email/brevo.js';
-import { getUserState, patchUserState } from './repositories/state.js';
-import { upsertUser } from './repositories/users.js';
+import { getUserState, patchUserState, validateOnboardingState } from './repositories/state.js';
+import { markOnboardingComplete, upsertUser } from './repositories/users.js';
 import {
   assertSameOrigin,
   clearSessionCookie,
@@ -35,13 +35,17 @@ function normalizeEmail(value) {
   return email;
 }
 
+function nextRouteFor(account) {
+  return account?.onboardingCompleted || account?.onboardingCompletedAt ? '/dashboard' : '/onboarding';
+}
+
 async function googleLogin(request, env) {
   assertSameOrigin(request);
   const body = await readJson(request);
   const google = await verifyGoogleCredential(body.credential, env.GOOGLE_CLIENT_ID);
-  const userId = await upsertUser(env, { provider: 'google', ...google });
-  const session = await createSession(env, userId);
-  return json({ ok: true, next: '/onboarding' }, 200, { 'Set-Cookie': session.cookie });
+  const account = await upsertUser(env, { provider: 'google', ...google });
+  const session = await createSession(env, account.userId);
+  return json({ ok: true, next: nextRouteFor(account) }, 200, { 'Set-Cookie': session.cookie });
 }
 
 async function startEmailLogin(request, env) {
@@ -67,9 +71,9 @@ async function verifyEmailLogin(request, env) {
       RETURNING email`,
   ).bind(new Date().toISOString(), tokenHash, Math.floor(Date.now() / 1000)).first();
   if (!row) throw new HttpError(401, 'This sign-in link is invalid or expired');
-  const userId = await upsertUser(env, { provider: 'email', subject: row.email, email: row.email, name: null });
-  const session = await createSession(env, userId);
-  return redirect(request, '/onboarding', { 'Set-Cookie': session.cookie });
+  const account = await upsertUser(env, { provider: 'email', subject: row.email, email: row.email, name: null });
+  const session = await createSession(env, account.userId);
+  return redirect(request, nextRouteFor(account), { 'Set-Cookie': session.cookie });
 }
 
 async function apiRoute(request, env, session) {
@@ -89,6 +93,14 @@ async function apiRoute(request, env, session) {
     assertSameOrigin(request);
     const body = await readJson(request);
     return json({ state: await patchUserState(env, session.userId, body) });
+  }
+  if (pathname === '/api/onboarding/complete' && request.method === 'PUT') {
+    assertSameOrigin(request);
+    const state = validateOnboardingState(await readJson(request));
+    if (!state) throw new HttpError(400, 'Valid onboarding profile required');
+    await patchUserState(env, session.userId, state);
+    const completedAt = await markOnboardingComplete(env, session.userId);
+    return json({ ok: true, next: '/dashboard', completedAt });
   }
   if (pathname === '/api/rules' && request.method === 'GET') {
     const date = new Date().toISOString().slice(0, 10);
@@ -116,11 +128,17 @@ async function handle(request, env) {
   const session = await getSession(request, env);
 
   if (url.pathname.startsWith('/api/')) return apiRoute(request, env, session);
-  if (url.pathname === '/' && session) return redirect(request, '/dashboard');
+  if (url.pathname === '/' && session) return redirect(request, nextRouteFor(session));
   if ((url.pathname === '/dashboard' || url.pathname === '/onboarding') && !session) {
     return redirect(request, '/login');
   }
-  if (url.pathname === '/login' && session) return redirect(request, '/dashboard');
+  if (url.pathname === '/login' && session) return redirect(request, nextRouteFor(session));
+  if (url.pathname === '/dashboard' && session && !session.onboardingCompletedAt) {
+    return redirect(request, '/onboarding');
+  }
+  if (url.pathname === '/onboarding' && session?.onboardingCompletedAt) {
+    return redirect(request, '/dashboard');
+  }
 
   return legacyUi.fetch(request, env);
 }

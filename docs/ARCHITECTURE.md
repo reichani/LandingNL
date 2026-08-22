@@ -22,6 +22,7 @@
 - `sessions`: revocable, expiring opaque sessions.
 - `email_login_tokens`: single-use email ownership challenges.
 - `user_state`: cross-device onboarding and journey state.
+- `users.onboarding_completed_at`: server-authoritative resume routing after a validated onboarding save.
 - `regulatory_rules`: versioned, source-linked, date-bounded published rules.
 
 ## Regulatory publishing gate

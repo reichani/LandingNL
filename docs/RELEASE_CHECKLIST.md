@@ -16,6 +16,7 @@
 - [ ] Email sign-in requires proof of mailbox ownership.
 - [ ] Unauthenticated users cannot open protected routes.
 - [ ] Onboarding persists after logout/login and across devices.
+- [ ] Returning completed users resume at `/dashboard`; incomplete users resume at `/onboarding`.
 - [ ] Mobile checks pass on Samsung S24+, iPhone and tablet widths.
 - [ ] Security headers and cookie attributes are present.
 - [ ] No console errors or unexpected Worker errors appear.
