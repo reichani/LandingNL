@@ -35,7 +35,7 @@ const PAGE_HASHES = new Map([
   ['/', 'a17866c0e38a2bd841d4bd2c5f4fb089b4e59319830aa28a89f4286dbe32a171'],
   ['/login', '1b46e366a392579600f9c0503b79d1990875ac97e9fb549e665e1ac73299a522'],
   ['/onboarding', '523ea18e03087c9388c50598f11a7dfb79b28df46b3abc95c8aa4c8d98b6513c'],
-  ['/dashboard', '4a37ee80c7b775a34b116134454d0fb49a650a738e88669f38e06047f3db8d73'],
+  ['/dashboard', '53cebde244c3332e564bca16db272909513062aa06c7e2c26d7731b2094abb6f'],
 ]);
 
 test('returning Google users are updated by scalar user id', async () => {
@@ -106,7 +106,15 @@ test('dashboard resource actions use real links instead of simulated redirect al
   assert.match(source, /link\.href = actionUrl/);
   assert.match(source, /link\.rel = 'noopener noreferrer'/);
   assert.match(source, /belastingdienst\.nl\/wps\/wcm\/connect\/nl\/zorgtoeslag/);
+  assert.match(source, /https:\/\/www\.isic\.nl\/en/);
   assert.doesNotMatch(source, /btn\.onclick = function\(\) \{ alert\(actionMsg\); \}/);
+});
+
+test('exchange board supports no-return Give Away listings', async () => {
+  const response = await legacyUi.fetch(new Request('https://example.test/dashboard'), env);
+  const html = await response.text();
+  assert.match(html, /<option value="🎁 Give Away">🎁 Give Away \(Ücretsiz Ver\)<\/option>/);
+  assert.match(html, /Ücretsiz – karşılık beklemiyorum/);
 });
 
 test('completed journey actions are disabled until an editable value changes', async () => {
