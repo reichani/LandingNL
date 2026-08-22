@@ -11,17 +11,45 @@
       "head_sampling_rate": 1
     }
   },
-  // Add the environment-specific D1 IDs returned by `wrangler d1 create`
-  // before the first staging deployment. Never reuse the production DB in staging.
-  // "d1_databases": [
-  //   { "binding": "DB", "database_name": "landingnl-db", "database_id": "<D1_DATABASE_ID>", "migrations_dir": "migrations" }
-  // ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "landingnl-db-staging",
+      "database_id": "0bf83e5e-afe1-4fd1-ae16-dfd103d801da",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "vars": {
+    "GOOGLE_CLIENT_ID": "400457048302-bks58p58mrf37cd5c52ifndr54shn8i1.apps.googleusercontent.com"
+  },
   "env": {
     "staging": {
-      "name": "landingnl-staging"
+      "name": "landingnl-staging",
+      "vars": {
+        "GOOGLE_CLIENT_ID": "400457048302-bks58p58mrf37cd5c52ifndr54shn8i1.apps.googleusercontent.com"
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "landingnl-db-staging",
+          "database_id": "0bf83e5e-afe1-4fd1-ae16-dfd103d801da",
+          "migrations_dir": "migrations"
+        }
+      ]
     },
     "production": {
-      "name": "landingnl"
+      "name": "landingnl",
+      "vars": {
+        "GOOGLE_CLIENT_ID": "400457048302-bks58p58mrf37cd5c52ifndr54shn8i1.apps.googleusercontent.com"
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "landingnl-db",
+          "database_id": "ba3aceec-0db5-4180-a665-0a440c76b18c",
+          "migrations_dir": "migrations"
+        }
+      ]
     }
   }
 }
