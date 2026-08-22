@@ -6,7 +6,7 @@ export async function upsertUser(env, identity) {
   if (existing) {
     await env.DB.prepare(
       'UPDATE users SET email = ?1, email_verified = 1, display_name = ?2, updated_at = ?3 WHERE id = ?4',
-    ).bind(identity.email, identity.name, new Date().toISOString(), existing).run();
+    ).bind(identity.email, identity.name, new Date().toISOString(), existing.id).run();
     return { userId: existing.id, onboardingCompleted: Boolean(existing.onboardingCompletedAt) };
   }
   const id = crypto.randomUUID();
