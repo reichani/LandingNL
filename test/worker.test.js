@@ -32,10 +32,10 @@ function createDb(overrides = {}) {
 const env = { DB: createDb(), GOOGLE_CLIENT_ID: 'test-client-id.apps.googleusercontent.com' };
 
 const PAGE_HASHES = new Map([
-  ['/', 'a17866c0e38a2bd841d4bd2c5f4fb089b4e59319830aa28a89f4286dbe32a171'],
-  ['/login', '1b46e366a392579600f9c0503b79d1990875ac97e9fb549e665e1ac73299a522'],
-  ['/onboarding', '523ea18e03087c9388c50598f11a7dfb79b28df46b3abc95c8aa4c8d98b6513c'],
-  ['/dashboard', '53cebde244c3332e564bca16db272909513062aa06c7e2c26d7731b2094abb6f'],
+  ['/', '4b1cf3903d0433e2c7e063ac2c41a1c1870ef3ae23e2f6a15d892602f6dcfdc9'],
+  ['/login', '5ba905aa143c94bcce95f103e85a3011e9e672010ad046a563d739198de74c1c'],
+  ['/onboarding', '5b8ea9796faa156f18cf4090b097ad62337d94221c90a5238bc2ec3121eb79de'],
+  ['/dashboard', '0de6bbfc537b4bacdea3584d4a815f4e3fe3e37be67c367037fea2e376ab8aa7'],
 ]);
 
 test('returning Google users are updated by scalar user id', async () => {
@@ -86,6 +86,17 @@ test('public landing and login routes remain available', async () => {
   }
 });
 
+test('every page exposes the semantic release and Cloudflare deployment id', async () => {
+  const versionedEnv = {
+    ...env,
+    CF_VERSION_METADATA: { id: '12345678-90ab-cdef-1234-567890abcdef' },
+  };
+  for (const path of ['/', '/login', '/onboarding', '/dashboard']) {
+    const response = await legacyUi.fetch(new Request(`https://example.test${path}`), versionedEnv);
+    assert.match(await response.text(), /v1\.0\.5 · 12345678/, path);
+  }
+});
+
 test('welcome page has one resilient journey entry and no header login action', async () => {
   const response = await legacyUi.fetch(new Request('https://example.test/'), env);
   const html = await response.text();
@@ -114,16 +125,17 @@ test('exchange board supports no-return Give Away listings', async () => {
   const response = await legacyUi.fetch(new Request('https://example.test/dashboard'), env);
   const html = await response.text();
   assert.match(html, /<option value="🎁 Give Away">🎁 Give Away \(Ücretsiz Ver\)<\/option>/);
+  assert.match(html, /id="btn-give-away"/);
   assert.match(html, /Ücretsiz – karşılık beklemiyorum/);
 });
 
 test('completed journey actions are disabled until an editable value changes', async () => {
   const source = await readFile(new URL('../src/ui/scripts/dashboard.js', import.meta.url), 'utf8');
-  assert.ok(source.includes('button.disabled = disabled'));
-  assert.ok(source.includes('setActionState(btn1, step >= 1)'));
-  assert.ok(source.includes('setActionState(btn2, step < 1 || step >= 2)'));
-  assert.ok(source.includes("changed ? 'Değişikliği Kaydet ➔' : '✓ Tarih Kaydedildi'"));
-  assert.ok(!source.includes("dateInput.addEventListener('change', function()"));
+  assert.match(source, /button\.disabled = disabled/);
+  assert.match(source, /setActionState\(btn1, step >= 1\)/);
+  assert.match(source, /setActionState\(btn2, step < 1 \|\| step >= 2\)/);
+  assert.match(source, /changed \? 'Değişikliği Kaydet ➔' : '✓ Tarih Kaydedildi'/);
+  assert.doesNotMatch(source, /dateInput\.addEventListener\('change', function\(\) \{\s*triggerBsnSave\(\)/);
 });
 
 test('protected pages redirect unauthenticated requests to login', async () => {
