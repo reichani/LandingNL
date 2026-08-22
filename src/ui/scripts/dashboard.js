@@ -44,7 +44,7 @@ export const dashboardScript = `
       return match ? match[0] : '2026-08-19';
     }
 
-    function createSubCard(tagClass, tagText, titleText, descText, actionMsg) {
+    function createSubCard(tagClass, tagText, titleText, descText, actionUrl) {
       var box = document.createElement('div');
       box.style.cssText = 'background:rgba(0,0,0,0.25); padding:12px; border-radius:12px; border:1px solid var(--border); display:flex; flex-direction:column; justify-content:space-between;';
       
@@ -66,13 +66,15 @@ export const dashboardScript = `
       topDiv.appendChild(p);
       box.appendChild(topDiv);
 
-      if (actionMsg) {
-        var btn = document.createElement('button');
-        btn.className = 'btn-act';
-        btn.style.cssText = 'width:100%; padding:6px; font-size:0.75rem; background:rgba(255,255,255,0.08); color:#cbd5e1;';
-        btn.innerText = 'Detay & Başvuru ➔';
-        btn.onclick = function() { alert(actionMsg); };
-        box.appendChild(btn);
+      if (actionUrl) {
+        var link = document.createElement('a');
+        link.className = 'btn-act';
+        link.style.cssText = 'width:100%; padding:6px; font-size:0.75rem; background:rgba(255,255,255,0.08); color:#cbd5e1; text-align:center; text-decoration:none; box-sizing:border-box;';
+        link.innerText = 'Kaynağı Aç ↗';
+        link.href = actionUrl;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        box.appendChild(link);
       }
 
       return box;
@@ -109,7 +111,7 @@ export const dashboardScript = `
         '🏠 Huurtoeslag (Kira Desteği)',
         isHouseReady ? 'Kira Sözleşmen Var - Başvurabilirsin' : 'Geçici Konaklama - Sözleşme Bekliyor',
         'Kendi kapısı ve mutfağı olan bağımsız odalarda kalan öğrencilere devlet aylık kira yardımı yapar.',
-        'DigiD ile Belastingdienst Huurtoeslag başvuru portalına yönlendiriliyorsunuz.'
+        'https://www.belastingdienst.nl/wps/wcm/connect/nl/huurtoeslag/content/hoe-moet-ik-huurtoeslag-aanvragen'
       ));
 
       grid.appendChild(createSubCard(
@@ -117,7 +119,7 @@ export const dashboardScript = `
         '🩺 Zorgtoeslag (Sigorta Desteği)',
         'Güncel uygunluğunu kontrol et',
         'Uygunluk; sigorta, gelir, yaş ve ikamet durumuna göre resmi kurum tarafından belirlenir.',
-        'DigiD ile Belastingdienst Zorgtoeslag başvuru portalına yönlendiriliyorsunuz.'
+        'https://www.belastingdienst.nl/wps/wcm/connect/nl/zorgtoeslag/content/hoe-moet-ik-zorgtoeslag-aanvragen'
       ));
     }
 
@@ -131,15 +133,14 @@ export const dashboardScript = `
         '💻 SURFspot İndirimleri',
         "Adobe, Microsoft, Apple & Laptop (%80'e varan)",
         'Üniversite mail login bilgilerin ile SURFspot.nl adresine girerek lisans indirimlerini kullan.',
-        'SURFspot.nl resmi öğrenci indirim portalına yönlendiriliyorsunuz.'
+        'https://www.surfspot.nl/'
       ));
 
       grid.appendChild(createSubCard(
         'tag-purple',
         '🎟️ Student Card Deals',
         'Müze, Sinema & Mağazalar',
-        'Öğrenci kartınla gittiğin her yerde sor: "Do you have a student discount?" (Rijksmuseum, Pathé vb.)',
-        'Öğrenci kartı geçen noktalar listesine yönlendiriliyorsunuz.'
+        'Öğrenci kartınla gittiğin her yerde sor: "Do you have a student discount?" (Rijksmuseum, Pathé vb.)'
       ));
     }
 
@@ -166,12 +167,12 @@ export const dashboardScript = `
       }
 
       if (!isWorking) {
-        container.appendChild(createSubCard('tag-purple', '🏥 Geçerli Sigortan', isEU ? 'EHIC / Özel Sigorta Yeterli' : 'Özel Öğrenci Sigortası (Aon / InsureToStudy)', 'Sadece eğitim aldığınız sürece zorunlu Hollanda Temel Sağlık Sigortası (Basiszorgverzekering) yapmanıza gerek yoktur.', 'Aon Student Insurance portalına yönlendiriliyorsunuz.'));
+        container.appendChild(createSubCard('tag-purple', '🏥 Geçerli Sigortan', isEU ? 'EHIC / Özel Sigorta Yeterli' : 'Özel Öğrenci Sigortası (Aon / InsureToStudy)', 'Sadece eğitim aldığınız sürece zorunlu Hollanda Temel Sağlık Sigortası (Basiszorgverzekering) yapmanıza gerek yoktur.', 'https://www.aonstudentinsurance.com/en/home'));
         container.appendChild(createSubCard('tag-mint', '💶 Sigorta Durumu', 'Poliçeni ve kapsamını doğrula', 'Mevcut özel/öğrenci sigortanın Hollanda’daki kapsamını sigortacı ve resmi kaynaklarla doğrula.'));
         container.appendChild(createSubCard('tag-amber', '⚠️ Karar Uyarısı', 'İşe Girdiğin An Değişir', 'Part-time veya resmi kontratlı bir işe başladığınız ilk gün Temel Sigortaya geçmek yasal zorunluluktur.'));
       } else {
-        container.appendChild(createSubCard('tag-mint', '🚨 STATÜ KONTROLÜ', 'Basiszorgverzekering gerekebilir', 'Ücretli çalışmaya başladığında Hollanda temel sağlık sigortası yükümlülüğünü resmi SVB ve hükümet kaynaklarından kontrol et.', 'Temel Sağlık Sigortası resmi bilgi sayfasına yönlendiriliyorsunuz.'));
-        container.appendChild(createSubCard('tag-purple', '💶 DEVLET DESTEĞİ', 'Zorgtoeslag uygunluğunu kontrol et', 'Gelir, yaş, ikamet ve sigorta durumuna göre destek hakkın doğabilir. Güncel sonucu Belastingdienst hesaplar.', 'Zorgtoeslag resmi uygunluk sayfasına yönlendiriliyorsunuz.'));
+        container.appendChild(createSubCard('tag-mint', '🚨 STATÜ KONTROLÜ', 'Basiszorgverzekering gerekebilir', 'Ücretli çalışmaya başladığında Hollanda temel sağlık sigortası yükümlülüğünü resmi SVB ve hükümet kaynaklarından kontrol et.', 'https://www.svb.nl/en/the-wlz-scheme/insurance-under-the-wlz-scheme/you-are-a-student-or-doing-an-internship'));
+        container.appendChild(createSubCard('tag-purple', '💶 DEVLET DESTEĞİ', 'Zorgtoeslag uygunluğunu kontrol et', 'Gelir, yaş, ikamet ve sigorta durumuna göre destek hakkın doğabilir. Güncel sonucu Belastingdienst hesaplar.', 'https://www.belastingdienst.nl/wps/wcm/connect/nl/zorgtoeslag/content/hoe-moet-ik-zorgtoeslag-aanvragen'));
         container.appendChild(createSubCard('tag-mint', '🩺 Aile Hekimi (Huisarts)', 'Huisarts Kaydınız Geçerli', "Phase 1'de kaydolduğunuz Huisarts hekiminiz üzerinden sevk ve sağlık erişimi devam eder."));
       }
     }
