@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: read
+  issues: write
 
 concurrency:
   group: landingnl-staging-d1-activation
@@ -41,3 +42,10 @@ jobs:
           --env staging
           --remote
           --command "SELECT name FROM sqlite_master WHERE type = 'table' AND name IN ('users', 'sessions', 'email_login_tokens', 'user_state', 'regulatory_rules') ORDER BY name;"
+      - name: Report activation result on PR
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh pr comment 4
+          --body "Staging D1 activation workflow result: **${{ job.status }}**. Commit: \`${{ github.sha }}\`."
