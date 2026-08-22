@@ -30,7 +30,7 @@ const PAGE_HASHES = new Map([
   ['/', 'a17866c0e38a2bd841d4bd2c5f4fb089b4e59319830aa28a89f4286dbe32a171'],
   ['/login', '1b46e366a392579600f9c0503b79d1990875ac97e9fb549e665e1ac73299a522'],
   ['/onboarding', '07cc33a8446f0db639b8f9e6da0f4275d649b22a474984120282609a2f2b5ad3'],
-  ['/dashboard', '171cb528a14e17bdb6f8c4032c3fa37c731888e3e7ffa37f6ba80bb5e48121aa'],
+  ['/dashboard', 'b1b2aed392124794736001ecfc78bd9acc386603cd60047d7999583ee5720914'],
 ]);
 
 test('rendered pages remain byte-for-byte identical to their approved baselines', async () => {
@@ -64,6 +64,14 @@ test('rendered dashboard scripts are valid JavaScript', async () => {
   const scripts = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)];
   assert.ok(scripts.length > 0);
   for (const [, source] of scripts) new vm.Script(source);
+});
+
+test('dashboard resource actions use real links instead of simulated redirect alerts', async () => {
+  const source = await readFile(new URL('../src/ui/scripts/dashboard.js', import.meta.url), 'utf8');
+  assert.match(source, /link\.href = actionUrl/);
+  assert.match(source, /link\.rel = 'noopener noreferrer'/);
+  assert.match(source, /belastingdienst\.nl\/wps\/wcm\/connect\/nl\/zorgtoeslag/);
+  assert.doesNotMatch(source, /btn\.onclick = function\(\) \{ alert\(actionMsg\); \}/);
 });
 
 test('protected pages redirect unauthenticated requests to login', async () => {
