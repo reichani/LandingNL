@@ -4,7 +4,7 @@ This repository captures the Cloudflare dashboard implementation of LandingNL v1
 
 ## Local setup
 
-1. Install Node.js 20 or newer.
+1. Install Node.js 22 or newer (required by the pinned Wrangler version).
 2. Run `npm install`.
 3. Create local D1 state and apply `migrations/0001_secure_foundation.sql` with `npm run db:migrate:local`.
 4. Copy `.dev.vars.example` to `.dev.vars`; configure Google and the verified Brevo sender.
@@ -24,7 +24,7 @@ The `--keep-vars` flag is intentional during the migration: it prevents existing
 
 ## Current architecture
 
-`src/legacy-ui.js` preserves the recovered dashboard presentation while `src/index.js` owns the server trust boundary. Google credentials, email magic links, opaque sessions, protected routes and cross-device state now terminate at the Worker and D1. See `docs/ARCHITECTURE.md` for the security model and `docs/AUDIT.md` for the original findings.
+`src/index.js` owns the server trust boundary. `src/legacy-ui.js` is now a thin presentation router, while the four recovered HTML documents live independently under `src/ui/pages/`. Page output is locked to the PR #4 baseline with byte-for-byte SHA-256 regression tests. Google credentials, email magic links, opaque sessions, protected routes and cross-device state terminate at the Worker and D1. See `docs/ARCHITECTURE.md` for the security model and `docs/AUDIT.md` for the original findings.
 
 ## Cloudflare activation prerequisites
 

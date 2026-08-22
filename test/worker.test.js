@@ -1,8 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 
 import worker from '../src/index.js';
+import legacyUi from '../src/legacy-ui.js';
 
 function createDb(overrides = {}) {
   return {
@@ -22,6 +24,23 @@ function createDb(overrides = {}) {
 }
 
 const env = { DB: createDb(), GOOGLE_CLIENT_ID: 'test-client-id.apps.googleusercontent.com' };
+
+const PAGE_HASHES = new Map([
+  ['/', '88497cb5287dc7a0160b49b42278163e44a631bdd057e31b130447ed0ee9ad8e'],
+  ['/login', '1b46e366a392579600f9c0503b79d1990875ac97e9fb549e665e1ac73299a522'],
+  ['/onboarding', '07cc33a8446f0db639b8f9e6da0f4275d649b22a474984120282609a2f2b5ad3'],
+  ['/dashboard', 'bb88b0027d0fe9aae0f881cef663b8c6deba317dc79b04b0a6317c92644122b7'],
+]);
+
+test('extracted pages remain byte-for-byte identical to the PR #4 baseline', async () => {
+  for (const [path, expectedHash] of PAGE_HASHES) {
+    const response = await legacyUi.fetch(new Request(`https://example.test${path}`), env);
+    const body = await response.text();
+    const hash = createHash('sha256').update(body).digest('hex');
+    assert.equal(response.status, 200, path);
+    assert.equal(hash, expectedHash, path);
+  }
+});
 
 test('public landing and login routes remain available', async () => {
   for (const path of ['/', '/login']) {
@@ -82,7 +101,7 @@ test('security headers are attached', async () => {
 });
 
 test('community user content is rendered through textContent', async () => {
-  const source = await readFile(new URL('../src/legacy-ui.js', import.meta.url), 'utf8');
+  const source = await readFile(new URL('../src/ui/pages/dashboard.js', import.meta.url), 'utf8');
   assert.match(source, /offerStrong\.textContent/);
   assert.doesNotMatch(source, /div\.innerHTML\s*=\s*'<div><span class="swap-tag/);
 });

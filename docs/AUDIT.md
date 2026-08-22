@@ -58,6 +58,8 @@ Savings, allowance, wage, insurance and work-hour statements are embedded in UI 
 
 One 964-line template mixes routing, HTML, CSS, UI state, business rules and content. This makes small changes difficult to test and review.
 
+Remediation status: the presentation router and four page documents are separated under `src/ui/pages/`. Exact HTML output is protected by SHA-256 parity tests. CSS and browser scripts deliberately remain embedded so this mechanical change does not alter runtime behavior.
+
 ## Target structure after the recovery commit
 
 ```text
