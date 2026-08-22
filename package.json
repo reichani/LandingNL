@@ -1,0 +1,19 @@
+{
+  "name": "landingnl-worker",
+  "version": "1.0.4",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --local",
+    "test": "node --test",
+    "check": "npm test && wrangler deploy --dry-run --keep-vars",
+    "deploy:staging": "wrangler deploy --env staging --keep-vars",
+    "deploy:production": "wrangler deploy --env production --keep-vars"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

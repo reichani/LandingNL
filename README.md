@@ -1,52 +1,25 @@
-# LandingNL
+# LandingNL Worker
 
-LandingNL is a mobile-first landing companion for international students moving to the Netherlands.
+This repository captures the Cloudflare dashboard implementation of LandingNL v1.0.4 as a reproducible local Worker project.
 
-## Product thesis
+## Local setup
 
-**Land → Settle → Belong**
+1. Install Node.js 20 or newer.
+2. Run `npm install`.
+3. Copy `.dev.vars.example` to `.dev.vars` and set the Google OAuth client ID.
+4. Run `npm test`.
+5. Run `npm run dev` and open the local URL printed by Wrangler.
 
-LandingNL helps students move from pre-arrival preparation to becoming operational and independent in the Netherlands, while keeping every screen focused on one clear next action.
+## Release flow
 
-### Core journeys
-- Housing search and registrable address readiness
-- Arrival, municipality registration, BSN and DigiD
-- Budget, banking, mobility and essential setup
-- Part-time work, CV creation and paid-hours tracking
-- DUO and regulatory-aware guidance
-- Secure document wallet
-- Community: Ask, Meet, Share and Exchange
+- Feature work is made on a branch and reviewed through a pull request.
+- `npm run check` must pass before merge.
+- Deploy to staging with `npm run deploy:staging`.
+- Verify the checklist in `docs/RELEASE_CHECKLIST.md`.
+- Deploy production only from the protected default branch.
 
-## Product principles
-- One Moment → One Focus → One Action
-- Mobile-first and future-facing for students born around 2008
-- Free users receive meaningful utility; Plus unlocks adaptive intelligence
-- Official-source-first regulatory guidance
-- No hard paywall on urgent government tasks
-- PII separated from analytics and product signals
-- Revenue-funded infrastructure: free tiers first, upgrade as real usage and revenue grow
+The `--keep-vars` flag is intentional during the migration: it prevents existing dashboard-managed variables from being removed before they are inventoried.
 
-## Build strategy
+## Current architecture
 
-The working application is the source of truth. Figma remains the visual specification and is updated at major UX milestones.
-
-Planned stack:
-- Next.js + TypeScript
-- Responsive component system
-- Supabase/PostgreSQL
-- Google authentication
-- Event-driven journey engine
-- Entitlements and consent model
-- Versioned regulatory Rule Registry
-- Analytics event taxonomy
-
-## Delivery phases
-
-### P0 — v0.1
-Auth + consent, Housing, Home/Plan, municipality → BSN → DigiD, Wallet, basic Budget, Work/CV, paid-hours tracker, analytics foundation.
-
-### P1
-DUO intelligence, insurance, dynamic budget, Regulatory Admin, Community core (`Ask / Meet / Share / Exchange`).
-
-### P2
-Online sessions, IRL get-togethers, shared dinners, skills exchange matching, advanced community intelligence.
+`src/index.js` is an exact recovery copy of the dashboard code. It remains monolithic so the first Git commit is behavior-preserving. The next phase should extract HTML, CSS and browser JavaScript, then replace the demo authentication and browser-only persistence with verified server-side services.
