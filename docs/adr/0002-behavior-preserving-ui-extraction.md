@@ -14,6 +14,7 @@ PR #4 already contains authentication, D1, security and content changes. This ex
 
 - Keep `src/legacy-ui.js` as the presentation router and response-header owner.
 - Move welcome, login, onboarding and dashboard documents to separate modules under `src/ui/pages/`.
+- Move dashboard browser behavior to `src/ui/scripts/dashboard.js` and interpolate it back into the same response bytes.
 - Preserve the generated HTML byte-for-byte, including inline CSS and browser JavaScript.
 - Lock each page to its pre-extraction SHA-256 value in route parity tests.
 - Preserve existing paths, statuses, response headers, cookie checks and 404 behavior.
@@ -22,7 +23,7 @@ PR #4 already contains authentication, D1, security and content changes. This ex
 
 - Page ownership and review boundaries become clearer.
 - Accidental presentation drift fails the parity test.
-- Inline CSS and browser JavaScript remain technical debt by design.
+- Inline CSS remains technical debt by design; the dashboard browser script now has an independent source boundary.
 - Auth, D1, XSS, regulatory content, UX and deployment behavior are not changed by this decision.
 
 ## Rollback

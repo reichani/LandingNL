@@ -24,7 +24,7 @@ The `--keep-vars` flag is intentional during the migration: it prevents existing
 
 ## Current architecture
 
-`src/index.js` owns the server trust boundary. `src/legacy-ui.js` is now a thin presentation router, while the four recovered HTML documents live independently under `src/ui/pages/`. Page output is locked to the PR #4 baseline with byte-for-byte SHA-256 regression tests. Google credentials, email magic links, opaque sessions, protected routes and cross-device state terminate at the Worker and D1. See `docs/ARCHITECTURE.md` for the security model and `docs/AUDIT.md` for the original findings.
+`src/index.js` owns the server trust boundary. `src/legacy-ui.js` is now a thin presentation router, while the four recovered HTML documents live independently under `src/ui/pages/`. The dashboard browser behavior lives separately under `src/ui/scripts/`. Page output is locked to the PR #4 baseline with byte-for-byte SHA-256 regression tests. Google credentials, email magic links, opaque sessions, protected routes and cross-device state terminate at the Worker and D1. See `docs/ARCHITECTURE.md` for the security model and `docs/AUDIT.md` for the original findings.
 
 ## Cloudflare activation prerequisites
 

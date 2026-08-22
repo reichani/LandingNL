@@ -101,7 +101,7 @@ test('security headers are attached', async () => {
 });
 
 test('community user content is rendered through textContent', async () => {
-  const source = await readFile(new URL('../src/ui/pages/dashboard.js', import.meta.url), 'utf8');
+  const source = await readFile(new URL('../src/ui/scripts/dashboard.js', import.meta.url), 'utf8');
   assert.match(source, /offerStrong\.textContent/);
   assert.doesNotMatch(source, /div\.innerHTML\s*=\s*'<div><span class="swap-tag/);
 });
