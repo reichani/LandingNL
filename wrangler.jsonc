@@ -20,13 +20,15 @@
     }
   ],
   "vars": {
-    "GOOGLE_CLIENT_ID": "400457048302-bks58p58mrf37cd5c52ifndr54shn8i1.apps.googleusercontent.com"
+    "GOOGLE_CLIENT_ID": "400457048302-bks58p58mrf37cd5c52ifndr54shn8i1.apps.googleusercontent.com",
+    "APP_BASE_URL": "https://landingnl-staging.reichani.workers.dev"
   },
   "env": {
     "staging": {
       "name": "landingnl-staging",
       "vars": {
-        "GOOGLE_CLIENT_ID": "400457048302-bks58p58mrf37cd5c52ifndr54shn8i1.apps.googleusercontent.com"
+        "GOOGLE_CLIENT_ID": "400457048302-bks58p58mrf37cd5c52ifndr54shn8i1.apps.googleusercontent.com",
+        "APP_BASE_URL": "https://landingnl-staging.reichani.workers.dev"
       },
       "d1_databases": [
         {
@@ -40,7 +42,8 @@
     "production": {
       "name": "landingnl",
       "vars": {
-        "GOOGLE_CLIENT_ID": "400457048302-bks58p58mrf37cd5c52ifndr54shn8i1.apps.googleusercontent.com"
+        "GOOGLE_CLIENT_ID": "400457048302-bks58p58mrf37cd5c52ifndr54shn8i1.apps.googleusercontent.com",
+        "APP_BASE_URL": "https://landingnl.reichani.workers.dev"
       },
       "d1_databases": [
         {
