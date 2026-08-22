@@ -2,6 +2,9 @@ name: Deploy staging
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - migration/cloudflare-dashboard-v1.0.4
 
 permissions:
   contents: read
