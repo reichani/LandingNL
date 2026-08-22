@@ -26,13 +26,13 @@ function createDb(overrides = {}) {
 const env = { DB: createDb(), GOOGLE_CLIENT_ID: 'test-client-id.apps.googleusercontent.com' };
 
 const PAGE_HASHES = new Map([
-  ['/', '88497cb5287dc7a0160b49b42278163e44a631bdd057e31b130447ed0ee9ad8e'],
+  ['/', 'a17866c0e38a2bd841d4bd2c5f4fb089b4e59319830aa28a89f4286dbe32a171'],
   ['/login', '1b46e366a392579600f9c0503b79d1990875ac97e9fb549e665e1ac73299a522'],
   ['/onboarding', '07cc33a8446f0db639b8f9e6da0f4275d649b22a474984120282609a2f2b5ad3'],
   ['/dashboard', 'bb88b0027d0fe9aae0f881cef663b8c6deba317dc79b04b0a6317c92644122b7'],
 ]);
 
-test('extracted pages remain byte-for-byte identical to the PR #4 baseline', async () => {
+test('rendered pages remain byte-for-byte identical to their approved baselines', async () => {
   for (const [path, expectedHash] of PAGE_HASHES) {
     const response = await legacyUi.fetch(new Request(`https://example.test${path}`), env);
     const body = await response.text();
@@ -48,6 +48,13 @@ test('public landing and login routes remain available', async () => {
     assert.equal(response.status, 200, path);
     assert.match(response.headers.get('content-type') ?? '', /text\/html/);
   }
+});
+
+test('welcome page has one resilient journey entry and no header login action', async () => {
+  const response = await legacyUi.fetch(new Request('https://example.test/'), env);
+  const html = await response.text();
+  assert.match(html, /<a class="cta" id="journey-start" href="\/login">Yolculuğu Başlat ➔<\/a>/);
+  assert.doesNotMatch(html, /btn-nav-login|btn-hero-login/);
 });
 
 test('protected pages redirect unauthenticated requests to login', async () => {
