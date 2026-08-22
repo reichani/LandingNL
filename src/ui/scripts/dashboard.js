@@ -129,7 +129,7 @@ export const dashboardScript = `
       grid.appendChild(createSubCard(
         'tag-mint',
         '💻 SURFspot İndirimleri',
-        'Adobe, Microsoft, Apple & Laptop (%80\'e varan)',
+        "Adobe, Microsoft, Apple & Laptop (%80'e varan)",
         'Üniversite mail login bilgilerin ile SURFspot.nl adresine girerek lisans indirimlerini kullan.',
         'SURFspot.nl resmi öğrenci indirim portalına yönlendiriliyorsunuz.'
       ));
@@ -172,7 +172,7 @@ export const dashboardScript = `
       } else {
         container.appendChild(createSubCard('tag-mint', '🚨 STATÜ KONTROLÜ', 'Basiszorgverzekering gerekebilir', 'Ücretli çalışmaya başladığında Hollanda temel sağlık sigortası yükümlülüğünü resmi SVB ve hükümet kaynaklarından kontrol et.', 'Temel Sağlık Sigortası resmi bilgi sayfasına yönlendiriliyorsunuz.'));
         container.appendChild(createSubCard('tag-purple', '💶 DEVLET DESTEĞİ', 'Zorgtoeslag uygunluğunu kontrol et', 'Gelir, yaş, ikamet ve sigorta durumuna göre destek hakkın doğabilir. Güncel sonucu Belastingdienst hesaplar.', 'Zorgtoeslag resmi uygunluk sayfasına yönlendiriliyorsunuz.'));
-        container.appendChild(createSubCard('tag-mint', '🩺 Aile Hekimi (Huisarts)', 'Huisarts Kaydınız Geçerli', 'Phase 1\'de kaydolduğunuz Huisarts hekiminiz üzerinden sevk ve sağlık erişimi devam eder.'));
+        container.appendChild(createSubCard('tag-mint', '🩺 Aile Hekimi (Huisarts)', 'Huisarts Kaydınız Geçerli', "Phase 1'de kaydolduğunuz Huisarts hekiminiz üzerinden sevk ve sağlık erişimi devam eder."));
       }
     }
 
