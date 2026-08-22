@@ -1,12 +1,12 @@
 import { dashboardScript } from '../scripts/dashboard.js';
 
-export function renderDashboardPage() {
+export function renderDashboardPage(releaseLabel = 'v1.0.5 · local') {
   return `<!DOCTYPE html>
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LandingNL • Dashboard v1.0.4</title>
+  <title>LandingNL • Dashboard ${releaseLabel}</title>
   <style>
     :root {
       --bg: #080c14;
@@ -106,7 +106,7 @@ export function renderDashboardPage() {
 <body>
   <div class="container">
     <header>
-      <div class="brand">LandingNL • Student Journey <span class="v-badge">v1.0.4</span></div>
+      <div class="brand">LandingNL • Student Journey <span class="v-badge">${releaseLabel}</span></div>
       <button class="btn-reset" id="btn-reset-app">Sıfırla & Çıkış ➔</button>
     </header>
 
@@ -243,6 +243,7 @@ export function renderDashboardPage() {
             <option value="🚲 Gear & Tools">🚲 Gear & Tools (Eşya / Kitap)</option>
             <option value="🎁 Give Away">🎁 Give Away (Ücretsiz Ver)</option>
           </select>
+          <button type="button" class="btn-act btn-act-full" id="btn-give-away" style="margin:-2px 0 12px; background:rgba(192,132,252,0.16); color:#d8b4fe; border:1px solid rgba(192,132,252,0.3);">🎁 Ücretsiz Ver</button>
 
           <label style="font-size:0.75rem; color:var(--muted); display:block; margin-bottom:4px;">Ne Sunuyorsun?</label>
           <input type="text" id="swap-title" placeholder="Örn: 2 Porsiyon Ev Yapımı Makarna" style="width:100%; padding:8px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:white; font-size:0.85rem; margin-bottom:10px; outline:none;" />
@@ -283,4 +284,3 @@ export function renderDashboardPage() {
 </body>
 </html>`;
 }
-
