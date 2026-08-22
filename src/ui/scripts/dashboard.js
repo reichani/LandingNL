@@ -140,7 +140,8 @@ export const dashboardScript = `
         'tag-purple',
         '🎟️ Student Card Deals',
         'Müze, Sinema & Mağazalar',
-        'Öğrenci kartınla gittiğin her yerde sor: "Do you have a student discount?" (Rijksmuseum, Pathé vb.)'
+        'Öğrenci kartınla gittiğin her yerde sor: "Do you have a student discount?" Güncel fırsatları açmadan önce koşulları kontrol et.',
+        'https://www.isic.nl/en'
       ));
     }
 
@@ -430,6 +431,8 @@ export const dashboardScript = `
           var cat = document.getElementById('swap-cat').value;
           var title = document.getElementById('swap-title').value;
           var offer = document.getElementById('swap-offer').value;
+
+          if (cat === '🎁 Give Away' && !offer) offer = 'Ücretsiz – karşılık beklemiyorum';
 
           if (!title || !offer) return alert('Lütfen tüm alanları doldurun.');
 
