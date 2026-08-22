@@ -1,10 +1,10 @@
-export function renderLoginPage(googleClientId) {
+export function renderLoginPage(googleClientId, releaseLabel = 'v1.0.5 · local') {
   return `<!DOCTYPE html>
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LandingNL • Giriş v1.0.4</title>
+  <title>LandingNL • Giriş ${releaseLabel}</title>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     :root { --primary: #3b82f6; --bg: #080c14; --card: #111827; --text: #f8fafc; --muted: #94a3b8; --border: rgba(255,255,255,0.08); }
@@ -19,7 +19,7 @@ export function renderLoginPage(googleClientId) {
 </head>
 <body>
   <div class="card">
-    <h2>Giriş Yap <span style="font-size:0.7rem; color:#94a3b8;">v1.0.4</span></h2>
+    <h2>Giriş Yap <span style="font-size:0.7rem; color:#94a3b8;">${releaseLabel}</span></h2>
     <p>Profilini oluştur veya mevcut hesabına eriş.</p>
     
     <div id="g_id_onload" data-client_id="${googleClientId}" data-context="signin" data-ux_mode="popup" data-callback="handleGoogleCredential" data-auto_prompt="false"></div>
@@ -71,4 +71,3 @@ export function renderLoginPage(googleClientId) {
 </body>
 </html>`;
 }
-
