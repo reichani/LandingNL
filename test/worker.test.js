@@ -119,11 +119,11 @@ test('exchange board supports no-return Give Away listings', async () => {
 
 test('completed journey actions are disabled until an editable value changes', async () => {
   const source = await readFile(new URL('../src/ui/scripts/dashboard.js', import.meta.url), 'utf8');
-  assert.match(source, /button\\.disabled = disabled/);
-  assert.match(source, /setActionState\\(btn1, step >= 1\\)/);
-  assert.match(source, /setActionState\\(btn2, step < 1 \\|\\| step >= 2\\)/);
-  assert.match(source, /changed \\? 'Değişikliği Kaydet ➔' : '✓ Tarih Kaydedildi'/);
-  assert.doesNotMatch(source, /dateInput\\.addEventListener\\('change', function\\(\\) \\{\\s*triggerBsnSave\\(\\)/);
+  assert.ok(source.includes('button.disabled = disabled'));
+  assert.ok(source.includes('setActionState(btn1, step >= 1)'));
+  assert.ok(source.includes('setActionState(btn2, step < 1 || step >= 2)'));
+  assert.ok(source.includes("changed ? 'Değişikliği Kaydet ➔' : '✓ Tarih Kaydedildi'"));
+  assert.ok(!source.includes("dateInput.addEventListener('change', function()"));
 });
 
 test('protected pages redirect unauthenticated requests to login', async () => {
