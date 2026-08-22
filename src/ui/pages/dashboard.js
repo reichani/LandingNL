@@ -241,6 +241,7 @@ export function renderDashboardPage() {
             <option value="🍝 Food Exchange">🍝 Food Exchange (Ev Yemeği)</option>
             <option value="🎹 Skill Swap">🎹 Skill Swap (Ders / Enstrüman)</option>
             <option value="🚲 Gear & Tools">🚲 Gear & Tools (Eşya / Kitap)</option>
+            <option value="🎁 Give Away">🎁 Give Away (Ücretsiz Ver)</option>
           </select>
 
           <label style="font-size:0.75rem; color:var(--muted); display:block; margin-bottom:4px;">Ne Sunuyorsun?</label>
