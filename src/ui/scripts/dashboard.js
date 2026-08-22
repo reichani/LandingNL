@@ -194,6 +194,28 @@ export const dashboardScript = `
       render();
     }
 
+    function setActionState(button, disabled) {
+      if (!button) return;
+      button.disabled = disabled;
+      button.setAttribute('aria-disabled', disabled ? 'true' : 'false');
+      button.style.cursor = disabled ? 'not-allowed' : 'pointer';
+      button.style.pointerEvents = disabled ? 'none' : 'auto';
+    }
+
+    function updateBsnSaveButton() {
+      var button = document.getElementById('btn-save-bsn-date');
+      var input = document.getElementById('bsn-date');
+      if (!button || !input) return;
+      var completed = parseInt(Store.get('step', '0')) >= 1;
+      var changed = cleanIsoDate(input.value) !== cleanIsoDate(Store.get('bsn_date', '2026-08-19'));
+      var enabled = !completed || changed;
+      setActionState(button, !enabled);
+      button.style.opacity = enabled ? '1' : '0.55';
+      button.innerText = completed
+        ? (changed ? 'Değişikliği Kaydet ➔' : '✓ Tarih Kaydedildi')
+        : 'Tarihi Onayla & BSN Tamamla ➔';
+    }
+
     function render() {
       var step = parseInt(Store.get('step', '0'));
       var rawDate = Store.get('bsn_date', '2026-08-19');
@@ -217,6 +239,11 @@ export const dashboardScript = `
       var btn2 = document.getElementById('btn-step-2');
       var btn3 = document.getElementById('btn-step-3');
       var btn4 = document.getElementById('btn-step-4');
+
+      setActionState(btn1, step >= 1);
+      setActionState(btn2, step < 1 || step >= 2);
+      setActionState(btn3, step < 2 || step >= 3);
+      setActionState(btn4, step < 3 || step >= 4);
 
       var tagIng = document.getElementById('tag-ing');
       var tagTwelve = document.getElementById('tag-twelve');
@@ -269,6 +296,7 @@ export const dashboardScript = `
       } else if (step < 4) {
         if (bGp) { bGp.className = 'badge'; bGp.innerText = '🔒 4. Huisarts (GP) Kaydı'; }
       }
+      updateBsnSaveButton();
     }
 
     var defaultPosts = [
@@ -348,16 +376,14 @@ export const dashboardScript = `
       var dateInput = document.getElementById('bsn-date');
       if (dateInput) {
         dateInput.value = cleanIsoDate(Store.get('bsn_date', '2026-08-19'));
-        dateInput.addEventListener('change', function() {
-          triggerBsnSave();
-        });
+        dateInput.addEventListener('input', updateBsnSaveButton);
+        dateInput.addEventListener('change', updateBsnSaveButton);
       }
 
       var btnSaveDate = document.getElementById('btn-save-bsn-date');
       if (btnSaveDate) {
         btnSaveDate.onclick = function() {
           triggerBsnSave();
-          alert('✅ BSN Randevu Tarihi Kaydedildi ve Adım 1 Tamamlandı!');
         };
       }
 
