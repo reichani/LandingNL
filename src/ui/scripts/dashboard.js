@@ -426,6 +426,17 @@ export const dashboardScript = `
       }
 
       var btnAddSwap = document.getElementById('btn-add-swap');
+      var btnGiveAway = document.getElementById('btn-give-away');
+      if (btnGiveAway) {
+        btnGiveAway.onclick = function() {
+          var category = document.getElementById('swap-cat');
+          var title = document.getElementById('swap-title');
+          var offer = document.getElementById('swap-offer');
+          if (category) category.value = '🎁 Give Away';
+          if (offer) { offer.value = ''; offer.placeholder = 'Karşılık gerekmez'; }
+          if (title) title.focus();
+        };
+      }
       if (btnAddSwap) {
         btnAddSwap.onclick = function() {
           var cat = document.getElementById('swap-cat').value;
