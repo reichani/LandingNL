@@ -7,6 +7,7 @@ import vm from 'node:vm';
 import worker from '../src/index.js';
 import legacyUi from '../src/legacy-ui.js';
 import { upsertUser } from '../src/repositories/users.js';
+import { signupAllowed } from '../src/index.js';
 
 function createDb(overrides = {}) {
   return {
@@ -31,11 +32,12 @@ function createDb(overrides = {}) {
 
 const env = { DB: createDb(), GOOGLE_CLIENT_ID: 'test-client-id.apps.googleusercontent.com' };
 
+// Approved v1.0.6 baselines (journey truth-language release, see docs/adr/0007).
 const PAGE_HASHES = new Map([
-  ['/', '4b1cf3903d0433e2c7e063ac2c41a1c1870ef3ae23e2f6a15d892602f6dcfdc9'],
-  ['/login', '5ba905aa143c94bcce95f103e85a3011e9e672010ad046a563d739198de74c1c'],
-  ['/onboarding', '5b8ea9796faa156f18cf4090b097ad62337d94221c90a5238bc2ec3121eb79de'],
-  ['/dashboard', '0de6bbfc537b4bacdea3584d4a815f4e3fe3e37be67c367037fea2e376ab8aa7'],
+  ['/', '931cac8938f6de6aa812b3b1660ec1171d7b5665fb0b67f1c729af4d799d75c1'],
+  ['/login', 'ca0cdeeb5838cf0d4528b4b8e1415cbe321b7b9da2298f9a593227620a5df245'],
+  ['/onboarding', '74da244fe2e3a122d0ef258544933aff108c9470f05b3e08d964861290dd5aec'],
+  ['/dashboard', '1d396c2cd8039bf294a76bef6d5876c307bf12a9b670593f81a7bb1968a3b0a2'],
 ]);
 
 test('returning Google users are updated by scalar user id', async () => {
@@ -93,7 +95,7 @@ test('every page exposes the semantic release and Cloudflare deployment id', asy
   };
   for (const path of ['/', '/login', '/onboarding', '/dashboard']) {
     const response = await legacyUi.fetch(new Request(`https://example.test${path}`), versionedEnv);
-    assert.match(await response.text(), /v1\.0\.5 · 12345678/, path);
+    assert.match(await response.text(), /v1\.0\.6 · 12345678/, path);
   }
 });
 
@@ -283,4 +285,157 @@ test('community user content is rendered through textContent', async () => {
   const source = await readFile(new URL('../src/ui/scripts/dashboard.js', import.meta.url), 'utf8');
   assert.match(source, /offerStrong\.textContent/);
   assert.doesNotMatch(source, /div\.innerHTML\s*=\s*'<div><span class="swap-tag/);
+});
+
+// ---- v1.0.6 production-readiness and journey truth tests ----
+
+function jsonRequest(path, body, { method = 'POST', cookie } = {}) {
+  const headers = { Origin: 'https://example.test', 'Content-Type': 'application/json' };
+  if (cookie) headers.Cookie = cookie;
+  return new Request(`https://example.test${path}`, { method, headers, body: JSON.stringify(body) });
+}
+
+test('a stale or prototype session cookie renders the public page and is cleared', async () => {
+  const response = await worker.fetch(new Request('https://example.test/', {
+    headers: { Cookie: 'landingnl_session=active' },
+  }), env);
+  assert.equal(response.status, 200);
+  assert.match(await response.text(), /journey-start/);
+  assert.match(response.headers.get('set-cookie') ?? '', /landingnl_session=; Path=\/; Max-Age=0/);
+});
+
+test('signup gate is fail-closed unless explicitly opened or invited', async () => {
+  assert.equal(await signupAllowed({}, 'student@example.com'), false);
+  assert.equal(await signupAllowed({ SIGNUP_MODE: 'closed_beta', DB: createDb() }, 'student@example.com'), false);
+  assert.equal(await signupAllowed({ BETA_ALLOWLIST: 'a@x.nl, Student@Example.com' }, 'student@example.com'), true);
+  assert.equal(await signupAllowed({ SIGNUP_MODE: 'open' }, 'anyone@example.com'), true);
+  const invitedDb = createDb({ first(sql, column, values) {
+    return sql.includes('FROM beta_invites') && values[0] === 'invited@example.com' ? 1 : null;
+  } });
+  assert.equal(await signupAllowed({ SIGNUP_MODE: 'closed_beta', DB: invitedDb }, 'Invited@Example.com'), true);
+});
+
+test('email sign-in is refused before any token is written when email is not configured', async () => {
+  const writes = [];
+  const trackingEnv = { ...env, DB: createDb({ run(sql, values) { writes.push(sql); return { success: true }; } }) };
+  const response = await worker.fetch(jsonRequest('/api/auth/email/start', { email: 'student@example.com' }), trackingEnv);
+  assert.equal(response.status, 503);
+  assert.equal(writes.length, 0);
+});
+
+test('email sign-in is limited per address', async () => {
+  const writes = [];
+  const limitedEnv = {
+    ...env,
+    SIGNUP_MODE: 'open',
+    BREVO_API_KEY: 'test-key',
+    AUTH_FROM_EMAIL: 'no-reply@example.test',
+    DB: createDb({
+      first(sql) { return sql.includes('COUNT(*)') ? 3 : null; },
+      run(sql) { writes.push(sql); return { success: true }; },
+    }),
+  };
+  const response = await worker.fetch(jsonRequest('/api/auth/email/start', { email: 'student@example.com' }), limitedEnv);
+  assert.equal(response.status, 429);
+  assert.equal(writes.length, 0);
+});
+
+test('closed beta blocks email sign-in for addresses outside the allowlist', async () => {
+  const betaEnv = { ...env, BREVO_API_KEY: 'k', AUTH_FROM_EMAIL: 'no-reply@example.test', BETA_ALLOWLIST: 'owner@example.test' };
+  const response = await worker.fetch(jsonRequest('/api/auth/email/start', { email: 'student@example.com' }), betaEnv);
+  assert.equal(response.status, 403);
+});
+
+test('login page hides email sign-in until it is configured and shows the beta notice', async () => {
+  const closed = await (await legacyUi.fetch(new Request('https://example.test/login'), env)).text();
+  assert.doesNotMatch(closed, /id="btn-email-login"/);
+  assert.match(closed, /id="beta-notice"/);
+  const open = await (await legacyUi.fetch(new Request('https://example.test/login'), {
+    ...env, SIGNUP_MODE: 'open', BREVO_API_KEY: 'k', AUTH_FROM_EMAIL: 'no-reply@example.test',
+  })).text();
+  assert.match(open, /id="btn-email-login"/);
+  assert.doesNotMatch(open, /id="beta-notice"/);
+});
+
+test('onboarding rejects students under 16', async () => {
+  const writes = [];
+  const onboardingEnv = {
+    ...env,
+    DB: createDb({
+      first(sql) {
+        if (sql.includes('FROM sessions')) return { userId: 'user-1', email: 'student@example.com', onboardingCompletedAt: null };
+        return null;
+      },
+      run(sql) { writes.push(sql); return { success: true }; },
+    }),
+  };
+  const response = await worker.fetch(jsonRequest('/api/onboarding/complete',
+    { age: '15', status: 'eu', city: 'Amsterdam', program: 'UvA', housing: 'yes' },
+    { method: 'PUT', cookie: 'landingnl_session=opaque-session-token' }), onboardingEnv);
+  assert.equal(response.status, 400);
+  assert.equal(writes.length, 0);
+});
+
+test('onboarding does not silently assume a birth date', async () => {
+  const html = await (await legacyUi.fetch(new Request('https://example.test/onboarding'), env)).text();
+  assert.doesNotMatch(html, /id="dob" value=/);
+});
+
+test('dashboard makes no simulated completion, integration or community claims', async () => {
+  const html = await (await legacyUi.fetch(new Request('https://example.test/dashboard'), env)).text();
+  for (const claim of [/Revolut/, /✓ Aktif/, /Aktifleşti!/, /Entegre Edildi/, /%100 tamamlandı/, /Government Free Money/,
+    /kampüs panosuna eklendi/, /yönlendiriliyorsunuz/, /Huisarts Kaydınız Geçerli/, /badge active">✓ Vize/, /2026-08-19/]) {
+    assert.doesNotMatch(html, claim, String(claim));
+  }
+  assert.match(html, /\(beyan\)/);
+  assert.match(html, /Önizleme/);
+});
+
+test('saving the registration appointment date does not mark the BSN step complete', async () => {
+  const source = await readFile(new URL('../src/ui/scripts/dashboard.js', import.meta.url), 'utf8');
+  const saveFn = source.slice(source.indexOf('function triggerBsnSave'), source.indexOf("window.addEventListener('DOMContentLoaded'"));
+  assert.match(saveFn, /Store\.set\('bsn_date', val\)/);
+  assert.doesNotMatch(saveFn, /Store\.set\('step'/);
+});
+
+test('robots.txt and favicon are served without touching the database', async () => {
+  const robots = await worker.fetch(new Request('https://example.test/robots.txt'), {});
+  assert.equal(robots.status, 200);
+  assert.match(await robots.text(), /Disallow: \/dashboard/);
+  const favicon = await worker.fetch(new Request('https://example.test/favicon.ico'), {});
+  assert.equal(favicon.status, 204);
+});
+
+test('privacy notice is public and linked before sign-in', async () => {
+  const privacy = await worker.fetch(new Request('https://example.test/privacy'), env);
+  assert.equal(privacy.status, 200);
+  const body = await privacy.text();
+  assert.match(body, /Veri sorumlusu/);
+  assert.match(body, /Autoriteit Persoonsgegevens/);
+  for (const path of ['/', '/login']) {
+    const page = await (await worker.fetch(new Request(`https://example.test${path}`), env)).text();
+    assert.match(page, /href="\/privacy"/, path);
+  }
+});
+
+test('production config opens Google sign-in', async () => {
+  const config = await readFile(new URL('../wrangler.jsonc', import.meta.url), 'utf8');
+  const production = config.slice(config.indexOf('"production"'));
+  assert.match(production, /"SIGNUP_MODE": "open"/);
+  assert.match(production, /"workers_dev": false/);
+});
+
+test('the journey branches on EU/EEA versus non-EU status', async () => {
+  const source = await readFile(new URL('../src/ui/scripts/dashboard.js', import.meta.url), 'utf8');
+  const route = source.slice(source.indexOf('function renderStatusRoute'), source.indexOf('function renderAllowances'));
+  assert.match(route, /Store\.get\('status', 'non_eu'\) === 'eu'/);
+  assert.match(route, /VVR/);
+  assert.match(route, /MVV/);
+  assert.match(route, /TWV/);
+  assert.match(route, /ind\.nl\/en\/residence-permits\/eu-eea-and-swiss-citizens/);
+  assert.match(route, /ind\.nl\/en\/residence-permits\/study/);
+  // Route content is written with textContent, never innerHTML concatenation.
+  assert.doesNotMatch(route, /innerHTML\s*\+?=\s*[^\']*\+/);
+  const html = await (await legacyUi.fetch(new Request('https://example.test/dashboard'), env)).text();
+  assert.match(html, /id="status-route"/);
 });

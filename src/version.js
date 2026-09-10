@@ -1,4 +1,4 @@
-const RELEASE_VERSION = '1.0.5';
+const RELEASE_VERSION = '1.0.6';
 
 export function getReleaseLabel(env = {}) {
   const metadata = env.CF_VERSION_METADATA || {};

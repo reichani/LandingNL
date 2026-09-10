@@ -1,3 +1,6 @@
+// Minimum age 16: Dutch GDPR implementation act (UAVG art. 5) sets the age of digital consent at 16.
+export const MIN_AGE = 16;
+
 const ALLOWED_KEYS = new Set([
   'age', 'status', 'city', 'program', 'housing', 'step', 'bsn_date', 'is_working', 'user_swaps',
 ]);
@@ -13,7 +16,7 @@ export function validateOnboardingState(input) {
     if (!value || value.length > 200) return null;
     state[key] = value;
   }
-  if (!/^\d{1,3}$/.test(state.age) || Number(state.age) < 15 || Number(state.age) > 100) return null;
+  if (!/^\d{1,3}$/.test(state.age) || Number(state.age) < MIN_AGE || Number(state.age) > 100) return null;
   if (!['eu', 'non_eu'].includes(state.status)) return null;
   if (!['yes', 'no'].includes(state.housing)) return null;
   return state;

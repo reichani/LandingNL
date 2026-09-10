@@ -1,4 +1,4 @@
-export function renderWelcomePage(releaseLabel = 'v1.0.5 · local') {
+export function renderWelcomePage(releaseLabel = 'v1.0.6 · local') {
   return `<!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -31,6 +31,7 @@ export function renderWelcomePage(releaseLabel = 'v1.0.5 · local') {
     <p>Landing, Living ve Parasız Dayanışma Paneli (Student Exchange) tek bir sade platformda.</p>
     <a class="cta" id="journey-start" href="/login">Yolculuğu Başlat ➔</a>
   </section>
+  <footer style="text-align:center; padding:0 20px 40px; font-size:0.8rem;"><a href="/privacy" style="color:#94a3b8;">Gizlilik Bildirimi</a></footer>
 </body>
 </html>`;
 }

@@ -1,6 +1,6 @@
 import { dashboardScript } from '../scripts/dashboard.js';
 
-export function renderDashboardPage(releaseLabel = 'v1.0.5 · local') {
+export function renderDashboardPage(releaseLabel = 'v1.0.6 · local') {
   return `<!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -107,29 +107,29 @@ export function renderDashboardPage(releaseLabel = 'v1.0.5 · local') {
   <div class="container">
     <header>
       <div class="brand">LandingNL • Student Journey <span class="v-badge">${releaseLabel}</span></div>
-      <button class="btn-reset" id="btn-reset-app">Sıfırla & Çıkış ➔</button>
+      <button class="btn-reset" id="btn-reset-app">Çıkış Yap ➔</button>
     </header>
 
     <div class="savings-banner">
       <div>
-        <div style="font-size:0.78rem; color:var(--mint); font-weight:700; text-transform:uppercase;">💡 Hak Kazandığın Yıllık Tasarruf / İade Potansiyeli</div>
+        <div style="font-size:0.78rem; color:var(--mint); font-weight:700; text-transform:uppercase;">💡 Destek ve İndirim Olanakları</div>
         <div style="font-size:1.4rem; font-weight:800; color:#fff;" id="total-savings-text">Kişisel uygunluğuna göre</div>
       </div>
-      <span class="tag tag-mint" style="padding:8px 14px; font-size:0.8rem;">Devlet Desteği & İndirimler Dahil</span>
+      <span class="tag tag-amber" style="padding:8px 14px; font-size:0.8rem;">Tutar garanti edilmez · resmi kurum hesaplar</span>
     </div>
 
     <div class="progress-box">
       <div style="display:flex; justify-content:space-between; font-weight:700; font-size:0.9rem;">
-        <span>🚩 Uyum İlerlemesi</span>
-        <span id="percent-text" style="color:var(--mint);">%20</span>
+        <span>🚩 Uyum İlerlemesi (senin beyanına göre)</span>
+        <span id="percent-text" style="color:var(--mint);">%0</span>
       </div>
       <div class="progress-bar-bg">
         <div class="progress-bar-fill" id="bar-fill"></div>
       </div>
       <div class="badges">
-        <span class="badge active">✓ Vize</span>
-        <span class="badge active" id="b-housing">✓ Kalacak Yer</span>
-        <span class="badge" id="b-bsn">⏳ 1. BSN Kaydı</span>
+        <span class="badge" id="b-visa">Oturum izni: kontrol et</span>
+        <span class="badge" id="b-housing">Konut: kontrol et</span>
+        <span class="badge" id="b-bsn">⏳ 1. Belediye kaydı & BSN</span>
         <span class="badge" id="b-digid">🔒 2. DigiD</span>
         <span class="badge" id="b-bank">🔒 3. Banka</span>
         <span class="badge" id="b-gp">🔒 4. Huisarts (GP) Kaydı</span>
@@ -139,36 +139,39 @@ export function renderDashboardPage(releaseLabel = 'v1.0.5 · local') {
     <div class="tabs">
       <button class="tab active" id="t1">✈️ Phase 1: Landing & Devlet Destekleri</button>
       <button class="tab" id="t2">🎁 Phase 2: Living, İndirimler & Sigorta</button>
-      <button class="tab" id="t3">🤝 Student Exchange Board</button>
+      <button class="tab" id="t3">🤝 Student Exchange (Önizleme)</button>
     </div>
 
     <!-- PHASE 1 -->
     <div id="view-1">
+      <div class="card" id="status-route" style="border-left: 4px solid var(--purple); margin-bottom:16px;"></div>
       <div class="grid">
         <div class="card" style="border-left: 4px solid var(--mint);">
-          <div class="card-title">📄 Evrak & BSN Tarihi</div>
-          <p style="font-size:0.8rem; color:var(--muted); margin-bottom:12px;">BSN / Randevu tarihini seçip onaylayın. Daha sonra tarihi düzenleyebilirsiniz.</p>
+          <div class="card-title">📄 Belediye Kayıt Randevusu</div>
+          <p style="font-size:0.8rem; color:var(--muted); margin-bottom:12px;">Belediye (BRP) veya RNI kayıt randevu tarihini kaydet. BSN'in kayıttan sonra verilir; aldığında yandaki adımı işaretle. BSN numaranı buraya yazma.</p>
           <input type="date" id="bsn-date" style="width:100%; padding:10px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.12); border-radius:8px; color:white; font-size:0.9rem; margin-bottom:10px; outline:none; cursor:pointer;" />
-          <button class="btn-act btn-act-full" id="btn-save-bsn-date">Tarihi Onayla & BSN Tamamla ➔</button>
+          <button class="btn-act btn-act-full" id="btn-save-bsn-date">Randevu Tarihini Kaydet ➔</button>
+          <a class="btn-act btn-act-full" style="display:block; margin-top:8px; text-align:center; text-decoration:none; background:rgba(255,255,255,0.08); color:#cbd5e1;" href="https://www.government.nl/themes/government-and-democracy/personal-data/citizen-service-number-bsn" target="_blank" rel="noopener noreferrer">BSN hakkında resmi kaynak ↗</a>
         </div>
 
         <div class="card" style="border-left: 4px solid var(--primary);">
-          <div class="card-title">🏛️ İdari Adımlar (Phase 1)</div>
+          <div class="card-title">🏛️ İdari Adımlar (Phase 1 · Settle)</div>
+          <p style="font-size:0.75rem; color:var(--muted); margin:0 0 8px 0;">LandingNL bu adımları senin yerine tamamlamaz veya doğrulamaz; her adımı resmi kurumda bitirdiğinde işaretle.</p>
           <ul class="list">
             <li class="item">
-              <span>1. Belediye BSN</span>
-              <button class="btn-act" id="btn-step-1">Tamamla ➔</button>
+              <span>1. Belediye kaydı & BSN</span>
+              <button class="btn-act" id="btn-step-1">BSN'imi aldım ➔</button>
             </li>
             <li class="item">
-              <span>2. DigiD Aktivasyon</span>
+              <span>2. DigiD</span>
               <button class="btn-act" id="btn-step-2" style="opacity:0.5;">🔒 Kilitli</button>
             </li>
             <li class="item">
-              <span>3. Banka & Twelve</span>
+              <span>3. Banka hesabı</span>
               <button class="btn-act" id="btn-step-3" style="opacity:0.5;">🔒 Kilitli</button>
             </li>
             <li class="item">
-              <span>4. Huisarts (GP) Kaydı</span>
+              <span>4. Huisarts (aile hekimi)</span>
               <button class="btn-act" id="btn-step-4" style="opacity:0.5;">🔒 Kilitli</button>
             </li>
           </ul>
@@ -176,17 +179,17 @@ export function renderDashboardPage(releaseLabel = 'v1.0.5 · local') {
         </div>
 
         <div class="card">
-          <div class="card-title">💳 Finans & Entegrasyonlar</div>
+          <div class="card-title">💳 Banka Hesabı</div>
+          <p style="font-size:0.75rem; color:var(--muted); margin:0 0 8px 0;">Bankaların şartları farklıdır; hesap açmadan önce koşulları bankanın kendi sitesinden kontrol et. LandingNL hiçbir bankayla entegre değildir.</p>
           <ul class="list">
-            <li class="item"><span>Revolut (BSN'siz)</span> <span class="tag tag-purple">✓ Aktif</span></li>
-            <li class="item"><span>ING / ABN Banka</span> <span class="tag tag-amber" id="tag-ing">BSN Bekliyor</span></li>
-            <li class="item"><span>Twelve Öğrenci Kartı</span> <span class="tag tag-amber" id="tag-twelve">Banka Bekliyor</span></li>
+            <li class="item"><span>BSN gerektirmeyen hesaplar</span> <span class="tag tag-purple">Koşulları kontrol et</span></li>
+            <li class="item"><span>Hollanda bankaları (ING, ABN AMRO, Rabobank…)</span> <span class="tag tag-amber" id="tag-ing">Genellikle BSN ister</span></li>
           </ul>
         </div>
 
         <div class="card col-3" style="border-left: 4px solid var(--amber);">
-          <div class="card-title">🏛️ Government Free Money: Devlet Destekleri</div>
-          <p style="font-size:0.82rem; color:var(--muted); margin-bottom:12px;">Birçok öğrenci bu karşılıksız devlet ödemelerine başvurabileceğini bilmiyor. Uygunluğunu kontrol et:</p>
+          <div class="card-title">🏛️ Devlet Destekleri (toeslagen)</div>
+          <p style="font-size:0.82rem; color:var(--muted); margin-bottom:12px;">Uygunluk ve tutarı Belastingdienst belirler; LandingNL başvuru yapmaz ve tutar garanti etmez. Kendi durumunu resmi hesaplayıcıyla kontrol et:</p>
           <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:12px;" id="allowance-grid">
           </div>
         </div>
@@ -211,11 +214,11 @@ export function renderDashboardPage(releaseLabel = 'v1.0.5 · local') {
 
         <div class="card col-3" style="border-left: 4px solid var(--mint);">
           <div class="card-title">🏥 Phase 2: Çalışma Statüsü & Sağlık Sigortası Karar Ağacı</div>
-          <p style="font-size:0.82rem; color:var(--muted); margin-bottom:16px;">Hollanda kanunlarına göre çalışmaya başladığınız an sağlık sigortası statünüz değişir:</p>
+          <p style="font-size:0.82rem; color:var(--muted); margin-bottom:16px;">Ücretli işe veya stajyer maaşına başladığında sağlık sigortası yükümlülüğün değişebilir. Durumunu seç:</p>
 
           <div style="display:flex; gap:12px; margin-bottom:20px; flex-wrap:wrap;">
             <button class="btn-act" id="btn-work-no" style="padding:10px 18px; font-size:0.85rem;">❌ Çalışmıyorum (Sadece Öğrenciyim)</button>
-            <button class="btn-act" id="btn-work-yes" style="padding:10px 18px; font-size:0.85rem; opacity:0.6; background:rgba(255,255,255,0.08);">🟢 Sigortalı Çalışıyorum (Part-time / Full-time)</button>
+            <button class="btn-act" id="btn-work-yes" style="padding:10px 18px; font-size:0.85rem; opacity:0.6; background:rgba(255,255,255,0.08);">🟢 Ücretli Çalışıyorum (Part-time / Full-time)</button>
           </div>
 
           <div id="insurance-tree-result" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:14px;">
@@ -234,7 +237,7 @@ export function renderDashboardPage(releaseLabel = 'v1.0.5 · local') {
       <div class="grid">
         <div class="card" style="border-left: 4px solid var(--mint);">
           <div class="card-title">🌱 İlan Paylaş (Zero-Cash Swap)</div>
-          <p style="font-size:0.8rem; color:var(--muted); margin-bottom:14px;">Parasız dairesel kampüs pazarı: Yemek, yetenek veya eşya takası yap.</p>
+          <p style="font-size:0.8rem; color:var(--muted); margin-bottom:14px;">Önizleme: ilanların şimdilik yalnızca senin hesabında saklanır, başka öğrenciler göremez. Topluluk panosu moderasyon ve bildirim araçları hazır olunca açılacak.</p>
           
           <label style="font-size:0.75rem; color:var(--muted); display:block; margin-bottom:4px;">Kategori</label>
           <select id="swap-cat" style="width:100%; padding:8px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:white; font-size:0.85rem; margin-bottom:10px; outline:none;">
@@ -251,30 +254,32 @@ export function renderDashboardPage(releaseLabel = 'v1.0.5 · local') {
           <label style="font-size:0.75rem; color:var(--muted); display:block; margin-bottom:4px;">Karşılığında Ne İstersin?</label>
           <input type="text" id="swap-offer" placeholder="Örn: NT2 Dil Pratiği / Kahve" style="width:100%; padding:8px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:white; font-size:0.85rem; margin-bottom:14px; outline:none;" />
 
-          <button class="btn-act btn-act-full" id="btn-add-swap" style="background:var(--mint); color:#042f2e;">Panoya Ekle ➔</button>
+          <button class="btn-act btn-act-full" id="btn-add-swap" style="background:var(--mint); color:#042f2e;">Taslak Olarak Kaydet ➔</button>
         </div>
 
         <div class="card col-2">
           <div class="card-title">🤝 <span id="city-board-title">Kampüs</span> Dayanışma Akışı</div>
-          <p style="font-size:0.8rem; color:var(--muted); margin-bottom:16px;">Şehrindeki öğrencilerin yayındaki parasız takas ilanları:</p>
+          <p style="font-size:0.8rem; color:var(--muted); margin-bottom:16px;">Senin taslakların ve örnek ilanlar (gerçek kullanıcı ilanı değildir):</p>
           <div id="swap-container"></div>
         </div>
       </div>
     </div>
   </div>
 
+  <footer style="text-align:center; padding:8px 20px 32px; font-size:0.78rem;"><a href="/privacy" style="color:#94a3b8;">Gizlilik Bildirimi</a> · Hesabının silinmesi için: reichani@gmail.com</footer>
+
   <div id="modal-box" class="modal hidden">
     <div class="modal-content">
       <div style="font-size:2rem; margin-bottom:8px;">🤝</div>
       <h3 style="margin:0 0 6px 0;" id="modal-title">İlan Sahibiyle Bağlan</h3>
-      <p style="font-size:0.8rem; color:var(--muted); margin-bottom:16px;">Kampüs içi doğrudan hızlı iletişim şablonu:</p>
+      <p style="font-size:0.8rem; color:var(--muted); margin-bottom:16px;">Mesajlaşma henüz açık değil. Bu şablonu kendi öğrenci grubunda kullanabilirsin:</p>
       
       <div style="background:rgba(0,0,0,0.3); border:1px solid var(--border); border-radius:10px; padding:12px; font-size:0.82rem; text-align:left; color:#cbd5e1; margin-bottom:18px;" id="modal-msg">
         "Hoi! LandingNL Kampüs panosundaki ilanını gördüm. Takas yapmak ister misin?"
       </div>
 
       <div style="display:flex; gap:10px;">
-        <button class="btn-act" id="btn-modal-wa" style="flex:1; padding:10px; background:var(--mint); color:#042f2e;">WhatsApp / Discord ➔</button>
+        <button class="btn-act" id="btn-modal-wa" style="flex:1; padding:10px; background:var(--mint); color:#042f2e;">Mesajı Kopyala</button>
         <button class="btn-act" id="btn-modal-close" style="padding:10px; background:rgba(255,255,255,0.1); min-width:auto;">Kapat</button>
       </div>
     </div>

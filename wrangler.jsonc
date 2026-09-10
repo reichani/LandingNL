@@ -1,7 +1,11 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "landingnl",
+  // Top-level config is for local development only. It is deliberately NOT named
+  // "landingnl": a bare `wrangler deploy` must never overwrite the production Worker.
+  // Deploy with `npm run deploy:staging` or `npm run deploy:production`.
+  "name": "landingnl-local",
   "main": "src/index.js",
+  "workers_dev": false,
   "compatibility_date": "2026-08-22",
   "compatibility_flags": ["nodejs_compat"],
   "observability": {
@@ -23,16 +27,21 @@
     }
   ],
   "vars": {
-    "GOOGLE_CLIENT_ID": "400457048302-bks58p58mrf37cd5c52ifndr54shn8i1.apps.googleusercontent.com"
+    "GOOGLE_CLIENT_ID": "400457048302-bks58p58mrf37cd5c52ifndr54shn8i1.apps.googleusercontent.com",
+    "SIGNUP_MODE": "open",
+    "APP_BASE_URL": "http://localhost:8787"
   },
   "env": {
     "staging": {
       "name": "landingnl-staging",
+      "workers_dev": true,
       "version_metadata": {
         "binding": "CF_VERSION_METADATA"
       },
       "vars": {
-        "GOOGLE_CLIENT_ID": "400457048302-bks58p58mrf37cd5c52ifndr54shn8i1.apps.googleusercontent.com"
+        "GOOGLE_CLIENT_ID": "400457048302-bks58p58mrf37cd5c52ifndr54shn8i1.apps.googleusercontent.com",
+        "SIGNUP_MODE": "open",
+        "APP_BASE_URL": "https://landingnl-staging.reichani.workers.dev"
       },
       "d1_databases": [
         {
@@ -45,11 +54,17 @@
     },
     "production": {
       "name": "landingnl",
+      // Production is reachable only on landingnl.com; the workers.dev copy is disabled.
+      "workers_dev": false,
       "version_metadata": {
         "binding": "CF_VERSION_METADATA"
       },
       "vars": {
-        "GOOGLE_CLIENT_ID": "400457048302-bks58p58mrf37cd5c52ifndr54shn8i1.apps.googleusercontent.com"
+        "GOOGLE_CLIENT_ID": "400457048302-bks58p58mrf37cd5c52ifndr54shn8i1.apps.googleusercontent.com",
+        // Owner decision 2026-09-10: public Google sign-in, published with /privacy.
+        // Set to "closed_beta" to admit only D1 beta_invites addresses.
+        "SIGNUP_MODE": "open",
+        "APP_BASE_URL": "https://landingnl.com"
       },
       "d1_databases": [
         {

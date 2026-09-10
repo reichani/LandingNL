@@ -1,7 +1,11 @@
 import { HttpError } from '../security.js';
 
+export function emailLoginConfigured(env) {
+  return Boolean(env.BREVO_API_KEY && env.AUTH_FROM_EMAIL);
+}
+
 export async function sendMagicLink(env, recipient, link) {
-  if (!env.BREVO_API_KEY || !env.AUTH_FROM_EMAIL) {
+  if (!emailLoginConfigured(env)) {
     throw new HttpError(503, 'Email sign-in is not configured');
   }
   const response = await fetch('https://api.brevo.com/v3/smtp/email', {

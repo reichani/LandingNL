@@ -2,12 +2,13 @@ import { renderDashboardPage } from './ui/pages/dashboard.js';
 import { renderLoginPage } from './ui/pages/login.js';
 import { renderOnboardingPage } from './ui/pages/onboarding.js';
 import { renderWelcomePage } from './ui/pages/welcome.js';
+import { renderPrivacyPage } from './ui/pages/privacy.js';
 import { getReleaseLabel } from './version.js';
+import { emailLoginConfigured } from './email/brevo.js';
 
 const HTML_HEADERS = {
   'Content-Type': 'text/html; charset=utf-8',
   'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
-  'Access-Control-Allow-Origin': '*',
 };
 
 function html(content) {
@@ -23,15 +24,20 @@ export default {
       return new Response(null, { headers: HTML_HEADERS });
     }
 
-    const cookieHeader = request.headers.get('Cookie') || '';
-    const hasSession = cookieHeader.includes('landingnl_session=');
-
-    if ((url.pathname === '/' || url.pathname === '') && !hasSession) {
+    // Session routing is decided by src/index.js; this module only renders pages.
+    if (url.pathname === '/' || url.pathname === '') {
       return html(renderWelcomePage(releaseLabel));
     }
 
     if (url.pathname === '/login') {
-      return html(renderLoginPage(env.GOOGLE_CLIENT_ID || '', releaseLabel));
+      return html(renderLoginPage(env.GOOGLE_CLIENT_ID || '', releaseLabel, {
+        emailLoginEnabled: emailLoginConfigured(env),
+        closedBeta: env.SIGNUP_MODE !== 'open',
+      }));
+    }
+
+    if (url.pathname === '/privacy') {
+      return html(renderPrivacyPage(releaseLabel));
     }
 
     if (url.pathname === '/onboarding') {

@@ -1,4 +1,4 @@
-export function renderOnboardingPage(releaseLabel = 'v1.0.5 · local') {
+export function renderOnboardingPage(releaseLabel = 'v1.0.6 · local') {
   return `<!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -25,20 +25,21 @@ export function renderOnboardingPage(releaseLabel = 'v1.0.5 · local') {
     <div id="step-1">
       <div class="step">Adım 1 / 4</div>
       <h2>Doğum Tarihin</h2>
-      <p>Asgari ücret skalası yaşınıza göre hesaplanır.</p>
-      <label>Doğum Tarihi</label>
-      <input type="date" id="dob" value="2005-01-01" required />
+      <p>Hollanda'da yaşa bağlı kurallar (ör. asgari ücret kademesi) için gerekir. LandingNL 16 yaş ve üzeri öğrenciler içindir.</p>
+      <label for="dob">Doğum Tarihi</label>
+      <input type="date" id="dob" required />
       <button class="btn" id="btn-ob-1">Devam ➔</button>
+      <p style="font-size:0.72rem; margin:12px 0 0 0;"><a href="/privacy" style="color:#94a3b8;">Gizlilik Bildirimi</a></p>
     </div>
 
     <div id="step-2" class="hidden">
       <div class="step">Adım 2 / 4</div>
       <h2>Vatandaşlık Statün</h2>
-      <p>Çalışma izni yükümlülüğü pasaport türüne bağlıdır.</p>
-      <label>Pasaport</label>
+      <p>Hollanda'ya giriş, oturum izni ve çalışma izni kuralları pasaportuna göre değişir. Bu seçim yolculuk adımlarını belirler.</p>
+      <label for="status">Pasaport</label>
       <select id="status">
-        <option value="non_eu">Non-EU / EEA (AB Dışı - Vizeye Tabi)</option>
-        <option value="eu">EU / EEA (AB Vatandaşı - İzin Gerekmez)</option>
+        <option value="non_eu">AB/AEA veya İsviçre dışı pasaport (oturum izni gerekir)</option>
+        <option value="eu">AB/AEA veya İsviçre pasaportu (oturum izni gerekmez)</option>
       </select>
       <button class="btn" id="btn-ob-2">Devam ➔</button>
     </div>
@@ -100,13 +101,22 @@ export function renderOnboardingPage(releaseLabel = 'v1.0.5 · local') {
     }
 
     document.addEventListener('DOMContentLoaded', function() {
+      var maxDob = new Date();
+      maxDob.setUTCFullYear(maxDob.getUTCFullYear() - 16);
+      document.getElementById('dob').max = maxDob.toISOString().slice(0, 10);
       document.getElementById('city').addEventListener('change', updateSchools);
       updateSchools();
 
       document.getElementById('btn-ob-1').onclick = function() {
         var dob = document.getElementById('dob').value;
-        if (!dob) return alert('Tarih seçin.');
-        var age = Math.abs(new Date(Date.now() - new Date(dob).getTime()).getUTCFullYear() - 1970);
+        if (!dob) return alert('Doğum tarihini seçin.');
+        var birth = new Date(dob + 'T00:00:00Z');
+        var today = new Date();
+        var age = today.getUTCFullYear() - birth.getUTCFullYear();
+        var hadBirthday = (today.getUTCMonth() > birth.getUTCMonth()) ||
+          (today.getUTCMonth() === birth.getUTCMonth() && today.getUTCDate() >= birth.getUTCDate());
+        if (!hadBirthday) age -= 1;
+        if (!(age >= 16 && age <= 100)) return alert('LandingNL 16 yaş ve üzeri öğrenciler içindir. Doğum tarihini kontrol et.');
         localStorage.setItem('landingnl_age', age);
         document.getElementById('step-1').classList.add('hidden');
         document.getElementById('step-2').classList.remove('hidden');
@@ -141,7 +151,10 @@ export function renderOnboardingPage(releaseLabel = 'v1.0.5 · local') {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(state)
           });
-          if (!response.ok) throw new Error('Profil kaydedilemedi.');
+          if (!response.ok) {
+            var failure = await response.json().catch(function() { return {}; });
+            throw new Error(failure.error || 'Profil kaydedilemedi.');
+          }
           var result = await response.json();
           location.href = result.next || '/dashboard';
         } catch (error) {

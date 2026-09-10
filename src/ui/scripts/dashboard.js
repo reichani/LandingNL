@@ -31,6 +31,7 @@ export const dashboardScript = `
           if (!response.ok) return;
           var result = await response.json();
           var state = result.state || {};
+          Store.clear();
           Object.keys(state).forEach(function(key) {
             localStorage.setItem('landingnl_' + key, String(state[key]));
           });
@@ -39,9 +40,9 @@ export const dashboardScript = `
     };
 
     function cleanIsoDate(val) {
-      if (!val) return '2026-08-19';
+      if (!val) return '';
       var match = val.match(/^\\d{4}-\\d{2}-\\d{2}/);
-      return match ? match[0] : '2026-08-19';
+      return match ? match[0] : '';
     }
 
     function createSubCard(tagClass, tagText, titleText, descText, actionUrl) {
@@ -98,6 +99,57 @@ export const dashboardScript = `
       grid.appendChild(createSubCard('tag-mint', '💶 Asgari Ücret Skalası', isAdult ? 'Tam Asgari Ücret Skalası' : age + ' Yaş Jeugdloon Skalası', '21 yaş altı öğrenciler için yaşa bağlı resmi kademeli ücret uygulanır.'));
     }
 
+    // Non-EU/EEA and EU/EEA students enter the Dutch system through different doors:
+    // the non-EU route runs through IND (entry visa + residence permit) before municipal
+    // registration, the EU route does not. Both then share the Settle steps.
+    function renderStatusRoute() {
+      var box = document.getElementById('status-route');
+      if (!box) return;
+      var isEU = Store.get('status', 'non_eu') === 'eu';
+      box.innerHTML = '';
+
+      var title = document.createElement('div');
+      title.className = 'card-title';
+      title.textContent = isEU ? '🇪🇺 AB/AEA veya İsviçre rotası' : '🛂 AB/AEA dışı rota';
+      box.appendChild(title);
+
+      var lead = document.createElement('p');
+      lead.style.cssText = 'font-size:0.82rem; color:var(--muted); margin:0 0 12px 0;';
+      lead.textContent = isEU
+        ? 'Oturum izni başvurusu gerekmez. Hollanda’da dört aydan uzun kalacaksan belediyeye (BRP) kaydolman gerekir; kısa kalışlarda RNI kaydı yapılır. Aşağıdaki adımlarla doğrudan başlayabilirsin.'
+        : 'Belediyeye kaydolmadan önce oturum iznin (VVR) tamamlanmalı. Başvuruyu genellikle okulun IND nezdinde senin adına yapar; gerekiyorsa önce giriş vizesi (MVV) alınır. İzin kartını aldıktan sonra aşağıdaki adımlara geç.';
+      box.appendChild(lead);
+
+      var list = document.createElement('ul');
+      list.className = 'list';
+      var items = isEU
+        ? [['Oturum izni', 'Gerekmez'], ['Çalışma izni (TWV)', 'Genellikle gerekmez'], ['İlk adım', 'Belediye / RNI kaydı']]
+        : [['Oturum izni (VVR)', 'Gerekir – okulun ve IND ile takip et'], ['Giriş vizesi (MVV)', 'Ülkene göre değişir'], ['Çalışma izni (TWV)', 'İşveren başvurur – saat sınırı olabilir'], ['İlk adım', 'İzin kartı, sonra belediye kaydı']];
+      items.forEach(function(pair) {
+        var li = document.createElement('li');
+        li.className = 'item';
+        var left = document.createElement('span');
+        left.textContent = pair[0];
+        var right = document.createElement('span');
+        right.className = 'tag ' + (isEU ? 'tag-mint' : 'tag-amber');
+        right.textContent = pair[1];
+        li.appendChild(left); li.appendChild(right);
+        list.appendChild(li);
+      });
+      box.appendChild(list);
+
+      var link = document.createElement('a');
+      link.href = isEU
+        ? 'https://ind.nl/en/residence-permits/eu-eea-and-swiss-citizens'
+        : 'https://ind.nl/en/residence-permits/study/residence-permit-for-study-purposes';
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.className = 'btn-act btn-act-full';
+      link.style.cssText = 'display:block; margin-top:10px; text-align:center; text-decoration:none;';
+      link.textContent = 'IND resmi sayfası ↗';
+      box.appendChild(link);
+    }
+
     function renderAllowances() {
       var grid = document.getElementById('allowance-grid');
       if (!grid) return;
@@ -109,8 +161,8 @@ export const dashboardScript = `
       grid.appendChild(createSubCard(
         isHouseReady ? 'tag-mint' : 'tag-amber',
         '🏠 Huurtoeslag (Kira Desteği)',
-        isHouseReady ? 'Kira Sözleşmen Var - Başvurabilirsin' : 'Geçici Konaklama - Sözleşme Bekliyor',
-        'Kendi kapısı ve mutfağı olan bağımsız odalarda kalan öğrencilere devlet aylık kira yardımı yapar.',
+        isHouseReady ? 'Sözleşmen var – uygunluğunu kontrol et' : 'Önce kira sözleşmesi gerekir',
+        'Genellikle kendi girişi, mutfağı ve tuvaleti olan bağımsız bir konut gerekir; yaş, kira ve gelir koşulları da vardır. Sonucu Belastingdienst belirler.',
         'https://www.belastingdienst.nl/wps/wcm/connect/nl/huurtoeslag/content/hoe-moet-ik-huurtoeslag-aanvragen'
       ));
 
@@ -168,13 +220,13 @@ export const dashboardScript = `
       }
 
       if (!isWorking) {
-        container.appendChild(createSubCard('tag-purple', '🏥 Geçerli Sigortan', isEU ? 'EHIC / Özel Sigorta Yeterli' : 'Özel Öğrenci Sigortası (Aon / InsureToStudy)', 'Sadece eğitim aldığınız sürece zorunlu Hollanda Temel Sağlık Sigortası (Basiszorgverzekering) yapmanıza gerek yoktur.', 'https://www.aonstudentinsurance.com/en/home'));
+        container.appendChild(createSubCard('tag-purple', '🏥 Yalnızca öğrenciysen', isEU ? 'EHIC veya özel sigorta genellikle yeterli' : 'Özel öğrenci sigortası genellikle gerekir', 'Sadece okuyorsan Hollanda temel sağlık sigortası (basisverzekering) genellikle zorunlu değildir; kendi durumunu resmi kaynaktan doğrula.', 'https://www.studyinnl.org/plan-your-stay/healthcare-insurance'));
         container.appendChild(createSubCard('tag-mint', '💶 Sigorta Durumu', 'Poliçeni ve kapsamını doğrula', 'Mevcut özel/öğrenci sigortanın Hollanda’daki kapsamını sigortacı ve resmi kaynaklarla doğrula.'));
-        container.appendChild(createSubCard('tag-amber', '⚠️ Karar Uyarısı', 'İşe Girdiğin An Değişir', 'Part-time veya resmi kontratlı bir işe başladığınız ilk gün Temel Sigortaya geçmek yasal zorunluluktur.'));
+        container.appendChild(createSubCard('tag-amber', '⚠️ Karar Uyarısı', 'Ücretli işe başlarsan değişir', 'Ücretli bir işe veya maaşlı staja başladığında Hollanda temel sağlık sigortası genellikle zorunlu hale gelir. Süreyi ve koşulları resmi kaynaktan kontrol et.'));
       } else {
         container.appendChild(createSubCard('tag-mint', '🚨 STATÜ KONTROLÜ', 'Basiszorgverzekering gerekebilir', 'Ücretli çalışmaya başladığında Hollanda temel sağlık sigortası yükümlülüğünü resmi SVB ve hükümet kaynaklarından kontrol et.', 'https://www.svb.nl/en/the-wlz-scheme/insurance-under-the-wlz-scheme/you-are-a-student-or-doing-an-internship'));
         container.appendChild(createSubCard('tag-purple', '💶 DEVLET DESTEĞİ', 'Zorgtoeslag uygunluğunu kontrol et', 'Gelir, yaş, ikamet ve sigorta durumuna göre destek hakkın doğabilir. Güncel sonucu Belastingdienst hesaplar.', 'https://www.belastingdienst.nl/wps/wcm/connect/nl/zorgtoeslag/content/hoe-moet-ik-zorgtoeslag-aanvragen'));
-        container.appendChild(createSubCard('tag-mint', '🩺 Aile Hekimi (Huisarts)', 'Huisarts Kaydınız Geçerli', "Phase 1'de kaydolduğunuz Huisarts hekiminiz üzerinden sevk ve sağlık erişimi devam eder."));
+        container.appendChild(createSubCard('tag-mint', '🩺 Aile Hekimi (Huisarts)', 'Sigorta değişince hekimine bildir', 'Yeni sigorta bilgilerini kayıtlı olduğun huisarts pratiğiyle paylaş.'));
       }
     }
 
@@ -183,13 +235,13 @@ export const dashboardScript = `
       if (targetStep === 1) {
         Store.set('step', '1');
       } else if (targetStep === 2) {
-        if (currentStep < 1) return alert('Önce BSN kaydını tamamlayın.');
+        if (currentStep < 1) return alert('Önce BSN adımını işaretle.');
         Store.set('step', '2');
       } else if (targetStep === 3) {
-        if (currentStep < 2) return alert('Önce DigiD aktivasyonunu tamamlayın.');
+        if (currentStep < 2) return alert('Önce DigiD adımını işaretle.');
         Store.set('step', '3');
       } else if (targetStep === 4) {
-        if (currentStep < 3) return alert('Önce Banka entegrasyonunu tamamlayın.');
+        if (currentStep < 3) return alert('Önce banka hesabı adımını işaretle.');
         Store.set('step', '4');
       }
       render();
@@ -207,29 +259,37 @@ export const dashboardScript = `
       var button = document.getElementById('btn-save-bsn-date');
       var input = document.getElementById('bsn-date');
       if (!button || !input) return;
-      var completed = parseInt(Store.get('step', '0')) >= 1;
-      var changed = cleanIsoDate(input.value) !== cleanIsoDate(Store.get('bsn_date', '2026-08-19'));
-      var enabled = !completed || changed;
+      var saved = cleanIsoDate(Store.get('bsn_date', ''));
+      var completed = Boolean(saved);
+      var changed = Boolean(input.value) && cleanIsoDate(input.value) !== saved;
+      var enabled = changed;
       setActionState(button, !enabled);
       button.style.opacity = enabled ? '1' : '0.55';
       button.innerText = completed
         ? (changed ? 'Değişikliği Kaydet ➔' : '✓ Tarih Kaydedildi')
-        : 'Tarihi Onayla & BSN Tamamla ➔';
+        : 'Randevu Tarihini Kaydet ➔';
     }
 
     function render() {
       var step = parseInt(Store.get('step', '0'));
-      var rawDate = Store.get('bsn_date', '2026-08-19');
-      var savedDate = cleanIsoDate(rawDate);
+      var savedDate = cleanIsoDate(Store.get('bsn_date', ''));
 
       var dateElem = document.getElementById('bsn-date');
-      if (dateElem) dateElem.value = savedDate;
+      if (dateElem && document.activeElement !== dateElem) dateElem.value = savedDate;
 
-      var score = 20 + (step * 20);
+      // Progress reflects the four user-confirmed Settle milestones only.
+      var score = step * 25;
       var percentElem = document.getElementById('percent-text');
       var fillElem = document.getElementById('bar-fill');
       if (percentElem) percentElem.innerText = '%' + score;
       if (fillElem) fillElem.style.width = score + '%';
+
+      var isEU = Store.get('status', 'non_eu') === 'eu';
+      var hasHousing = Store.get('housing', 'no') === 'yes';
+      var bVisa = document.getElementById('b-visa');
+      var bHousing = document.getElementById('b-housing');
+      if (bVisa) { bVisa.className = isEU ? 'badge active' : 'badge'; bVisa.innerText = isEU ? 'AB/AEA: oturum izni gerekmez' : 'Oturum izni: IND ile doğrula'; }
+      if (bHousing) { bHousing.className = hasHousing ? 'badge active' : 'badge'; bHousing.innerText = hasHousing ? '✓ Konut (beyan)' : '⏳ Konut arıyorsun'; }
 
       var bBsn = document.getElementById('b-bsn');
       var bDigid = document.getElementById('b-digid');
@@ -247,63 +307,68 @@ export const dashboardScript = `
       setActionState(btn4, step < 3 || step >= 4);
 
       var tagIng = document.getElementById('tag-ing');
-      var tagTwelve = document.getElementById('tag-twelve');
       var info = document.getElementById('status-info');
-
       if (info) info.style.display = 'block';
 
+      function setInfo(text) { if (info) info.textContent = text; }
+
       if (step >= 1) {
-        if (bBsn) { bBsn.className = 'badge active'; bBsn.innerText = '✓ BSN Tamam'; }
-        if (btn1) { btn1.className = 'tag tag-mint'; btn1.innerText = '✓ Alındı'; }
-        if (tagIng) { tagIng.className = 'tag tag-mint'; tagIng.innerText = '✓ Hesabı Aç'; }
-        if (btn2) { btn2.style.opacity = '1'; btn2.innerText = 'Aktifleştir ➔'; }
-        if (info) info.innerHTML = '✅ <strong>BSN Kaydedildi (' + savedDate + ')!</strong> Şimdi DigiD mektubunu onaylamak için "2. DigiD" butonuna basın.';
+        if (bBsn) { bBsn.className = 'badge active'; bBsn.innerText = '✓ BSN (beyan)'; }
+        if (btn1) { btn1.className = 'tag tag-mint'; btn1.innerText = '✓ İşaretlendi'; }
+        if (tagIng) { tagIng.className = 'tag tag-mint'; tagIng.innerText = 'BSN hazır – şartları kontrol et'; }
+        if (btn2) { btn2.style.opacity = '1'; btn2.innerText = 'Aktifleştirdim ➔'; }
+        setInfo('Sıradaki adım DigiD: BSN ve kayıtlı adresinle digid.nl üzerinden başvur. Aktivasyon mektubu posta ile adresine gelir; aktifleştirdiğinde işaretle.');
       } else {
-        if (bBsn) { bBsn.className = 'badge'; bBsn.innerText = '⏳ 1. BSN Kaydı'; }
-        if (btn1) { btn1.className = 'btn-act'; btn1.innerText = 'Tamamla ➔'; }
-        if (tagIng) { tagIng.className = 'tag tag-amber'; tagIng.innerText = 'BSN Bekliyor'; }
-        if (btn2) { btn2.style.opacity = '0.5'; btn2.innerText = '🔒 Kilitli'; }
-        if (info) info.innerHTML = 'ℹ️ BSN randevu tarihinizi kaydederek idari adımları sırayla açın.';
+        if (bBsn) { bBsn.className = 'badge'; bBsn.innerText = '⏳ 1. Belediye kaydı & BSN'; }
+        if (btn1) { btn1.className = 'btn-act'; btn1.innerText = "BSN'imi aldım ➔"; }
+        if (tagIng) { tagIng.className = 'tag tag-amber'; tagIng.innerText = 'Genellikle BSN ister'; }
+        if (btn2) { btn2.style.opacity = '0.5'; btn2.innerText = '🔒 Önce BSN'; }
+        var firstStep = isEU
+          ? 'İlk adım: belediye (BRP) veya RNI kaydı. Randevu tarihini kaydet; BSN verildiğinde adımı işaretle.'
+          : 'İlk adım: oturum izni kartın (VVR) hazır olduğunda belediye kaydı. Randevu tarihini kaydet; BSN verildiğinde adımı işaretle.';
+        setInfo(savedDate
+          ? 'Belediye randevun kayıtlı (' + savedDate + '). BSN numaran verildiğinde “BSN’imi aldım” adımını işaretle.'
+          : firstStep);
       }
 
       if (step >= 2) {
-        if (bDigid) { bDigid.className = 'badge active'; bDigid.innerText = '✓ DigiD Aktif'; }
-        if (btn2) { btn2.className = 'tag tag-mint'; btn2.innerText = '✓ Aktifleşti'; }
-        if (tagTwelve) { tagTwelve.className = 'tag tag-mint'; tagTwelve.innerText = '✓ Kart Bağla'; }
-        if (btn3) { btn3.style.opacity = '1'; btn3.innerText = 'Entegre Et ➔'; }
-        if (info) info.innerHTML = '✅ <strong>DigiD Aktifleşti!</strong> Son olarak Banka & Twelve entegrasyonuna tıklayın.';
-      } else if (step < 2) {
+        if (bDigid) { bDigid.className = 'badge active'; bDigid.innerText = '✓ DigiD (beyan)'; }
+        if (btn2) { btn2.className = 'tag tag-mint'; btn2.innerText = '✓ İşaretlendi'; }
+        if (btn3) { btn3.style.opacity = '1'; btn3.innerText = 'Hesabımı açtım ➔'; }
+        setInfo(isEU
+          ? 'Sıradaki adım banka hesabı: kimlik ve BSN ile başvurabilirsin; bankanın istediği belgeleri kendi sitesinden kontrol et.'
+          : 'Sıradaki adım banka hesabı: kimliğin yanında oturum izni kartın da istenebilir; bankanın koşullarını kendi sitesinden kontrol et.');
+      } else {
         if (bDigid) { bDigid.className = 'badge'; bDigid.innerText = '🔒 2. DigiD'; }
-        if (tagTwelve) { tagTwelve.className = 'tag tag-amber'; tagTwelve.innerText = 'Banka Bekliyor'; }
-        if (btn3) { btn3.style.opacity = '0.5'; btn3.innerText = '🔒 Kilitli'; }
+        if (btn3) { btn3.style.opacity = '0.5'; btn3.innerText = '🔒 Önce DigiD'; }
       }
 
       if (step >= 3) {
-        if (bBank) { bBank.className = 'badge active'; bBank.innerText = '✓ Banka Entegre'; }
-        if (btn3) { btn3.className = 'tag tag-mint'; btn3.innerText = '✓ Entegre Edildi'; }
-        if (tagIng) { tagIng.className = 'tag tag-mint'; tagIng.innerText = '✓ Aktif'; }
-        if (tagTwelve) { tagTwelve.className = 'tag tag-mint'; tagTwelve.innerText = '✓ Tanımlandı'; }
-        if (btn4) { btn4.style.opacity = '1'; btn4.innerText = 'Hekim Seç ➔'; }
-        if (info) info.innerHTML = '✅ <strong>Banka Entegre Edildi!</strong> Son olarak BSN ve Adresinizle mahalle Huisarts (Aile Hekimi) kaydınızı tamamlayın.';
-      } else if (step < 3) {
+        if (bBank) { bBank.className = 'badge active'; bBank.innerText = '✓ Banka hesabı (beyan)'; }
+        if (btn3) { btn3.className = 'tag tag-mint'; btn3.innerText = '✓ İşaretlendi'; }
+        if (btn4) { btn4.style.opacity = '1'; btn4.innerText = 'Kaydoldum ➔'; }
+        setInfo('Sıradaki adım huisarts: yakınındaki pratikleri ara ve yeni hasta kabul edip etmediklerini doğrudan sor. Merkezi bir kapasite listesi yoktur. Kaydın onaylandığında işaretle.');
+      } else {
         if (bBank) { bBank.className = 'badge'; bBank.innerText = '🔒 3. Banka'; }
-        if (btn4) { btn4.style.opacity = '0.5'; btn4.innerText = '🔒 Kilitli'; }
+        if (btn4) { btn4.style.opacity = '0.5'; btn4.innerText = '🔒 Önce banka'; }
       }
 
       if (step >= 4) {
-        if (bGp) { bGp.className = 'badge active'; bGp.innerText = '✓ Huisarts Kayıtlı'; }
-        if (btn4) { btn4.className = 'tag tag-mint'; btn4.innerText = '✓ Kayıtlı'; }
-        if (info) info.innerHTML = '🎉 <strong>Tebrikler!</strong> Phase 1 Uyum Süreci %100 tamamlandı. Phase 2 akademik ve sigorta karar ağacı modülüne geçebilirsiniz.';
-      } else if (step < 4) {
-        if (bGp) { bGp.className = 'badge'; bGp.innerText = '🔒 4. Huisarts (GP) Kaydı'; }
+        if (bGp) { bGp.className = 'badge active'; bGp.innerText = '✓ Huisarts (beyan)'; }
+        if (btn4) { btn4.className = 'tag tag-mint'; btn4.innerText = '✓ İşaretlendi'; }
+        setInfo(isEU
+          ? 'Settle adımlarının dördünü de işaretledin. Çalışmaya veya staja başlarsan Phase 2 sekmesinden sigorta durumunu yeniden kontrol et.'
+          : 'Settle adımlarının dördünü de işaretledin. Çalışmaya başlamadan önce oturum iznindeki çalışma koşullarını ve işverenin TWV yükümlülüğünü doğrula; sigorta durumunu Phase 2 sekmesinden kontrol et.');
+      } else {
+        if (bGp) { bGp.className = 'badge'; bGp.innerText = '🔒 4. Huisarts'; }
       }
       updateBsnSaveButton();
     }
 
     var defaultPosts = [
-      { id: 1, cat: '🍝 Food Exchange', title: '3 Porsiyon İtalyan Makarnası', offer: 'Bulaşıkları yıkayacak ev arkadaşı', tagClass: 'tag-purple' },
-      { id: 2, cat: '🎹 Skill Swap', title: 'Piyano Dersi / Pratik Eşliği', offer: 'NT2 Temel Hollandaca konuşma pratiği', tagClass: 'tag-mint' },
-      { id: 3, cat: '🚲 Gear & Tools', title: 'Swapfiets Anahtarı & Yağlama Seti', offer: '1 Bardak Filtre Kahve', tagClass: 'tag-amber' }
+      { id: 1, cat: '🍝 Food Exchange', title: '3 Porsiyon İtalyan Makarnası', offer: 'Bulaşıkları yıkayacak ev arkadaşı', tagClass: 'tag-purple', sample: true },
+      { id: 2, cat: '🎹 Skill Swap', title: 'Piyano Dersi / Pratik Eşliği', offer: 'NT2 Temel Hollandaca konuşma pratiği', tagClass: 'tag-mint', sample: true },
+      { id: 3, cat: '🚲 Gear & Tools', title: 'Swapfiets Anahtarı & Yağlama Seti', offer: '1 Bardak Filtre Kahve', tagClass: 'tag-amber', sample: true }
     ];
 
     function renderSwaps() {
@@ -322,7 +387,7 @@ export const dashboardScript = `
         var content = document.createElement('div');
         var category = document.createElement('span');
         category.className = 'swap-tag ' + (post.tagClass || 'tag-mint');
-        category.textContent = String(post.cat || '');
+        category.textContent = String(post.cat || '') + (post.sample ? ' · Örnek' : ' · Taslağın');
         var title = document.createElement('h4');
         title.style.cssText = 'margin:2px 0; font-size:0.9rem; color:#fff;';
         title.textContent = String(post.title || '');
@@ -346,6 +411,8 @@ export const dashboardScript = `
           btnConn.onclick = function() {
             document.getElementById('modal-title').innerText = '"' + t + '"';
             document.getElementById('modal-msg').innerText = 'Hoi! LandingNL kampüs panosundaki "' + t + '" ilanını gördüm. Takas yapmak ister misin?';
+            var wa = document.getElementById('btn-modal-wa');
+            if (wa) wa.innerText = 'Mesajı Kopyala';
             document.getElementById('modal-box').classList.remove('hidden');
           };
         })(post.title);
@@ -358,9 +425,9 @@ export const dashboardScript = `
     // DIRECT STEP UPDATE FUNCTION FOR BSN DATE
     function triggerBsnSave() {
       var dateInput = document.getElementById('bsn-date');
-      var val = cleanIsoDate(dateInput ? dateInput.value : '2026-08-19');
+      var val = cleanIsoDate(dateInput ? dateInput.value : '');
+      if (!val) return alert('Randevu tarihini seç.');
       Store.set('bsn_date', val);
-      Store.set('step', '1');
       render();
     }
 
@@ -376,7 +443,7 @@ export const dashboardScript = `
 
       var dateInput = document.getElementById('bsn-date');
       if (dateInput) {
-        dateInput.value = cleanIsoDate(Store.get('bsn_date', '2026-08-19'));
+        dateInput.value = cleanIsoDate(Store.get('bsn_date', ''));
         dateInput.addEventListener('input', updateBsnSaveButton);
         dateInput.addEventListener('change', updateBsnSaveButton);
       }
@@ -456,15 +523,21 @@ export const dashboardScript = `
           document.getElementById('swap-offer').value = '';
 
           renderSwaps();
-          alert('🌱 İlanınız kampüs panosuna eklendi!');
+          alert('Taslağın kaydedildi. Topluluk panosu açılana kadar yalnızca sen görebilirsin.');
         };
       }
 
       var btnWa = document.getElementById('btn-modal-wa');
       if (btnWa) {
         btnWa.onclick = function() {
-          alert('Mesaj kopyalandı! Öğrenci sohbet grubuna yönlendiriliyorsunuz.');
-          document.getElementById('modal-box').classList.add('hidden');
+          var msg = document.getElementById('modal-msg');
+          var text = msg ? msg.innerText : '';
+          var done = function() { btnWa.innerText = '✓ Kopyalandı'; };
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(done, function() { alert('Kopyalanamadı; metni elle seçip kopyala.'); });
+          } else {
+            alert('Kopyalanamadı; metni elle seçip kopyala.');
+          }
         };
       }
 
@@ -495,6 +568,7 @@ export const dashboardScript = `
 
       Store.hydrate().finally(function() {
         renderProfileGrid();
+        renderStatusRoute();
         renderAllowances();
         renderPerks();
         renderInsuranceTree();
