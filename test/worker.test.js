@@ -37,7 +37,7 @@ const PAGE_HASHES = new Map([
   ['/', '066013fc9c34a55b10228ad6868ddf397418e8acad4245f1d8ee11bdad0ee785'],
   ['/login', '3cafba3453a201269063aaea12c5af15e6b193dab7957b2aa43e6e1309f4f676'],
   ['/onboarding', '202ee18456fce810dee0ce4f676ee241eb53c066cce97e6b319958f1ea668cf4'],
-  ['/dashboard', '48acda7d8098cc303858bd639a3f8f91619e6a9c4df64b91a31e9c25a9401f55'],
+  ['/dashboard', '3be0cbdd8551195ef08da2d00d3a3fa5151b09960a97af46939da14d1b0a18e3'],
 ]);
 
 test('returning Google users are updated by scalar user id', async () => {
@@ -656,4 +656,21 @@ test('public transport guidance never promises a discount the student may not ha
   assert.match(transport, /Always check out/);
   // No card claims free travel outright.
   assert.doesNotMatch(transport, /travel for free with your student card/i);
+});
+
+test('bike rental guidance is vendor-neutral and carries no perishable prices', async () => {
+  const html = await (await legacyUi.fetch(new Request('https://example.test/dashboard'), env)).text();
+  assert.match(html, /id="bike-grid"/);
+
+  const source = await readFile(new URL('../src/ui/scripts/dashboard.js', import.meta.url), 'utf8');
+  const bikes = source.slice(source.indexOf('function renderBikes'), source.indexOf('function renderInsuranceTree'));
+  // OV-fiets conditions come from the NS page, including what a student OV does not cover.
+  assert.match(bikes, /personal OV-chipkaart with the free OV-fiets subscription/);
+  assert.match(bikes, /student travel product alone is not enough/);
+  assert.match(bikes, /ns\.nl\/en\/service-and-contact\/door-to-door-services\/ov-fiets/);
+  // No rental company is named and no monthly price is quoted.
+  for (const vendor of ['Swapfiets', 'StuBike', 'Student Mobility', 'Donkey Republic']) {
+    assert.ok(!bikes.includes(vendor), vendor);
+  }
+  assert.doesNotMatch(bikes, /€\s?\d+\s?(per month|\/month|a month)/i);
 });

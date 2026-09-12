@@ -234,6 +234,12 @@ export function renderDashboardPage(releaseLabel = 'v1.0.6', buildMeta = '') {
         </div>
 
         <div class="card col-3" style="border-left: 4px solid var(--mint);">
+          <div class="card-title">🚲 Renting a bike</div>
+          <p style="font-size:0.82rem; color:var(--muted); margin-bottom:12px;">For most students the bike is the real daily transport. Renting suits a short or uncertain stay; buying second-hand usually wins over a longer one. LandingNL is not tied to any rental company.</p>
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:12px;" id="bike-grid"></div>
+        </div>
+
+        <div class="card col-3" style="border-left: 4px solid var(--mint);">
           <div class="card-title">🏥 Work status &amp; health insurance</div>
           <p style="font-size:0.82rem; color:var(--muted); margin-bottom:16px;">Starting paid work or a paid internship can change your health insurance obligation. Choose your situation:</p>
 

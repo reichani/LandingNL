@@ -295,6 +295,37 @@ export const dashboardScript = `
       ));
     }
 
+    // Rental guidance stays vendor-neutral: the decision criteria and the rules of
+    // the national OV-fiets scheme, no company recommendations and no prices that
+    // go stale (NS publishes the current rate).
+    function renderBikes() {
+      var grid = document.getElementById('bike-grid');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      grid.appendChild(createSubCard(
+        'tag-purple',
+        '🚉 OV-fiets',
+        'Station rental, per 24 hours',
+        'The national scheme at nearly every train station. You need a personal OV-chipkaart with the free OV-fiets subscription (or an NS Flex subscription) — a student travel product alone is not enough, and you cannot rent with a contactless bank card. You can keep a bike for up to seven days, but after three days a €5 per day surcharge applies, and returning it to a different location costs €10. NS publishes the current rate per 24 hours.',
+        'https://www.ns.nl/en/service-and-contact/door-to-door-services/ov-fiets'
+      ));
+
+      grid.appendChild(createSubCard(
+        'tag-mint',
+        '📅 Monthly rental',
+        'Best for a short or uncertain stay',
+        'Student bike rental companies charge a fixed monthly fee, usually with repairs included and often theft cover. Before you sign, check three things: what the fee covers if the bike breaks, what you pay if it is stolen, and the notice period for cancelling. There is no deposit-free standard — read the terms.'
+      ));
+
+      grid.appendChild(createSubCard(
+        'tag-amber',
+        '💰 Renting or buying',
+        'Roughly a year is the tipping point',
+        'Compare the monthly rental fee against the price of a decent second-hand bike plus a good lock. Over a full academic year buying is usually cheaper, but you carry the repair and theft risk and you have to sell it when you leave. Never buy a bike on the street from an unknown seller: handling stolen goods is a criminal offence in the Netherlands.'
+      ));
+    }
+
     function renderInsuranceTree() {
       var container = document.getElementById('insurance-tree-result');
       if (!container) return;
@@ -890,6 +921,7 @@ export const dashboardScript = `
         renderAllowances();
         renderPerks();
         renderTransport();
+        renderBikes();
         renderInsuranceTree();
         render();
         renderSwaps();
