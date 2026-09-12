@@ -45,7 +45,8 @@ jobs:
       - name: Smoke public routes
         run: |
           curl --fail --silent --show-error "$STAGING_URL/" >/dev/null
-          curl --fail --silent --show-error "$STAGING_URL/login" >/dev/null
+          curl --fail --silent --show-error "$STAGING_URL/login" | grep -q 'privacy-link'
+          curl --fail --silent --show-error "$STAGING_URL/privacy" | grep -q 'Who is responsible'
           curl --fail --silent --show-error "$STAGING_URL/robots.txt" | grep -q 'Disallow: /dashboard'
       - name: Verify dashboard remains protected
         shell: bash

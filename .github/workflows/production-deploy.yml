@@ -40,11 +40,11 @@ jobs:
           sleep 10
           curl --fail --silent --show-error "$PRODUCTION_URL/" | grep -q 'journey-start'
           curl --fail --silent --show-error "$PRODUCTION_URL/login" | grep -q 'privacy-link'
-          curl --fail --silent --show-error "$PRODUCTION_URL/privacy" | grep -q 'Veri sorumlusu'
+          curl --fail --silent --show-error "$PRODUCTION_URL/privacy" | grep -q 'Who is responsible'
           curl --fail --silent --show-error "$PRODUCTION_URL/robots.txt" | grep -q 'Disallow: /dashboard'
       - name: Verify the retired phone/SMS prototype is gone
         run: |
-          if curl --silent "$PRODUCTION_URL/" | grep -q 'SMS Doğrulama'; then
+          if curl --silent "$PRODUCTION_URL/" | grep -qE 'SMS Doğrulama|SMS Kodu'; then
             echo "Prototype still served"; exit 1
           fi
       - name: Verify dashboard remains protected
