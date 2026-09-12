@@ -43,6 +43,25 @@ export const dashboardScript = `
       return new Date().toISOString().slice(0, 10);
     }
 
+    // Municipal appointments are often weeks out, so the wait itself is worth
+    // showing: it is the reason to come back to the dashboard.
+    function daysUntil(isoDate) {
+      if (!isoDate) return null;
+      var target = Date.parse(isoDate + 'T00:00:00Z');
+      if (isNaN(target)) return null;
+      var today = Date.parse(todayIso() + 'T00:00:00Z');
+      return Math.round((target - today) / 86400000);
+    }
+
+    function countdownText(isoDate) {
+      var days = daysUntil(isoDate);
+      if (days === null) return '';
+      if (days > 1) return 'Your municipal appointment is in ' + days + ' days (' + isoDate + ').';
+      if (days === 1) return 'Your municipal appointment is tomorrow (' + isoDate + ').';
+      if (days === 0) return 'Your municipal appointment is today.';
+      return 'Your appointment was on ' + isoDate + '.';
+    }
+
     function cleanIsoDate(val) {
       if (!val) return '';
       var match = val.match(/^\\d{4}-\\d{2}-\\d{2}/);
@@ -369,7 +388,12 @@ export const dashboardScript = `
 
       var started = states.some(function(state) { return state !== 'todo'; });
       title.textContent = (started ? '' : 'Start here · ') + (focus + 1) + '. ' + STEP_NAMES[focus];
-      text.textContent = guidance[focus][states[focus] === 'doing' ? 'doing' : 'todo'];
+      var body = guidance[focus][states[focus] === 'doing' ? 'doing' : 'todo'];
+      if (focus === 0) {
+        var countdown = countdownText(cleanIsoDate(Store.get('bsn_date', '')));
+        if (countdown) body = countdown + ' ' + body;
+      }
+      text.textContent = body;
 
       select.innerHTML = '';
       STATES.forEach(function(state) {
@@ -539,6 +563,13 @@ export const dashboardScript = `
         setInfo(guidance[focus][states[focus] === 'doing' ? 'doing' : 'todo']);
       }
 
+      var countdownElem = document.getElementById('bsn-countdown');
+      if (countdownElem) {
+        var line = countdownText(savedDate);
+        countdownElem.textContent = line;
+        countdownElem.classList.toggle('hidden', !line);
+      }
+
       updateBsnSaveButton();
       var nextBox = document.getElementById('next-phase');
       if (nextBox && focus !== -1) nextBox.classList.add('hidden');
@@ -699,6 +730,32 @@ export const dashboardScript = `
         btnWorkYes.onclick = function() {
           Store.set('is_working', 'yes');
           renderInsuranceTree();
+        };
+      }
+
+      var btnShare = document.getElementById('btn-share');
+      if (btnShare) {
+        btnShare.onclick = async function() {
+          var shareData = {
+            title: 'LandingNL',
+            text: 'A step-by-step guide to your first months in the Netherlands: municipal registration and BSN, DigiD, a bank account and a huisarts.',
+            url: location.origin
+          };
+          try {
+            if (navigator.share) {
+              await navigator.share(shareData);
+              return;
+            }
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              await navigator.clipboard.writeText(shareData.url);
+              btnShare.innerText = '✓ Link copied';
+              setTimeout(function() { btnShare.innerText = 'Share'; }, 2500);
+              return;
+            }
+            alert(shareData.url);
+          } catch (error) {
+            // The user dismissed the share sheet; nothing to report.
+          }
         };
       }
 

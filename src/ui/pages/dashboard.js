@@ -115,6 +115,7 @@ export function renderDashboardPage(releaseLabel = 'v1.0.6', buildMeta = '') {
     <header>
       <div class="brand">LandingNL • My journey</div>
       <div style="display:flex; gap:8px; align-items:center;">
+        <button class="btn-act" id="btn-share" style="background:rgba(16,185,129,0.15); color:#34d399;">Share</button>
         <a class="btn-act" href="/onboarding?edit=1" style="text-decoration:none; background:rgba(255,255,255,0.08); color:#cbd5e1;">Edit profile</a>
         <button class="btn-reset" id="btn-reset-app">Sign out ➔</button>
       </div>
@@ -163,6 +164,7 @@ export function renderDashboardPage(releaseLabel = 'v1.0.6', buildMeta = '') {
           <div class="card-title">📄 Municipal registration appointment</div>
           <p style="font-size:0.8rem; color:var(--muted); margin-bottom:12px;">Save the date of your municipal (BRP) or RNI registration appointment. Your BSN is issued after registration — update the step once you receive it. Never type your BSN here.</p>
           <input type="date" id="bsn-date" style="width:100%; padding:10px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.12); border-radius:8px; color:white; font-size:0.9rem; margin-bottom:10px; outline:none; cursor:pointer;" />
+          <p class="hidden" id="bsn-countdown" style="font-size:0.82rem; color:#34d399; font-weight:600; margin:0 0 10px 0;"></p>
           <button class="btn-act btn-act-full" id="btn-save-bsn-date">Save appointment date ➔</button>
           <a class="btn-act btn-act-full" style="display:block; margin-top:8px; text-align:center; text-decoration:none; background:rgba(255,255,255,0.08); color:#cbd5e1;" href="https://www.government.nl/themes/government-and-democracy/personal-data/citizen-service-number-bsn" target="_blank" rel="noopener noreferrer">Official source on the BSN ↗</a>
         </div>

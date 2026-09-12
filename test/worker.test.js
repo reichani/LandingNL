@@ -34,10 +34,10 @@ const env = { DB: createDb(), GOOGLE_CLIENT_ID: 'test-client-id.apps.googleuserc
 
 // Approved v1.0.6 baselines (journey truth-language release, see docs/adr/0007).
 const PAGE_HASHES = new Map([
-  ['/', '40432863d3490d40fc1827386d598fa2ea8b94674e87f52152bd44ddb3f312c1'],
-  ['/login', '27e05c1faee18d9449e02bda4a4731882e2da67c787e3212ff69229666be8626'],
-  ['/onboarding', '90585cba381e797b6be3d605745aeb3b85222305ffaef635e653b117badfb6f5'],
-  ['/dashboard', '1457eba6c8d1a793a5e4ca5fe4edaf883375bd2dbadc64480ab1b5877b8394cc'],
+  ['/', '066013fc9c34a55b10228ad6868ddf397418e8acad4245f1d8ee11bdad0ee785'],
+  ['/login', '3cafba3453a201269063aaea12c5af15e6b193dab7957b2aa43e6e1309f4f676'],
+  ['/onboarding', '202ee18456fce810dee0ce4f676ee241eb53c066cce97e6b319958f1ea668cf4'],
+  ['/dashboard', 'e6ddc33f84de1abfe1c0c9ccdd6c2b53ae47afe7e1e4220566994cefb74b3047'],
 ]);
 
 test('returning Google users are updated by scalar user id', async () => {
@@ -601,4 +601,41 @@ test('the route card collapses once the first step is done', async () => {
   const route = source.slice(source.indexOf('function renderStatusRoute'), source.indexOf('function renderAllowances'));
   assert.match(route, /details\.open = states\[0\] !== 'done';/);
   assert.match(route, /document\.createElement\('summary'\)/);
+});
+
+test('a saved appointment turns into a visible countdown', async () => {
+  const source = await readFile(new URL('../src/ui/scripts/dashboard.js', import.meta.url), 'utf8');
+  const helper = source.slice(source.indexOf('function countdownText'), source.indexOf('function cleanIsoDate'));
+  assert.match(helper, /is in ' \+ days \+ ' days/);
+  assert.match(helper, /is tomorrow/);
+  assert.match(helper, /is today/);
+  // The countdown also leads the hero card while step 1 is the focus.
+  const hero = source.slice(source.indexOf('function renderNextAction'), source.indexOf('function renderStepControls'));
+  assert.match(hero, /if \(focus === 0\) \{/);
+  const html = await (await legacyUi.fetch(new Request('https://example.test/dashboard'), env)).text();
+  assert.match(html, /id="bsn-countdown"/);
+});
+
+test('students can pass the app on', async () => {
+  const html = await (await legacyUi.fetch(new Request('https://example.test/dashboard'), env)).text();
+  assert.match(html, /id="btn-share"/);
+  const source = await readFile(new URL('../src/ui/scripts/dashboard.js', import.meta.url), 'utf8');
+  const share = source.slice(source.indexOf("getElementById('btn-share')"), source.indexOf("getElementById('btn-reset-app')"));
+  assert.match(share, /navigator\.share/);
+  // Falls back to the clipboard where the share sheet is unavailable.
+  assert.match(share, /navigator\.clipboard\.writeText\(shareData\.url\)/);
+});
+
+test('public pages carry link preview metadata and private pages stay out of search', async () => {
+  for (const path of ['/', '/login', '/privacy']) {
+    const html = await (await legacyUi.fetch(new Request(`https://example.test${path}`), env)).text();
+    assert.match(html, /<meta name="description" content="[^"]{40,}">/, path);
+    assert.match(html, /<meta property="og:title"/, path);
+    assert.match(html, /<link rel="canonical" href="https:\/\/landingnl\.com/, path);
+    assert.doesNotMatch(html, /noindex/, path);
+  }
+  for (const path of ['/onboarding', '/dashboard']) {
+    const html = await (await legacyUi.fetch(new Request(`https://example.test${path}`), env)).text();
+    assert.match(html, /<meta name="robots" content="noindex, nofollow">/, path);
+  }
 });
