@@ -227,6 +227,12 @@ export function renderDashboardPage(releaseLabel = 'v1.0.6', buildMeta = '') {
           </div>
         </div>
 
+        <div class="card col-3" style="border-left: 4px solid var(--amber);">
+          <div class="card-title">🚌 Getting around: bus, tram, metro and train</div>
+          <p style="font-size:0.82rem; color:var(--muted); margin-bottom:12px;">Whether you get the student travel product depends on your own situation, and international students often do not qualify. Check it with the official tool rather than assuming:</p>
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:12px;" id="transport-grid"></div>
+        </div>
+
         <div class="card col-3" style="border-left: 4px solid var(--mint);">
           <div class="card-title">🏥 Work status &amp; health insurance</div>
           <p style="font-size:0.82rem; color:var(--muted); margin-bottom:16px;">Starting paid work or a paid internship can change your health insurance obligation. Choose your situation:</p>

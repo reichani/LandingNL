@@ -253,6 +253,48 @@ export const dashboardScript = `
       ));
     }
 
+    // Public transport is where students most often assume a discount they do not
+    // have: the student travel product runs through DUO student finance and many
+    // international students are not eligible, so every card points at the
+    // official eligibility check instead of promising anything.
+    function renderTransport() {
+      var grid = document.getElementById('transport-grid');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      grid.appendChild(createSubCard(
+        'tag-amber',
+        '🎓 Studentenreisproduct',
+        'Check whether you qualify',
+        'The student travel product gives free or discounted travel on bus, tram, metro and train, but it is part of Dutch student finance through DUO. Many international students are not eligible; EU/EEA, Swiss and UK students may qualify under conditions, for example by working in the Netherlands. Run the official eligibility check before you count on it.',
+        'https://www.studentenreisproduct.nl/en/i-am-a-foreign-student/'
+      ));
+
+      grid.appendChild(createSubCard(
+        'tag-purple',
+        '💳 Paying for your trip',
+        'OVpay, OV-chipkaart and the new OV-pas',
+        'You can tap in and out with a contactless bank card or phone via OVpay. A personal OV-chipkaart is still needed for the student travel product and most subscriptions, and it is being replaced by the OV-pas. If you travel on balance, you need a minimum amount on the card to check in: around €4 for bus, tram and metro and €20 for the train.',
+        'https://www.ov-chipkaart.nl/en'
+      ));
+
+      grid.appendChild(createSubCard(
+        'tag-mint',
+        '⚠️ Always check out',
+        'Forgetting costs you the boarding fee',
+        'When you check in, a boarding fee is reserved and only recalculated to your real fare when you check out. If you forget, you are charged the full boarding fee. Refunds are sometimes possible through the operator’s website, but checking out is far easier.',
+        'https://www.ov-chipkaart.nl/en'
+      ));
+
+      grid.appendChild(createSubCard(
+        'tag-amber',
+        '🌞 Summer period',
+        'Travel is not free from 16 July to 16 August',
+        'During the summer holiday period the student travel product does not give free travel: it becomes a 40% discount on the train and a 34% discount on bus, tram and metro. Plan longer summer trips with that in mind.',
+        'https://www.studentenreisproduct.nl/en/'
+      ));
+    }
+
     function renderInsuranceTree() {
       var container = document.getElementById('insurance-tree-result');
       if (!container) return;
@@ -847,6 +889,7 @@ export const dashboardScript = `
         renderStatusRoute();
         renderAllowances();
         renderPerks();
+        renderTransport();
         renderInsuranceTree();
         render();
         renderSwaps();

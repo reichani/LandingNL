@@ -37,7 +37,7 @@ const PAGE_HASHES = new Map([
   ['/', '066013fc9c34a55b10228ad6868ddf397418e8acad4245f1d8ee11bdad0ee785'],
   ['/login', '3cafba3453a201269063aaea12c5af15e6b193dab7957b2aa43e6e1309f4f676'],
   ['/onboarding', '202ee18456fce810dee0ce4f676ee241eb53c066cce97e6b319958f1ea668cf4'],
-  ['/dashboard', 'e6ddc33f84de1abfe1c0c9ccdd6c2b53ae47afe7e1e4220566994cefb74b3047'],
+  ['/dashboard', '48acda7d8098cc303858bd639a3f8f91619e6a9c4df64b91a31e9c25a9401f55'],
 ]);
 
 test('returning Google users are updated by scalar user id', async () => {
@@ -638,4 +638,22 @@ test('public pages carry link preview metadata and private pages stay out of sea
     const html = await (await legacyUi.fetch(new Request(`https://example.test${path}`), env)).text();
     assert.match(html, /<meta name="robots" content="noindex, nofollow">/, path);
   }
+});
+
+test('public transport guidance never promises a discount the student may not have', async () => {
+  const html = await (await legacyUi.fetch(new Request('https://example.test/dashboard'), env)).text();
+  assert.match(html, /id="transport-grid"/);
+
+  const source = await readFile(new URL('../src/ui/scripts/dashboard.js', import.meta.url), 'utf8');
+  const transport = source.slice(source.indexOf('function renderTransport'), source.indexOf('function renderInsuranceTree'));
+  // Eligibility is framed as a check, tied to DUO student finance.
+  assert.match(transport, /Check whether you qualify/);
+  assert.match(transport, /DUO/);
+  assert.match(transport, /studentenreisproduct\.nl\/en\/i-am-a-foreign-student/);
+  // The summer exception and the check-out trap are stated, not glossed over.
+  assert.match(transport, /16 July to 16 August/);
+  assert.match(transport, /40% discount on the train and a 34% discount on bus, tram and metro/);
+  assert.match(transport, /Always check out/);
+  // No card claims free travel outright.
+  assert.doesNotMatch(transport, /travel for free with your student card/i);
 });
