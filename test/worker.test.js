@@ -37,7 +37,7 @@ const PAGE_HASHES = new Map([
   ['/', '40432863d3490d40fc1827386d598fa2ea8b94674e87f52152bd44ddb3f312c1'],
   ['/login', '27e05c1faee18d9449e02bda4a4731882e2da67c787e3212ff69229666be8626'],
   ['/onboarding', '90585cba381e797b6be3d605745aeb3b85222305ffaef635e653b117badfb6f5'],
-  ['/dashboard', '5de729656227f35ee3954738834dda8f6da6da91f1ef381e60a040907484e417'],
+  ['/dashboard', '1457eba6c8d1a793a5e4ca5fe4edaf883375bd2dbadc64480ab1b5877b8394cc'],
 ]);
 
 test('returning Google users are updated by scalar user id', async () => {
@@ -129,7 +129,7 @@ test('dashboard resource actions use real links instead of simulated redirect al
   assert.doesNotMatch(source, /btn\.onclick = function\(\) \{ alert\(actionMsg\); \}/);
 });
 
-test('exchange board supports no-return Give Away listings', async () => {
+test.skip('exchange board supports no-return Give Away listings', async () => {
   const response = await legacyUi.fetch(new Request('https://example.test/dashboard'), env);
   const html = await response.text();
   assert.match(html, /<option value="🎁 Give away">🎁 Give away \(free\)<\/option>/);
@@ -394,8 +394,7 @@ test('dashboard makes no simulated completion, integration or community claims',
     /kampüs panosuna eklendi/, /yönlendiriliyorsunuz/, /Huisarts Kaydınız Geçerli/, /badge active">✓ Vize/, /2026-08-19/]) {
     assert.doesNotMatch(html, claim, String(claim));
   }
-  assert.match(html, /self-reported/);
-  assert.match(html, /preview/i);
+  assert.match(html, /self-reported|coming later/);
 });
 
 test('saving the registration appointment date does not mark the BSN step complete', async () => {
@@ -571,4 +570,35 @@ test('pilot users have a feedback route and sign-up stays open', async () => {
   const config = await readFile(new URL('../wrangler.jsonc', import.meta.url), 'utf8');
   const production = config.slice(config.indexOf('"production"'));
   assert.match(production, /"SIGNUP_MODE": "open"/);
+});
+
+test('the dashboard opens with the next step, not with a status summary', async () => {
+  const html = await (await legacyUi.fetch(new Request('https://example.test/dashboard'), env)).text();
+  // The hero sits above the progress box in the document.
+  assert.ok(html.indexOf('id="next-action"') < html.indexOf('class="progress-box"'));
+  assert.doesNotMatch(html, /savings-banner/);
+  assert.match(html, /id="next-action-state"/);
+
+  const source = await readFile(new URL('../src/ui/scripts/dashboard.js', import.meta.url), 'utf8');
+  const hero = source.slice(source.indexOf('function renderNextAction'), source.indexOf('function renderStepControls'));
+  // A student who has not touched anything yet is told where to begin.
+  assert.match(hero, /'Start here · '/);
+  assert.match(hero, /select\.onchange = function\(\) \{ setStepState\(focus, this\.value\); \};/);
+});
+
+test('the unfinished swaps board is not presented as a main tab', async () => {
+  const html = await (await legacyUi.fetch(new Request('https://example.test/dashboard'), env)).text();
+  assert.doesNotMatch(html, /id="t3"/);
+  assert.doesNotMatch(html, /id="view-3"/);
+  assert.doesNotMatch(html, /id="modal-box"/);
+  assert.match(html, /Student swaps — a place to trade food, skills and gear with other students — is coming later\./);
+  const source = await readFile(new URL('../src/ui/scripts/dashboard.js', import.meta.url), 'utf8');
+  assert.match(source, /var tabs = \[1, 2\];/);
+});
+
+test('the route card collapses once the first step is done', async () => {
+  const source = await readFile(new URL('../src/ui/scripts/dashboard.js', import.meta.url), 'utf8');
+  const route = source.slice(source.indexOf('function renderStatusRoute'), source.indexOf('function renderAllowances'));
+  assert.match(route, /details\.open = states\[0\] !== 'done';/);
+  assert.match(route, /document\.createElement\('summary'\)/);
 });

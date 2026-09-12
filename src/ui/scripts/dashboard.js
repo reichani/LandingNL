@@ -127,10 +127,17 @@ export const dashboardScript = `
       var isEU = Store.get('status', 'non_eu') === 'eu';
       box.innerHTML = '';
 
-      var title = document.createElement('div');
+      // Once the first step is done this is reference material, so it collapses.
+      var states = readStepStates();
+      var details = document.createElement('details');
+      details.open = states[0] !== 'done';
+      var title = document.createElement('summary');
       title.className = 'card-title';
+      title.style.cursor = 'pointer';
       title.textContent = isEU ? '🇪🇺 EU/EEA or Swiss route' : '🛂 Non-EU/EEA route';
-      box.appendChild(title);
+      details.appendChild(title);
+      box.appendChild(details);
+      box = details;
 
       var lead = document.createElement('p');
       lead.style.cssText = 'font-size:0.82rem; color:var(--muted); margin:0 0 12px 0;';
@@ -331,6 +338,59 @@ export const dashboardScript = `
       render();
     }
 
+    // The dashboard opens with the one thing the student has to do next, not with
+    // a status summary. Everything else on the page is secondary to this card.
+    function renderNextAction(states, guidance, focus) {
+      var title = document.getElementById('next-action-title');
+      var text = document.getElementById('next-action-text');
+      var select = document.getElementById('next-action-state');
+      var link = document.getElementById('next-action-link');
+      var label = document.querySelector('.next-action-status');
+      if (!title || !text || !select) return;
+
+      var SOURCES = [
+        'https://www.government.nl/themes/government-and-democracy/personal-data/citizen-service-number-bsn',
+        'https://www.digid.nl/en',
+        '',
+        ''
+      ];
+
+      if (focus === -1) {
+        title.textContent = 'You are through the settling-in steps';
+        text.textContent = 'Keep going under “Daily life & insurance”: set your work status, check your allowances and student discounts.';
+        select.classList.add('hidden');
+        if (label) label.classList.add('hidden');
+        if (link) link.classList.add('hidden');
+        return;
+      }
+
+      select.classList.remove('hidden');
+      if (label) label.classList.remove('hidden');
+
+      var started = states.some(function(state) { return state !== 'todo'; });
+      title.textContent = (started ? '' : 'Start here · ') + (focus + 1) + '. ' + STEP_NAMES[focus];
+      text.textContent = guidance[focus][states[focus] === 'doing' ? 'doing' : 'todo'];
+
+      select.innerHTML = '';
+      STATES.forEach(function(state) {
+        var option = document.createElement('option');
+        option.value = state;
+        option.textContent = STATE_LABELS[state];
+        select.appendChild(option);
+      });
+      select.value = states[focus];
+      select.onchange = function() { setStepState(focus, this.value); };
+
+      if (link) {
+        if (SOURCES[focus]) {
+          link.href = SOURCES[focus];
+          link.classList.remove('hidden');
+        } else {
+          link.classList.add('hidden');
+        }
+      }
+    }
+
     function renderStepControls(states) {
       for (var i = 0; i < 4; i++) {
         (function(index) {
@@ -467,6 +527,8 @@ export const dashboardScript = `
       for (var k = 0; k < 4; k++) {
         if (states[k] !== 'done') { focus = k; break; }
       }
+
+      renderNextAction(states, guidance, focus);
 
       if (focus === -1) {
         renderNextPhase(isEU);
@@ -705,7 +767,7 @@ export const dashboardScript = `
         };
       }
 
-      var tabs = [1, 2, 3];
+      var tabs = [1, 2];
       for (var i = 0; i < tabs.length; i++) {
         (function(num) {
           var tBtn = document.getElementById('t' + num);

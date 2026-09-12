@@ -30,18 +30,20 @@ export function renderDashboardPage(releaseLabel = 'v1.0.6', buildMeta = '') {
     .v-badge { background: rgba(59, 130, 246, 0.2); border: 1px solid rgba(59, 130, 246, 0.4); color: #60a5fa; font-size: 0.72rem; padding: 2px 8px; border-radius: 12px; margin-left: 8px; font-weight: 600; }
     .btn-reset { background: rgba(239, 68, 68, 0.12); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.25); padding: 8px 16px; border-radius: 16px; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
 
-    .savings-banner {
-      background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(59, 130, 246, 0.12));
-      border: 1px solid rgba(16, 185, 129, 0.3);
-      border-radius: 16px;
-      padding: 16px 20px;
-      margin-bottom: 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 12px;
+    .next-action {
+      background: linear-gradient(135deg, rgba(37,99,235,0.18), rgba(16,185,129,0.12));
+      border: 1px solid rgba(59,130,246,0.35);
+      border-radius: 18px;
+      padding: 20px;
+      margin-bottom: 16px;
     }
+    .next-action-label { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: #93c5fd; font-weight: 700; }
+    .next-action-title { font-size: 1.25rem; margin: 6px 0 8px 0; color: #fff; }
+    .next-action-text { font-size: 0.88rem; color: #cbd5e1; margin: 0 0 14px 0; }
+    .next-action-controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .next-action-status { font-size: 0.78rem; color: var(--muted); }
+    .next-action-link { font-size: 0.8rem; color: #93c5fd; text-decoration: none; font-weight: 600; }
+    #next-action-state { max-width: none; flex: 1 1 180px; }
 
     .progress-box { background: var(--card); border: 1px solid var(--border); border-radius: 18px; padding: 20px; margin-bottom: 24px; }
     .progress-bar-bg { background: rgba(255,255,255,0.06); height: 8px; border-radius: 4px; overflow: hidden; margin: 10px 0 14px 0; }
@@ -118,17 +120,20 @@ export function renderDashboardPage(releaseLabel = 'v1.0.6', buildMeta = '') {
       </div>
     </header>
 
-    <div class="savings-banner">
-      <div>
-        <div style="font-size:0.78rem; color:var(--mint); font-weight:700; text-transform:uppercase;">💡 Support and discounts you may qualify for</div>
-        <div style="font-size:1.4rem; font-weight:800; color:#fff;" id="total-savings-text">Based on your own situation</div>
+    <section class="next-action" id="next-action">
+      <div class="next-action-label">Your next step</div>
+      <h2 class="next-action-title" id="next-action-title">Loading…</h2>
+      <p class="next-action-text" id="next-action-text"></p>
+      <div class="next-action-controls">
+        <label class="next-action-status" for="next-action-state">Status</label>
+        <select class="step-state" id="next-action-state" aria-label="Status of your next step"></select>
+        <a class="next-action-link hidden" id="next-action-link" target="_blank" rel="noopener noreferrer">Official source ↗</a>
       </div>
-      <span class="tag tag-amber" style="padding:8px 14px; font-size:0.8rem;">Amounts are never guaranteed · official bodies decide</span>
-    </div>
+    </section>
 
     <div class="progress-box">
       <div style="display:flex; justify-content:space-between; font-weight:700; font-size:0.9rem;">
-        <span>🚩 Your progress (as you reported it)</span>
+        <span>Your progress · you decide when a step is done</span>
         <span id="percent-text" style="color:var(--mint);">%0</span>
       </div>
       <div class="progress-bar-bg">
@@ -147,7 +152,6 @@ export function renderDashboardPage(releaseLabel = 'v1.0.6', buildMeta = '') {
     <div class="tabs">
       <button class="tab active" id="t1">✈️ Settling in</button>
       <button class="tab" id="t2">🎁 Daily life &amp; insurance</button>
-      <button class="tab" id="t3">🤝 Student swaps (preview)</button>
     </div>
 
     <!-- PHASE 1 -->
@@ -241,38 +245,7 @@ export function renderDashboardPage(releaseLabel = 'v1.0.6', buildMeta = '') {
       </div>
     </div>
 
-    <!-- PHASE 3 -->
-    <div id="view-3" class="hidden">
-      <div class="grid">
-        <div class="card" style="border-left: 4px solid var(--mint);">
-          <div class="card-title">🌱 Post a swap</div>
-          <p style="font-size:0.8rem; color:var(--muted); margin-bottom:14px;">Preview: your posts are stored on your account only and no other student can see them. The community board opens once moderation and reporting tools are ready.</p>
-          
-          <label style="font-size:0.75rem; color:var(--muted); display:block; margin-bottom:4px;">Category</label>
-          <select id="swap-cat" style="width:100%; padding:8px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:white; font-size:0.85rem; margin-bottom:10px; outline:none;">
-            <option value="🍝 Food">🍝 Food (home cooking)</option>
-            <option value="🎹 Skills">🎹 Skills (lessons, practice)</option>
-            <option value="🚲 Gear">🚲 Gear (items, books)</option>
-            <option value="🎁 Give away">🎁 Give away (free)</option>
-          </select>
-          <button type="button" class="btn-act btn-act-full" id="btn-give-away" style="margin:-2px 0 12px; background:rgba(192,132,252,0.16); color:#d8b4fe; border:1px solid rgba(192,132,252,0.3);">🎁 Give something away</button>
-
-          <label style="font-size:0.75rem; color:var(--muted); display:block; margin-bottom:4px;">What are you offering?</label>
-          <input type="text" id="swap-title" placeholder="e.g. two portions of home-made pasta" style="width:100%; padding:8px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:white; font-size:0.85rem; margin-bottom:10px; outline:none;" />
-
-          <label style="font-size:0.75rem; color:var(--muted); display:block; margin-bottom:4px;">What would you like in return?</label>
-          <input type="text" id="swap-offer" placeholder="e.g. Dutch practice, a coffee" style="width:100%; padding:8px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:white; font-size:0.85rem; margin-bottom:14px; outline:none;" />
-
-          <button class="btn-act btn-act-full" id="btn-add-swap" style="background:var(--mint); color:#042f2e;">Save as draft ➔</button>
-        </div>
-
-        <div class="card col-2">
-          <div class="card-title">🤝 Swaps in <span id="city-board-title">your city</span></div>
-          <p style="font-size:0.8rem; color:var(--muted); margin-bottom:16px;">Your drafts and a few samples (not real student posts):</p>
-          <div id="swap-container"></div>
-        </div>
-      </div>
-    </div>
+    <p style="text-align:center; color:#64748b; font-size:0.8rem; margin:20px 0 0 0;">🤝 Student swaps — a place to trade food, skills and gear with other students — is coming later.</p>
   </div>
 
   <footer style="text-align:center; padding:8px 20px 32px; font-size:0.78rem; color:#64748b;">
@@ -281,23 +254,6 @@ export function renderDashboardPage(releaseLabel = 'v1.0.6', buildMeta = '') {
     · To delete your account: reichani@gmail.com
     · <span title="Version">${releaseLabel}</span>
   </footer>
-
-  <div id="modal-box" class="modal hidden">
-    <div class="modal-content">
-      <div style="font-size:2rem; margin-bottom:8px;">🤝</div>
-      <h3 style="margin:0 0 6px 0;" id="modal-title">Contact the poster</h3>
-      <p style="font-size:0.8rem; color:var(--muted); margin-bottom:16px;">Messaging is not open yet. Use this template in your own student group:</p>
-      
-      <div style="background:rgba(0,0,0,0.3); border:1px solid var(--border); border-radius:10px; padding:12px; font-size:0.82rem; text-align:left; color:#cbd5e1; margin-bottom:18px;" id="modal-msg">
-        “Hoi! I saw your post on the LandingNL board. Would you like to swap?”
-      </div>
-
-      <div style="display:flex; gap:10px;">
-        <button class="btn-act" id="btn-modal-wa" style="flex:1; padding:10px; background:var(--mint); color:#042f2e;">Copy message</button>
-        <button class="btn-act" id="btn-modal-close" style="padding:10px; background:rgba(255,255,255,0.1); min-width:auto;">Close</button>
-      </div>
-    </div>
-  </div>
 
   <script>${dashboardScript}</script>
 </body>
