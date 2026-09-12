@@ -275,7 +275,12 @@ export function renderDashboardPage(releaseLabel = 'v1.0.6', buildMeta = '') {
     </div>
   </div>
 
-  <footer style="text-align:center; padding:8px 20px 32px; font-size:0.78rem; color:#64748b;"><a href="/privacy" style="color:#94a3b8;">Gizlilik Bildirimi</a> · Hesabının silinmesi için: reichani@gmail.com · <span title="Sürüm">${releaseLabel}</span></footer>
+  <footer style="text-align:center; padding:8px 20px 32px; font-size:0.78rem; color:#64748b;">
+    <a href="mailto:reichani@gmail.com?subject=LandingNL%20geri%20bildirim&amp;body=Ne%20yapmaya%20çalışıyordun%3F%0A%0ANe%20oldu%3F%0A%0AHangi%20sayfadaydın%3F%20(ör.%20Phase%201)%0A%0ATelefon%20%2F%20tarayıcı%3A%0A" style="color:#34d399; font-weight:600;">Geri bildirim gönder</a>
+    · <a href="/privacy" style="color:#94a3b8;">Gizlilik Bildirimi</a>
+    · Hesabının silinmesi için: reichani@gmail.com
+    · <span title="Sürüm">${releaseLabel}</span>
+  </footer>
 
   <div id="modal-box" class="modal hidden">
     <div class="modal-content">

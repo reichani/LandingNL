@@ -37,7 +37,7 @@ const PAGE_HASHES = new Map([
   ['/', '22230962a19e602c5eb6837e1e847613c0365245b46bba136ad7a772785775a6'],
   ['/login', '4ecf4cc9ec94b105e293addaa3f8ecef074f4d150dd35921b89e1603d466f45f'],
   ['/onboarding', '0d0111c19f5a7b0627084a7cfd2c38cf178a75aec85730e45371d2e36942da31'],
-  ['/dashboard', '8abf1f37b3214c06f036cee91d64091bc7bd5f3c5966bc5db1ce3f26cb0c7b7d'],
+  ['/dashboard', '2f237080bcd3f71e0f0b19baf81d42201f956eea2ed5b9cd657c1d581b8613fc'],
 ]);
 
 test('returning Google users are updated by scalar user id', async () => {
@@ -562,4 +562,13 @@ test('finishing the Settle steps opens a concrete next-phase panel', async () =>
   // The non-EU route gets the extra work-permit reminder.
   assert.match(next, /if \(!isEU\) items\.push/);
   assert.match(source, /if \(nextBox && focus !== -1\) nextBox\.classList\.add\('hidden'\)/);
+});
+
+test('pilot users have a feedback route and sign-up stays open', async () => {
+  const html = await (await legacyUi.fetch(new Request('https://example.test/dashboard'), env)).text();
+  assert.match(html, /Geri bildirim gönder/);
+  assert.match(html, /mailto:reichani@gmail\.com\?subject=LandingNL/);
+  const config = await readFile(new URL('../wrangler.jsonc', import.meta.url), 'utf8');
+  const production = config.slice(config.indexOf('"production"'));
+  assert.match(production, /"SIGNUP_MODE": "open"/);
 });
