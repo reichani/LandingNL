@@ -1,0 +1,286 @@
+export function renderOnboardingPage(releaseLabel = 'v1.0.6', buildMeta = '') {
+  return `<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LandingNL • Setup</title>
+  ${buildMeta}
+  <style>
+    :root { --primary: #3b82f6; --bg: #080c14; --card: #111827; --text: #f8fafc; --muted: #94a3b8; --border: rgba(255,255,255,0.08); }
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: var(--bg); color: var(--text); margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 32px; max-width: 440px; width: 100%; }
+    .step { font-size: 0.75rem; font-weight: 700; color: #60a5fa; text-transform: uppercase; margin-bottom: 6px; }
+    h2 { font-size: 1.4rem; margin: 0 0 8px 0; color: #fff; }
+    p { color: var(--muted); font-size: 0.85rem; margin-bottom: 20px; }
+    label { display: block; font-size: 0.8rem; font-weight: 600; color: #cbd5e1; margin-bottom: 6px; }
+    input, select { width: 100%; padding: 12px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; color: white; font-size: 0.9rem; margin-bottom: 16px; outline: none; }
+    .btn { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div id="edit-banner" class="hidden" style="background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.3); color:#93c5fd; border-radius:10px; padding:10px 12px; font-size:0.8rem; margin-bottom:16px;">
+      You are updating your profile. Your step statuses and saved date are kept.
+      <a href="/dashboard" style="color:#93c5fd; display:inline-block; margin-top:4px;">Cancel and go back</a>
+    </div>
+    <div id="step-1">
+      <div class="step">Step 1 of 4</div>
+      <h2>Date of birth</h2>
+      <p>Some Dutch rules depend on your age, such as the minimum wage bracket and allowances. We store your age only, not your date of birth. LandingNL is for students aged 16 and over.</p>
+      <label for="dob">Date of birth</label>
+      <input type="date" id="dob" required />
+      <button class="btn" id="btn-ob-1">Continue ➔</button>
+      <p style="font-size:0.72rem; margin:12px 0 0 0;"><a href="/privacy" style="color:#94a3b8;">Privacy Notice</a></p>
+    </div>
+
+    <div id="step-2" class="hidden">
+      <div class="step">Step 2 of 4</div>
+      <h2>Your passport</h2>
+      <p>Entry, residence and work permit rules depend on your passport. This choice shapes the steps you see.</p>
+      <label for="status">Passport</label>
+      <select id="status">
+        <option value="non_eu">Non-EU/EEA or non-Swiss passport (residence permit required)</option>
+        <option value="eu">EU/EEA or Swiss passport (no residence permit needed)</option>
+      </select>
+      <button class="btn" id="btn-ob-2">Continue ➔</button>
+    </div>
+
+    <div id="step-3" class="hidden">
+      <div class="step">Step 3 of 4</div>
+      <h2>City &amp; school</h2>
+      <p>Pick your city and school. If yours is not listed, choose “Other” and type it in.</p>
+      <label for="city">City</label>
+      <select id="city">
+        <option value="Amsterdam">Amsterdam</option>
+        <option value="Rotterdam">Rotterdam</option>
+        <option value="Den Haag">Den Haag</option>
+        <option value="Utrecht">Utrecht</option>
+        <option value="Eindhoven">Eindhoven</option>
+        <option value="Groningen">Groningen</option>
+        <option value="Leiden">Leiden</option>
+        <option value="Delft">Delft</option>
+        <option value="Maastricht">Maastricht</option>
+        <option value="Nijmegen">Nijmegen</option>
+        <option value="Tilburg">Tilburg</option>
+        <option value="Enschede">Enschede</option>
+        <option value="Wageningen">Wageningen</option>
+        <option value="Breda">Breda</option>
+        <option value="Arnhem">Arnhem</option>
+        <option value="Zwolle">Zwolle</option>
+        <option value="Haarlem">Haarlem</option>
+        <option value="Leeuwarden">Leeuwarden</option>
+        <option value="__other__">Other city…</option>
+      </select>
+      <input type="text" id="city-other" class="hidden" placeholder="Type your city" />
+      <label for="school">School</label>
+      <select id="school"></select>
+      <input type="text" id="school-other" class="hidden" placeholder="Type your school" />
+      <label for="program">Programme <span style="color:#94a3b8; font-weight:400;">(optional)</span></label>
+      <input type="text" id="program" placeholder="e.g. Computer Science" />
+      <button class="btn" id="btn-ob-3">Continue ➔</button>
+    </div>
+
+    <div id="step-4" class="hidden">
+      <div class="step">Step 4 of 4</div>
+      <h2>Housing</h2>
+      <p>Do you already have a place to live?</p>
+      <label for="housing">Status</label>
+      <select id="housing">
+        <option value="yes">Yes, I have a rental contract</option>
+        <option value="no">Not yet / temporary accommodation</option>
+      </select>
+      <button class="btn" id="btn-ob-finish">Go to my dashboard ➔</button>
+    </div>
+  </div>
+
+  <script>
+    // The main Dutch research universities (WO) and universities of applied
+    // sciences (HBO). The list is not exhaustive, so every city also offers a
+    // free-text "Other" option.
+    var schoolsMap = {
+      'Amsterdam': ['Universiteit van Amsterdam (UvA)', 'Vrije Universiteit Amsterdam (VU)', 'Hogeschool van Amsterdam (HvA)', 'Amsterdam University College', 'Hogeschool Inholland Amsterdam', 'Gerrit Rietveld Academie', 'Amsterdamse Hogeschool voor de Kunsten'],
+      'Rotterdam': ['Erasmus Universiteit Rotterdam (EUR)', 'Hogeschool Rotterdam', 'Hogeschool Inholland Rotterdam', 'Codarts Rotterdam', 'Erasmus University College'],
+      'Den Haag': ['Universiteit Leiden – Campus Den Haag', 'De Haagse Hogeschool (THUAS)', 'Hogeschool Inholland Den Haag', 'Koninklijke Academie van Beeldende Kunsten'],
+      'Utrecht': ['Universiteit Utrecht (UU)', 'Hogeschool Utrecht (HU)', 'University College Utrecht', 'Hogeschool voor de Kunsten Utrecht (HKU)'],
+      'Eindhoven': ['Technische Universiteit Eindhoven (TU/e)', 'Fontys Hogescholen Eindhoven', 'Design Academy Eindhoven', 'Summa College'],
+      'Groningen': ['Rijksuniversiteit Groningen (RUG)', 'Hanzehogeschool Groningen', 'University College Groningen'],
+      'Leiden': ['Universiteit Leiden', 'Hogeschool Leiden', 'Leiden University College'],
+      'Delft': ['Technische Universiteit Delft (TU Delft)', 'De Haagse Hogeschool – Delft', 'Inholland Delft'],
+      'Maastricht': ['Universiteit Maastricht (UM)', 'Zuyd Hogeschool', 'Maastricht University College', 'Hotelschool Maastricht'],
+      'Nijmegen': ['Radboud Universiteit', 'Hogeschool van Arnhem en Nijmegen (HAN)'],
+      'Tilburg': ['Tilburg University', 'Fontys Hogescholen Tilburg', 'Avans Hogeschool Tilburg'],
+      'Enschede': ['Universiteit Twente (UT)', 'Saxion Hogeschool Enschede', 'ArtEZ Enschede'],
+      'Wageningen': ['Wageningen University & Research (WUR)', 'Aeres Hogeschool Wageningen'],
+      'Breda': ['Breda University of Applied Sciences (BUas)', 'Avans Hogeschool Breda'],
+      'Arnhem': ['Hogeschool van Arnhem en Nijmegen (HAN)', 'ArtEZ University of the Arts'],
+      'Zwolle': ['Hogeschool Windesheim', 'Katholieke Pabo Zwolle'],
+      'Haarlem': ['Hogeschool Inholland Haarlem', 'Hogeschool van Amsterdam – Haarlem'],
+      'Leeuwarden': ['NHL Stenden Hogeschool', 'Van Hall Larenstein']
+    };
+
+    var OTHER = '__other__';
+
+    function toggleOtherInput(inputId, show) {
+      var input = document.getElementById(inputId);
+      if (!input) return;
+      input.classList.toggle('hidden', !show);
+      if (!show) input.value = '';
+    }
+
+    function updateSchools() {
+      var citySelect = document.getElementById('city');
+      var schoolSelect = document.getElementById('school');
+      var isOtherCity = citySelect.value === OTHER;
+      toggleOtherInput('city-other', isOtherCity);
+
+      schoolSelect.innerHTML = '';
+      var list = isOtherCity ? [] : (schoolsMap[citySelect.value] || []);
+      for (var i = 0; i < list.length; i++) {
+        var opt = document.createElement('option');
+        opt.value = list[i];
+        opt.textContent = list[i];
+        schoolSelect.appendChild(opt);
+      }
+      var other = document.createElement('option');
+      other.value = OTHER;
+      other.textContent = list.length ? 'Other (not listed)…' : 'I will type my school…';
+      schoolSelect.appendChild(other);
+      if (!list.length) schoolSelect.value = OTHER;
+      toggleOtherInput('school-other', schoolSelect.value === OTHER);
+    }
+
+    var EDIT_MODE = new URLSearchParams(location.search).has('edit');
+
+    function splitProgram(stored) {
+      var value = String(stored || '');
+      var separator = value.indexOf(' – ');
+      if (separator === -1) return { school: value, program: '' };
+      return { school: value.slice(0, separator), program: value.slice(separator + 3) };
+    }
+
+    function selectOrOther(select, otherInputId, value) {
+      if (!value) return;
+      var options = Array.prototype.slice.call(select.options);
+      var match = options.filter(function(option) { return option.value === value; })[0];
+      if (match) {
+        select.value = value;
+      } else {
+        select.value = OTHER;
+        var input = document.getElementById(otherInputId);
+        if (input) { input.classList.remove('hidden'); input.value = value; }
+      }
+    }
+
+    async function prefillFromServer() {
+      var banner = document.getElementById('edit-banner');
+      if (banner) banner.classList.remove('hidden');
+      try {
+        var response = await fetch('/api/state', { credentials: 'same-origin' });
+        if (!response.ok) return;
+        var state = (await response.json()).state || {};
+
+        if (state.status) document.getElementById('status').value = state.status;
+        if (state.housing) document.getElementById('housing').value = state.housing;
+
+        var citySelect = document.getElementById('city');
+        selectOrOther(citySelect, 'city-other', state.city);
+        updateSchools();
+        if (citySelect.value === OTHER) {
+          var cityOther = document.getElementById('city-other');
+          if (cityOther) { cityOther.classList.remove('hidden'); cityOther.value = state.city || ''; }
+        }
+
+        var parts = splitProgram(state.program);
+        selectOrOther(document.getElementById('school'), 'school-other', parts.school);
+        document.getElementById('program').value = parts.program;
+      } catch (error) {
+        // A failed prefill still leaves a usable, empty form.
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      var maxDob = new Date();
+      maxDob.setUTCFullYear(maxDob.getUTCFullYear() - 16);
+      document.getElementById('dob').max = maxDob.toISOString().slice(0, 10);
+      document.getElementById('city').addEventListener('change', updateSchools);
+      document.getElementById('school').addEventListener('change', function() {
+        toggleOtherInput('school-other', this.value === OTHER);
+      });
+      updateSchools();
+      if (EDIT_MODE) prefillFromServer();
+
+      document.getElementById('btn-ob-1').onclick = function() {
+        var dob = document.getElementById('dob').value;
+        if (!dob) return alert('Please choose your date of birth.');
+        var birth = new Date(dob + 'T00:00:00Z');
+        var today = new Date();
+        var age = today.getUTCFullYear() - birth.getUTCFullYear();
+        var hadBirthday = (today.getUTCMonth() > birth.getUTCMonth()) ||
+          (today.getUTCMonth() === birth.getUTCMonth() && today.getUTCDate() >= birth.getUTCDate());
+        if (!hadBirthday) age -= 1;
+        if (!(age >= 16 && age <= 100)) return alert('LandingNL is for students aged 16 and over. Please check your date of birth.');
+        localStorage.setItem('landingnl_age', age);
+        document.getElementById('step-1').classList.add('hidden');
+        document.getElementById('step-2').classList.remove('hidden');
+      };
+
+      document.getElementById('btn-ob-2').onclick = function() {
+        localStorage.setItem('landingnl_status', document.getElementById('status').value);
+        document.getElementById('step-2').classList.add('hidden');
+        document.getElementById('step-3').classList.remove('hidden');
+      };
+
+      document.getElementById('btn-ob-3').onclick = function() {
+        var citySelect = document.getElementById('city');
+        var city = citySelect.value === OTHER
+          ? document.getElementById('city-other').value.trim()
+          : citySelect.value;
+        if (!city) return alert('Please enter your city.');
+
+        var schoolSelect = document.getElementById('school');
+        var school = schoolSelect.value === OTHER
+          ? document.getElementById('school-other').value.trim()
+          : schoolSelect.value;
+        if (!school) return alert('Please enter your school.');
+
+        var program = document.getElementById('program').value.trim();
+        localStorage.setItem('landingnl_city', city);
+        localStorage.setItem('landingnl_program', program ? school + ' – ' + program : school);
+        document.getElementById('step-3').classList.add('hidden');
+        document.getElementById('step-4').classList.remove('hidden');
+      };
+
+      document.getElementById('btn-ob-finish').onclick = async function() {
+        localStorage.setItem('landingnl_housing', document.getElementById('housing').value);
+        var state = {
+          age: localStorage.getItem('landingnl_age') || '',
+          status: localStorage.getItem('landingnl_status') || '',
+          city: localStorage.getItem('landingnl_city') || '',
+          program: localStorage.getItem('landingnl_program') || '',
+          housing: localStorage.getItem('landingnl_housing') || ''
+        };
+        try {
+          var response = await fetch('/api/onboarding/complete', {
+            method: 'PUT',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(state)
+          });
+          if (!response.ok) {
+            var failure = await response.json().catch(function() { return {}; });
+            throw new Error(failure.error || 'Your profile could not be saved.');
+          }
+          var result = await response.json();
+          location.href = result.next || '/dashboard';
+        } catch (error) {
+          alert(error.message || 'Your profile could not be saved. Please try again.');
+        }
+      };
+    });
+  </script>
+</body>
+</html>`;
+}

@@ -1,0 +1,37 @@
+name: Staging D1 migration
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: landingnl-staging-d1-migration
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    name: Apply and verify staging migration
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CI: true
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npx wrangler deploy --dry-run --env staging --keep-vars
+      - run: npm run db:migrate:staging
+      - name: Verify required staging tables
+        run: >-
+          npx wrangler d1 execute DB
+          --env staging
+          --remote
+          --command "SELECT name FROM sqlite_master WHERE type = 'table' AND name IN ('users', 'sessions', 'email_login_tokens', 'user_state', 'regulatory_rules') ORDER BY name;"

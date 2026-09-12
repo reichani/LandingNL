@@ -1,0 +1,56 @@
+name: Deploy staging
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ['release/**']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: landingnl-staging-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CI: true
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npx wrangler deploy --dry-run --env staging --keep-vars
+      - name: Deploy and capture the staging URL
+        id: deploy
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run deploy:staging 2>&1 | tee deploy.log
+          url="$(grep -Eo 'https://[a-zA-Z0-9._-]*workers\.dev' deploy.log | tail -n 1)"
+          if [ -z "$url" ]; then
+            echo "Could not determine the deployed workers.dev URL from the deploy output." >&2
+            exit 1
+          fi
+          echo "Staging URL: $url"
+          echo "STAGING_URL=$url" >> "$GITHUB_ENV"
+      - name: Smoke public routes
+        run: |
+          curl --fail --silent --show-error "$STAGING_URL/" >/dev/null
+          curl --fail --silent --show-error "$STAGING_URL/login" >/dev/null
+          curl --fail --silent --show-error "$STAGING_URL/robots.txt" | grep -q 'Disallow: /dashboard'
+      - name: Verify dashboard remains protected
+        shell: bash
+        run: |
+          headers="$(curl --silent --show-error --dump-header - --output /dev/null "$STAGING_URL/dashboard" | tr -d '\r')"
+          printf '%s\n' "$headers" | grep -Eq '^HTTP/[0-9.]+ 303'
+          printf '%s\n' "$headers" | grep -Fqi "location: $STAGING_URL/login"
+          printf '%s\n' "$headers" | grep -Eqi '^cache-control: no-store$'

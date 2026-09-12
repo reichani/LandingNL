@@ -1,0 +1,74 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  // Top-level config is a deliberately incomplete scaffold. It is NOT named
+  // "landingnl" and it carries NO database binding, so any deploy that forgets
+  // --env cannot quietly write real users into the staging database: the Worker
+  // fails closed with "Database binding is not configured" instead.
+  // Deploy with `npm run deploy:staging` or `npm run deploy:production`;
+  // for local work use `npm run dev`, which passes --env staging.
+  "name": "landingnl-local",
+  "main": "src/index.js",
+  "workers_dev": false,
+  "compatibility_date": "2026-08-22",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1
+    }
+  },
+  "version_metadata": {
+    "binding": "CF_VERSION_METADATA"
+  },
+  "vars": {
+    "GOOGLE_CLIENT_ID": "400457048302-bks58p58mrf37cd5c52ifndr54shn8i1.apps.googleusercontent.com",
+    "SIGNUP_MODE": "open",
+    "APP_BASE_URL": "http://localhost:8787"
+  },
+  "env": {
+    "staging": {
+      "name": "landingnl-staging",
+      "workers_dev": true,
+      "version_metadata": {
+        "binding": "CF_VERSION_METADATA"
+      },
+      "vars": {
+        "GOOGLE_CLIENT_ID": "400457048302-bks58p58mrf37cd5c52ifndr54shn8i1.apps.googleusercontent.com",
+        "SIGNUP_MODE": "open",
+        "APP_BASE_URL": "https://landingnl-staging.reichani.workers.dev"
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "landingnl-db-staging",
+          "database_id": "0bf83e5e-afe1-4fd1-ae16-dfd103d801da",
+          "migrations_dir": "migrations"
+        }
+      ]
+    },
+    "production": {
+      "name": "landingnl",
+      // Production is reachable only on landingnl.com; the workers.dev copy is disabled.
+      "workers_dev": false,
+      "version_metadata": {
+        "binding": "CF_VERSION_METADATA"
+      },
+      "vars": {
+        "GOOGLE_CLIENT_ID": "400457048302-bks58p58mrf37cd5c52ifndr54shn8i1.apps.googleusercontent.com",
+        // Owner decision 2026-09-10: public Google sign-in, published with /privacy.
+        // Set to "closed_beta" to admit only D1 beta_invites addresses.
+        "SIGNUP_MODE": "open",
+        "APP_BASE_URL": "https://landingnl.com"
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "landingnl-db",
+          "database_id": "ba3aceec-0db5-4180-a665-0a440c76b18c",
+          "migrations_dir": "migrations"
+        }
+      ]
+    }
+  }
+}

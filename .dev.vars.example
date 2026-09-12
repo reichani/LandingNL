@@ -1,0 +1,8 @@
+# Public OAuth client identifier used by Google Identity Services.
+# Do not put client secrets in this file.
+GOOGLE_CLIENT_ID=replace-with-your-google-client-id.apps.googleusercontent.com
+
+# Server-side email magic links (Brevo transactional email).
+BREVO_API_KEY=replace-with-brevo-api-key
+AUTH_FROM_EMAIL=verified-sender@example.com
+APP_BASE_URL=http://localhost:8787

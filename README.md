@@ -1,52 +1,39 @@
-# LandingNL
+# LandingNL Worker
 
-LandingNL is a mobile-first landing companion for international students moving to the Netherlands.
+This repository captures the Cloudflare dashboard implementation of LandingNL v1.0.4 as a reproducible local Worker project.
 
-## Product thesis
+## Local setup
 
-**Land → Settle → Belong**
+1. Install Node.js 22 or newer (required by the pinned Wrangler version).
+2. Run `npm install`.
+3. Create local D1 state and apply `migrations/0001_secure_foundation.sql` with `npm run db:migrate:local`.
+4. Copy `.dev.vars.example` to `.dev.vars`; configure Google and the verified Brevo sender.
+5. Add the `DB` binding to `wrangler.jsonc` using the D1 database ID returned by Cloudflare.
+6. Run `npm test`.
+7. Run `npm run dev` and open the local URL printed by Wrangler.
 
-LandingNL helps students move from pre-arrival preparation to becoming operational and independent in the Netherlands, while keeping every screen focused on one clear next action.
+## Release flow
 
-### Core journeys
-- Housing search and registrable address readiness
-- Arrival, municipality registration, BSN and DigiD
-- Budget, banking, mobility and essential setup
-- Part-time work, CV creation and paid-hours tracking
-- DUO and regulatory-aware guidance
-- Secure document wallet
-- Community: Ask, Meet, Share and Exchange
+- Feature work is made on a branch and reviewed through a pull request.
+- `npm run check` must pass before merge.
+- Deploy to staging with `npm run deploy:staging`.
+- Verify the checklist in `docs/RELEASE_CHECKLIST.md`.
+- Deploy production only from the protected default branch.
 
-## Product principles
-- One Moment → One Focus → One Action
-- Mobile-first and future-facing for students born around 2008
-- Free users receive meaningful utility; Plus unlocks adaptive intelligence
-- Official-source-first regulatory guidance
-- No hard paywall on urgent government tasks
-- PII separated from analytics and product signals
-- Revenue-funded infrastructure: free tiers first, upgrade as real usage and revenue grow
+The `--keep-vars` flag is intentional during the migration: it prevents existing dashboard-managed variables from being removed before they are inventoried.
 
-## Build strategy
+## Current architecture
 
-The working application is the source of truth. Figma remains the visual specification and is updated at major UX milestones.
+`src/index.js` owns the server trust boundary. `src/legacy-ui.js` is now a thin presentation router, while the four recovered HTML documents live independently under `src/ui/pages/`. The dashboard browser behavior lives separately under `src/ui/scripts/`. Page output is locked to the PR #4 baseline with byte-for-byte SHA-256 regression tests. Google credentials, email magic links, opaque sessions, protected routes and cross-device state terminate at the Worker and D1. See `docs/ARCHITECTURE.md` for the security model and `docs/AUDIT.md` for the original findings.
 
-Planned stack:
-- Next.js + TypeScript
-- Responsive component system
-- Supabase/PostgreSQL
-- Google authentication
-- Event-driven journey engine
-- Entitlements and consent model
-- Versioned regulatory Rule Registry
-- Analytics event taxonomy
+## Cloudflare activation prerequisites
 
-## Delivery phases
+The code intentionally fails closed until these are configured:
 
-### P0 — v0.1
-Auth + consent, Housing, Home/Plan, municipality → BSN → DigiD, Wallet, basic Budget, Work/CV, paid-hours tracker, analytics foundation.
+- Separate `landingnl-db-staging` and `landingnl-db` D1 databases.
+- A `DB` binding in each environment.
+- `GOOGLE_CLIENT_ID` as a non-secret variable.
+- `BREVO_API_KEY` as a Worker secret.
+- `AUTH_FROM_EMAIL` and `APP_BASE_URL` as environment variables.
 
-### P1
-DUO intelligence, insurance, dynamic budget, Regulatory Admin, Community core (`Ask / Meet / Share / Exchange`).
-
-### P2
-Online sessions, IRL get-togethers, shared dinners, skills exchange matching, advanced community intelligence.
+Do not connect the production Worker before the staging migration and release checklist pass.
