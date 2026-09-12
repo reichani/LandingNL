@@ -735,3 +735,23 @@ test('a deploy without --env has no database and fails closed', async () => {
   assert.equal(response.status, 503);
   assert.match((await response.json()).error, /Database binding is not configured/);
 });
+
+test('the deploy smoke checks match the copy the app actually serves', async () => {
+  const [production, staging] = await Promise.all([
+    readFile(new URL('../.github/workflows/production-deploy.yml', import.meta.url), 'utf8'),
+    readFile(new URL('../.github/workflows/staging-deploy.yml', import.meta.url), 'utf8'),
+  ]);
+  const privacy = await (await legacyUi.fetch(new Request('https://example.test/privacy'), env)).text();
+  const login = await (await legacyUi.fetch(new Request('https://example.test/login'), env)).text();
+  const welcome = await (await legacyUi.fetch(new Request('https://example.test/'), env)).text();
+
+  // Every string the workflows grep for has to exist in the rendered pages,
+  // otherwise a healthy deploy fails its own smoke test.
+  for (const workflow of [production, staging]) {
+    assert.match(workflow, /grep -q 'Who is responsible'/);
+  }
+  assert.ok(privacy.includes('Who is responsible'));
+  assert.ok(login.includes('privacy-link'));
+  assert.ok(welcome.includes('journey-start'));
+  assert.doesNotMatch(production, /Veri sorumlusu/);
+});
