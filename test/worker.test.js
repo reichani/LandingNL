@@ -36,7 +36,7 @@ const env = { DB: createDb(), GOOGLE_CLIENT_ID: 'test-client-id.apps.googleuserc
 const PAGE_HASHES = new Map([
   ['/', '931cac8938f6de6aa812b3b1660ec1171d7b5665fb0b67f1c729af4d799d75c1'],
   ['/login', 'ca0cdeeb5838cf0d4528b4b8e1415cbe321b7b9da2298f9a593227620a5df245'],
-  ['/onboarding', '74da244fe2e3a122d0ef258544933aff108c9470f05b3e08d964861290dd5aec'],
+  ['/onboarding', 'bd248e1cacb38b3cbe98409d4c695ad83aef75b39093da875f5d286c89647ce8'],
   ['/dashboard', '1d396c2cd8039bf294a76bef6d5876c307bf12a9b670593f81a7bb1968a3b0a2'],
 ]);
 
@@ -438,4 +438,18 @@ test('the journey branches on EU/EEA versus non-EU status', async () => {
   assert.doesNotMatch(route, /innerHTML\s*\+?=\s*[^\']*\+/);
   const html = await (await legacyUi.fetch(new Request('https://example.test/dashboard'), env)).text();
   assert.match(html, /id="status-route"/);
+});
+
+test('the school step covers real institutions and always allows a free-text fallback', async () => {
+  const html = await (await legacyUi.fetch(new Request('https://example.test/onboarding'), env)).text();
+  for (const school of ['Universiteit van Amsterdam (UvA)', 'Technische Universiteit Delft (TU Delft)',
+    'Rijksuniversiteit Groningen (RUG)', 'Universiteit Maastricht (UM)', 'NHL Stenden Hogeschool']) {
+    assert.ok(html.includes(school), school);
+  }
+  assert.match(html, /id="school-other"/);
+  assert.match(html, /id="city-other"/);
+  // The school name is no longer fused with a single hardcoded programme.
+  assert.doesNotMatch(html, /UvA\) - PPLE/);
+  const cityCount = (html.match(/<option value="(?!__other__)[^"]+">/g) || []).length;
+  assert.ok(cityCount >= 18, `expected the full city list, saw ${cityCount}`);
 });

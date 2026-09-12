@@ -47,19 +47,35 @@ export function renderOnboardingPage(releaseLabel = 'v1.0.6 · local') {
     <div id="step-3" class="hidden">
       <div class="step">Adım 3 / 4</div>
       <h2>Eğitim Şehri & Okul</h2>
-      <p>Şehrinizi ve üniversitenizi seçin.</p>
-      <label>Şehir</label>
+      <p>Şehrini ve okulunu seç. Listede yoksa "Diğer" seçip kendin yazabilirsin.</p>
+      <label for="city">Şehir</label>
       <select id="city">
         <option value="Amsterdam">Amsterdam</option>
         <option value="Rotterdam">Rotterdam</option>
-        <option value="Eindhoven">Eindhoven</option>
+        <option value="Den Haag">Den Haag</option>
         <option value="Utrecht">Utrecht</option>
+        <option value="Eindhoven">Eindhoven</option>
+        <option value="Groningen">Groningen</option>
         <option value="Leiden">Leiden</option>
         <option value="Delft">Delft</option>
-        <option value="Groningen">Groningen</option>
+        <option value="Maastricht">Maastricht</option>
+        <option value="Nijmegen">Nijmegen</option>
+        <option value="Tilburg">Tilburg</option>
+        <option value="Enschede">Enschede</option>
+        <option value="Wageningen">Wageningen</option>
+        <option value="Breda">Breda</option>
+        <option value="Arnhem">Arnhem</option>
+        <option value="Zwolle">Zwolle</option>
+        <option value="Haarlem">Haarlem</option>
+        <option value="Leeuwarden">Leeuwarden</option>
+        <option value="__other__">Diğer şehir…</option>
       </select>
-      <label>Okul / Program</label>
-      <select id="program"></select>
+      <input type="text" id="city-other" class="hidden" placeholder="Şehrini yaz" />
+      <label for="school">Okul</label>
+      <select id="school"></select>
+      <input type="text" id="school-other" class="hidden" placeholder="Okulunun adını yaz" />
+      <label for="program">Bölüm / Program <span style="color:#94a3b8; font-weight:400;">(istersen)</span></label>
+      <input type="text" id="program" placeholder="Ör. Computer Science" />
       <button class="btn" id="btn-ob-3">Devam ➔</button>
     </div>
 
@@ -77,27 +93,59 @@ export function renderOnboardingPage(releaseLabel = 'v1.0.6 · local') {
   </div>
 
   <script>
+    // Hollanda'daki başlıca araştırma üniversiteleri (WO) ve uygulamalı bilimler
+    // üniversiteleri (HBO). Liste kapsayıcı değildir; bu yüzden her şehirde
+    // "Diğer" seçeneğiyle öğrenci okulunu kendisi yazabilir.
     var schoolsMap = {
-      'Amsterdam': ['University of Amsterdam (UvA) - PPLE', 'VU Amsterdam - Computer Science', 'Amsterdam University of Applied Sciences'],
-      'Rotterdam': ['Erasmus University Rotterdam (EUR) - Economics', 'Erasmus University Rotterdam (EUR) - IBA', 'Rotterdam University of Applied Sciences'],
-      'Eindhoven': ['Eindhoven University of Technology (TU/e) - Data Science', 'Fontys University of Applied Sciences - IT'],
-      'Utrecht': ['Utrecht University - Economics', 'HU University of Applied Sciences Utrecht'],
-      'Leiden': ['Leiden University - International Relations', 'Leiden University - Law'],
-      'Delft': ['TU Delft - Computer Science', 'TU Delft - Aerospace Engineering'],
-      'Groningen': ['University of Groningen - International Business', 'Hanze University of Applied Sciences']
+      'Amsterdam': ['Universiteit van Amsterdam (UvA)', 'Vrije Universiteit Amsterdam (VU)', 'Hogeschool van Amsterdam (HvA)', 'Amsterdam University College', 'Hogeschool Inholland Amsterdam', 'Gerrit Rietveld Academie', 'Amsterdamse Hogeschool voor de Kunsten'],
+      'Rotterdam': ['Erasmus Universiteit Rotterdam (EUR)', 'Hogeschool Rotterdam', 'Hogeschool Inholland Rotterdam', 'Codarts Rotterdam', 'Erasmus University College'],
+      'Den Haag': ['Universiteit Leiden – Campus Den Haag', 'De Haagse Hogeschool (THUAS)', 'Hogeschool Inholland Den Haag', 'Koninklijke Academie van Beeldende Kunsten'],
+      'Utrecht': ['Universiteit Utrecht (UU)', 'Hogeschool Utrecht (HU)', 'University College Utrecht', 'Hogeschool voor de Kunsten Utrecht (HKU)'],
+      'Eindhoven': ['Technische Universiteit Eindhoven (TU/e)', 'Fontys Hogescholen Eindhoven', 'Design Academy Eindhoven', 'Summa College'],
+      'Groningen': ['Rijksuniversiteit Groningen (RUG)', 'Hanzehogeschool Groningen', 'University College Groningen'],
+      'Leiden': ['Universiteit Leiden', 'Hogeschool Leiden', 'Leiden University College'],
+      'Delft': ['Technische Universiteit Delft (TU Delft)', 'De Haagse Hogeschool – Delft', 'Inholland Delft'],
+      'Maastricht': ['Universiteit Maastricht (UM)', 'Zuyd Hogeschool', 'Maastricht University College', 'Hotelschool Maastricht'],
+      'Nijmegen': ['Radboud Universiteit', 'Hogeschool van Arnhem en Nijmegen (HAN)'],
+      'Tilburg': ['Tilburg University', 'Fontys Hogescholen Tilburg', 'Avans Hogeschool Tilburg'],
+      'Enschede': ['Universiteit Twente (UT)', 'Saxion Hogeschool Enschede', 'ArtEZ Enschede'],
+      'Wageningen': ['Wageningen University & Research (WUR)', 'Aeres Hogeschool Wageningen'],
+      'Breda': ['Breda University of Applied Sciences (BUas)', 'Avans Hogeschool Breda'],
+      'Arnhem': ['Hogeschool van Arnhem en Nijmegen (HAN)', 'ArtEZ University of the Arts'],
+      'Zwolle': ['Hogeschool Windesheim', 'Katholieke Pabo Zwolle'],
+      'Haarlem': ['Hogeschool Inholland Haarlem', 'Hogeschool van Amsterdam – Haarlem'],
+      'Leeuwarden': ['NHL Stenden Hogeschool', 'Van Hall Larenstein']
     };
 
+    var OTHER = '__other__';
+
+    function toggleOtherInput(inputId, show) {
+      var input = document.getElementById(inputId);
+      if (!input) return;
+      input.classList.toggle('hidden', !show);
+      if (!show) input.value = '';
+    }
+
     function updateSchools() {
-      var city = document.getElementById('city').value;
-      var programSelect = document.getElementById('program');
-      programSelect.innerHTML = '';
-      var list = schoolsMap[city] || ['Genel Lisans Programı'];
+      var citySelect = document.getElementById('city');
+      var schoolSelect = document.getElementById('school');
+      var isOtherCity = citySelect.value === OTHER;
+      toggleOtherInput('city-other', isOtherCity);
+
+      schoolSelect.innerHTML = '';
+      var list = isOtherCity ? [] : (schoolsMap[citySelect.value] || []);
       for (var i = 0; i < list.length; i++) {
         var opt = document.createElement('option');
         opt.value = list[i];
-        opt.innerText = list[i];
-        programSelect.appendChild(opt);
+        opt.textContent = list[i];
+        schoolSelect.appendChild(opt);
       }
+      var other = document.createElement('option');
+      other.value = OTHER;
+      other.textContent = list.length ? 'Diğer (listede yok)…' : 'Okulumu yazacağım…';
+      schoolSelect.appendChild(other);
+      if (!list.length) schoolSelect.value = OTHER;
+      toggleOtherInput('school-other', schoolSelect.value === OTHER);
     }
 
     document.addEventListener('DOMContentLoaded', function() {
@@ -105,6 +153,9 @@ export function renderOnboardingPage(releaseLabel = 'v1.0.6 · local') {
       maxDob.setUTCFullYear(maxDob.getUTCFullYear() - 16);
       document.getElementById('dob').max = maxDob.toISOString().slice(0, 10);
       document.getElementById('city').addEventListener('change', updateSchools);
+      document.getElementById('school').addEventListener('change', function() {
+        toggleOtherInput('school-other', this.value === OTHER);
+      });
       updateSchools();
 
       document.getElementById('btn-ob-1').onclick = function() {
@@ -129,8 +180,21 @@ export function renderOnboardingPage(releaseLabel = 'v1.0.6 · local') {
       };
 
       document.getElementById('btn-ob-3').onclick = function() {
-        localStorage.setItem('landingnl_city', document.getElementById('city').value);
-        localStorage.setItem('landingnl_program', document.getElementById('program').value);
+        var citySelect = document.getElementById('city');
+        var city = citySelect.value === OTHER
+          ? document.getElementById('city-other').value.trim()
+          : citySelect.value;
+        if (!city) return alert('Şehrini yaz.');
+
+        var schoolSelect = document.getElementById('school');
+        var school = schoolSelect.value === OTHER
+          ? document.getElementById('school-other').value.trim()
+          : schoolSelect.value;
+        if (!school) return alert('Okulunun adını yaz.');
+
+        var program = document.getElementById('program').value.trim();
+        localStorage.setItem('landingnl_city', city);
+        localStorage.setItem('landingnl_program', program ? school + ' – ' + program : school);
         document.getElementById('step-3').classList.add('hidden');
         document.getElementById('step-4').classList.remove('hidden');
       };
