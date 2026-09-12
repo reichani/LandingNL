@@ -37,7 +37,7 @@ const PAGE_HASHES = new Map([
   ['/', '066013fc9c34a55b10228ad6868ddf397418e8acad4245f1d8ee11bdad0ee785'],
   ['/login', '3cafba3453a201269063aaea12c5af15e6b193dab7957b2aa43e6e1309f4f676'],
   ['/onboarding', '202ee18456fce810dee0ce4f676ee241eb53c066cce97e6b319958f1ea668cf4'],
-  ['/dashboard', '3be0cbdd8551195ef08da2d00d3a3fa5151b09960a97af46939da14d1b0a18e3'],
+  ['/dashboard', '00d6ae9f17c108f3dd7046dbf05d68122005b10a2d543ada6a998a80d1c79ee8'],
 ]);
 
 test('returning Google users are updated by scalar user id', async () => {
@@ -673,4 +673,25 @@ test('bike rental guidance is vendor-neutral and carries no perishable prices', 
     assert.ok(!bikes.includes(vendor), vendor);
   }
   assert.doesNotMatch(bikes, /€\s?\d+\s?(per month|\/month|a month)/i);
+});
+
+test('registration guidance no longer makes non-EU students wait for the permit card', async () => {
+  const source = await readFile(new URL('../src/ui/scripts/dashboard.js', import.meta.url), 'utf8');
+  const route = source.slice(source.indexOf('function renderStatusRoute'), source.indexOf('function renderDocuments'));
+  assert.doesNotMatch(route, /has to be sorted before you register/);
+  assert.match(route, /MVV sticker or the IND letter as proof of lawful stay/);
+  assert.match(route, /within three months of arrival/);
+  assert.match(route, /\['Registration deadline', 'Within 3 months of arrival'\]/);
+});
+
+test('the appointment document pitfalls are spelled out', async () => {
+  const html = await (await legacyUi.fetch(new Request('https://example.test/dashboard'), env)).text();
+  assert.match(html, /id="documents-grid"/);
+  const source = await readFile(new URL('../src/ui/scripts/dashboard.js', import.meta.url), 'utf8');
+  const docs = source.slice(source.indexOf('function renderDocuments'), source.indexOf('function renderTransport'));
+  assert.match(docs, /legalised \(or apostilled\) and translated/);
+  assert.match(docs, /You must really live there/);
+  assert.match(docs, /Slots fill up at the start of a semester/);
+  // Proof of lawful stay differs by passport.
+  assert.match(docs, /Store\.get\('status', 'non_eu'\) === 'eu'/);
 });

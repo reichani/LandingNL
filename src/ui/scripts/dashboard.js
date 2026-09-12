@@ -161,15 +161,15 @@ export const dashboardScript = `
       var lead = document.createElement('p');
       lead.style.cssText = 'font-size:0.82rem; color:var(--muted); margin:0 0 12px 0;';
       lead.textContent = isEU
-        ? 'You do not apply for a residence permit. If you stay longer than four months you register with your municipality (BRP); for shorter stays you are registered in the RNI. You can start with the steps below straight away.'
-        : 'Your residence permit (VVR) has to be sorted before you register with the municipality. Your school usually files the application with the IND on your behalf, and an entry visa (MVV) may be needed first. Move on to the steps below once you have your permit card.';
+        ? 'You do not apply for a residence permit. If you stay longer than four months you must register with your municipality (BRP); the RNI route is only for shorter stays. You can start with the steps below straight away.'
+        : 'Your school usually files the residence permit application with the IND on your behalf, and an entry visa (MVV) may be needed first. You do not have to wait for the permit card to register with your municipality: most municipalities accept your MVV sticker or the IND letter as proof of lawful stay. Register within three months of arrival — leaving it later can put your residence permit at risk.';
       box.appendChild(lead);
 
       var list = document.createElement('ul');
       list.className = 'list';
       var items = isEU
         ? [['Residence permit', 'Not required'], ['Work permit (TWV)', 'Usually not required'], ['First step', 'Municipal or RNI registration']]
-        : [['Residence permit (VVR)', 'Required – track it with your school and IND'], ['Entry visa (MVV)', 'Depends on your nationality'], ['Work permit (TWV)', 'Employer applies – hour limits may apply'], ['First step', 'Permit card, then municipal registration']];
+        : [['Residence permit (VVR)', 'Required – track it with your school and IND'], ['Entry visa (MVV)', 'Depends on your nationality'], ['Work permit (TWV)', 'Employer applies – hour limits may apply'], ['Registration deadline', 'Within 3 months of arrival']];
       items.forEach(function(pair) {
         var li = document.createElement('li');
         li.className = 'item';
@@ -257,6 +257,47 @@ export const dashboardScript = `
     // have: the student travel product runs through DUO student finance and many
     // international students are not eligible, so every card points at the
     // official eligibility check instead of promising anything.
+    // The documents are where registration actually fails: a legalised birth
+    // certificate has to be arranged in the home country, and appointment slots
+    // disappear at the start of a semester.
+    function renderDocuments() {
+      var grid = document.getElementById('documents-grid');
+      if (!grid) return;
+      grid.innerHTML = '';
+      var isEU = Store.get('status', 'non_eu') === 'eu';
+
+      grid.appendChild(createSubCard(
+        'tag-amber',
+        '📜 Birth certificate',
+        'Arrange it before you leave home',
+        'For a first registration municipalities usually ask for your birth certificate, legalised (or apostilled) and translated. This is the most common reason a registration appointment fails, and it is far harder to arrange once you are in the Netherlands. Ask your municipality which form they accept.',
+        'https://ind.nl/en/living-in-the-netherlands-with-a-residence-permit/living-in-the-netherlands'
+      ));
+
+      grid.appendChild(createSubCard(
+        'tag-purple',
+        '🏠 Proof of address',
+        'You must really live there',
+        'Bring your signed rental contract, or the main occupant’s written consent plus a copy of their ID. You have to actually live at the address you give; municipalities do check, and a registration at a postal address can be reversed. A landlord who does not allow registration is a warning sign — confirm it before you sign anything.'
+      ));
+
+      grid.appendChild(createSubCard(
+        isEU ? 'tag-mint' : 'tag-amber',
+        '🪪 Proof of lawful stay',
+        isEU ? 'Passport or national ID card' : 'Permit card, MVV sticker or IND letter',
+        isEU
+          ? 'As an EU, EEA or Swiss citizen your passport or national ID is enough. Bring originals, not copies.'
+          : 'Bring your residence permit card if you have it, or your MVV sticker or the IND letter inviting you to collect the card. Requirements differ slightly per municipality, so check their site before your appointment. Bring originals, not copies.'
+      ));
+
+      grid.appendChild(createSubCard(
+        'tag-mint',
+        '📅 Book early',
+        'Slots fill up at the start of a semester',
+        'First-registration appointments have to be made in advance and can be weeks out in August and September. Some universities arrange group appointments during arrival week — ask your international office first. Your BSN is usually given on paper at the appointment, with the official confirmation following by post.'
+      ));
+    }
+
     function renderTransport() {
       var grid = document.getElementById('transport-grid');
       if (!grid) return;
@@ -601,7 +642,7 @@ export const dashboardScript = `
             ? 'Your appointment is saved (' + savedDate + '). Once you have been, set this step to “Applied, waiting”; mark it “Done” when your BSN arrives.'
             : (isEU
                 ? 'First step: register with your municipality (BRP) or in the RNI. Book an appointment, save the date and set this step to “Applied, waiting”.'
-                : 'First step: register with your municipality once your residence permit card (VVR) is ready. Book an appointment, save the date and set this step to “Applied, waiting”.'),
+                : 'First step: register with your municipality — you can usually go with your MVV sticker or IND letter, before the permit card arrives. Book an appointment early, save the date and set this step to “Applied, waiting”.'),
           doing: 'You have registered and are waiting for your BSN. Mark this step “Done” once the number arrives.'
         },
         {
@@ -625,6 +666,7 @@ export const dashboardScript = `
         if (states[k] !== 'done') { focus = k; break; }
       }
 
+      renderDocuments();
       renderNextAction(states, guidance, focus);
 
       if (focus === -1) {
@@ -920,6 +962,7 @@ export const dashboardScript = `
         renderStatusRoute();
         renderAllowances();
         renderPerks();
+        renderDocuments();
         renderTransport();
         renderBikes();
         renderInsuranceTree();

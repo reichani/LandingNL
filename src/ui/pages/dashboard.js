@@ -202,6 +202,12 @@ export function renderDashboardPage(releaseLabel = 'v1.0.6', buildMeta = '') {
           </ul>
         </div>
 
+        <div class="card col-3" style="border-left: 4px solid var(--primary);">
+          <div class="card-title">📋 What to bring to your registration appointment</div>
+          <p style="font-size:0.82rem; color:var(--muted); margin-bottom:12px;">Requirements differ per municipality — always check their own site. These are the ones students most often get caught out by:</p>
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:12px;" id="documents-grid"></div>
+        </div>
+
         <div class="card col-3" style="border-left: 4px solid var(--amber);">
           <div class="card-title">🏛️ Government allowances (toeslagen)</div>
           <p style="font-size:0.82rem; color:var(--muted); margin-bottom:12px;">The Belastingdienst decides eligibility and amounts. LandingNL never applies on your behalf and guarantees no amount. Check your own situation with the official calculator:</p>
