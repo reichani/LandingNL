@@ -185,8 +185,8 @@ export const dashboardScript = `
 
       var link = document.createElement('a');
       link.href = isEU
-        ? 'https://ind.nl/en/residence-permits/eu-eea-and-swiss-citizens'
-        : 'https://ind.nl/en/residence-permits/study/residence-permit-for-study-purposes';
+        ? 'https://ind.nl/en/residence-permits/eu-eea-or-swiss-citizens/staying-in-the-netherlands-as-an-eu-eea-or-swiss-citizen'
+        : 'https://ind.nl/en/residence-permits/study';
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
       link.className = 'btn-act btn-act-full';

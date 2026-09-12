@@ -37,7 +37,7 @@ const PAGE_HASHES = new Map([
   ['/', '066013fc9c34a55b10228ad6868ddf397418e8acad4245f1d8ee11bdad0ee785'],
   ['/login', '3cafba3453a201269063aaea12c5af15e6b193dab7957b2aa43e6e1309f4f676'],
   ['/onboarding', '202ee18456fce810dee0ce4f676ee241eb53c066cce97e6b319958f1ea668cf4'],
-  ['/dashboard', 'aba4d117409c61196e29c94588b516a66c7f26257dc7deaa1e84903dc986cbf6'],
+  ['/dashboard', 'b3de3a7d0e8002374bc629f1eb6d574de669bd1c3da294572c0605329ddcd888'],
 ]);
 
 test('returning Google users are updated by scalar user id', async () => {
@@ -438,8 +438,10 @@ test('the journey branches on EU/EEA versus non-EU status', async () => {
   assert.match(route, /VVR/);
   assert.match(route, /MVV/);
   assert.match(route, /TWV/);
-  assert.match(route, /ind\.nl\/en\/residence-permits\/eu-eea-and-swiss-citizens/);
-  assert.match(route, /ind\.nl\/en\/residence-permits\/study/);
+  assert.match(route, /ind\.nl\/en\/residence-permits\/eu-eea-or-swiss-citizens\/staying-in-the-netherlands/);
+  assert.match(route, /'https:\/\/ind\.nl\/en\/residence-permits\/study'/);
+  // The retired URL 404s on ind.nl.
+  assert.doesNotMatch(route, /eu-eea-and-swiss-citizens/);
   // Route content is written with textContent, never innerHTML concatenation.
   assert.doesNotMatch(route, /innerHTML\s*\+?=\s*[^\']*\+/);
   const html = await (await legacyUi.fetch(new Request('https://example.test/dashboard'), env)).text();
