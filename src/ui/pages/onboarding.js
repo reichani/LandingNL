@@ -22,6 +22,10 @@ export function renderOnboardingPage(releaseLabel = 'v1.0.6', buildMeta = '') {
 </head>
 <body>
   <div class="card">
+    <div id="edit-banner" class="hidden" style="background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.3); color:#93c5fd; border-radius:10px; padding:10px 12px; font-size:0.8rem; margin-bottom:16px;">
+      Profilini güncelliyorsun. İşaretlediğin adımlar ve kayıtlı tarihin korunur.
+      <a href="/dashboard" style="color:#93c5fd; display:inline-block; margin-top:4px;">Vazgeç, panele dön</a>
+    </div>
     <div id="step-1">
       <div class="step">Adım 1 / 4</div>
       <h2>Doğum Tarihin</h2>
@@ -148,6 +152,55 @@ export function renderOnboardingPage(releaseLabel = 'v1.0.6', buildMeta = '') {
       toggleOtherInput('school-other', schoolSelect.value === OTHER);
     }
 
+    var EDIT_MODE = new URLSearchParams(location.search).has('edit');
+
+    function splitProgram(stored) {
+      var value = String(stored || '');
+      var separator = value.indexOf(' – ');
+      if (separator === -1) return { school: value, program: '' };
+      return { school: value.slice(0, separator), program: value.slice(separator + 3) };
+    }
+
+    function selectOrOther(select, otherInputId, value) {
+      if (!value) return;
+      var options = Array.prototype.slice.call(select.options);
+      var match = options.filter(function(option) { return option.value === value; })[0];
+      if (match) {
+        select.value = value;
+      } else {
+        select.value = OTHER;
+        var input = document.getElementById(otherInputId);
+        if (input) { input.classList.remove('hidden'); input.value = value; }
+      }
+    }
+
+    async function prefillFromServer() {
+      var banner = document.getElementById('edit-banner');
+      if (banner) banner.classList.remove('hidden');
+      try {
+        var response = await fetch('/api/state', { credentials: 'same-origin' });
+        if (!response.ok) return;
+        var state = (await response.json()).state || {};
+
+        if (state.status) document.getElementById('status').value = state.status;
+        if (state.housing) document.getElementById('housing').value = state.housing;
+
+        var citySelect = document.getElementById('city');
+        selectOrOther(citySelect, 'city-other', state.city);
+        updateSchools();
+        if (citySelect.value === OTHER) {
+          var cityOther = document.getElementById('city-other');
+          if (cityOther) { cityOther.classList.remove('hidden'); cityOther.value = state.city || ''; }
+        }
+
+        var parts = splitProgram(state.program);
+        selectOrOther(document.getElementById('school'), 'school-other', parts.school);
+        document.getElementById('program').value = parts.program;
+      } catch (error) {
+        // A failed prefill still leaves a usable, empty form.
+      }
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
       var maxDob = new Date();
       maxDob.setUTCFullYear(maxDob.getUTCFullYear() - 16);
@@ -157,6 +210,7 @@ export function renderOnboardingPage(releaseLabel = 'v1.0.6', buildMeta = '') {
         toggleOtherInput('school-other', this.value === OTHER);
       });
       updateSchools();
+      if (EDIT_MODE) prefillFromServer();
 
       document.getElementById('btn-ob-1').onclick = function() {
         var dob = document.getElementById('dob').value;

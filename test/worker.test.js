@@ -36,8 +36,8 @@ const env = { DB: createDb(), GOOGLE_CLIENT_ID: 'test-client-id.apps.googleuserc
 const PAGE_HASHES = new Map([
   ['/', '22230962a19e602c5eb6837e1e847613c0365245b46bba136ad7a772785775a6'],
   ['/login', '4ecf4cc9ec94b105e293addaa3f8ecef074f4d150dd35921b89e1603d466f45f'],
-  ['/onboarding', '98cea19d642fa29d84686d86e6b581824df744118545b9166d2eb83331c7bef8'],
-  ['/dashboard', '5daaf5a2bca4c1d136674940c921ff9295ed965de968f43b74f5d6ed3ebe5bf2'],
+  ['/onboarding', '0d0111c19f5a7b0627084a7cfd2c38cf178a75aec85730e45371d2e36942da31'],
+  ['/dashboard', 'd8210cd676b808cd953fbd35f220664a37df35d90ec6ad5cc9ef3f7e1afe6198'],
 ]);
 
 test('returning Google users are updated by scalar user id', async () => {
@@ -483,4 +483,44 @@ test('list tags wrap instead of overlapping their label', async () => {
   const html = await (await legacyUi.fetch(new Request('https://example.test/dashboard'), env)).text();
   assert.doesNotMatch(html, /\.tag \{[^}]*min-width: 105px/);
   assert.match(html, /\.item > span:first-child \{ flex: 1 1 auto; min-width: 0; \}/);
+});
+
+test('a completed profile can be reopened and corrected', async () => {
+  const completedEnv = {
+    ...env,
+    DB: createDb({
+      first(sql) {
+        if (sql.includes('FROM sessions')) {
+          return { userId: 'user-1', email: 'student@example.com', onboardingCompletedAt: '2026-09-01T00:00:00.000Z' };
+        }
+        return null;
+      },
+    }),
+  };
+  const cookie = { Cookie: 'landingnl_session=opaque-session-token' };
+
+  // Without ?edit the completed profile still goes straight to the dashboard.
+  const plain = await worker.fetch(new Request('https://example.test/onboarding', { headers: cookie }), completedEnv);
+  assert.equal(plain.status, 303);
+  assert.match(plain.headers.get('location'), /\/dashboard$/);
+
+  // With ?edit the form is served again.
+  const editing = await worker.fetch(new Request('https://example.test/onboarding?edit=1', { headers: cookie }), completedEnv);
+  assert.equal(editing.status, 200);
+  const html = await editing.text();
+  assert.match(html, /id="edit-banner"/);
+  assert.match(html, /EDIT_MODE/);
+  assert.match(html, /if \(EDIT_MODE\) prefillFromServer\(\);/);
+
+  const dashboard = await (await legacyUi.fetch(new Request('https://example.test/dashboard'), env)).text();
+  assert.match(dashboard, /href="\/onboarding\?edit=1"/);
+});
+
+test('the edit form restores a stored school that is not in the list', async () => {
+  const source = await readFile(new URL('../src/ui/pages/onboarding.js', import.meta.url), 'utf8');
+  assert.match(source, /function splitProgram/);
+  assert.match(source, /function selectOrOther/);
+  // An unknown value falls back to the free-text input rather than being dropped.
+  const helper = source.slice(source.indexOf('function selectOrOther'), source.indexOf('async function prefillFromServer'));
+  assert.match(helper, /select\.value = OTHER;/);
 });

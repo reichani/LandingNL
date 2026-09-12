@@ -210,7 +210,8 @@ async function route(request, env, url, session) {
   if (url.pathname === '/dashboard' && session && !session.onboardingCompletedAt) {
     return redirect(request, '/onboarding');
   }
-  if (url.pathname === '/onboarding' && session?.onboardingCompletedAt) {
+  // ?edit=1 re-opens onboarding so a student can correct a wrong age, city or school.
+  if (url.pathname === '/onboarding' && session?.onboardingCompletedAt && !url.searchParams.has('edit')) {
     return redirect(request, '/dashboard');
   }
 

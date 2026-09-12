@@ -109,7 +109,10 @@ export function renderDashboardPage(releaseLabel = 'v1.0.6', buildMeta = '') {
   <div class="container">
     <header>
       <div class="brand">LandingNL • Öğrenci Yolculuğum</div>
-      <button class="btn-reset" id="btn-reset-app">Çıkış Yap ➔</button>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <a class="btn-act" href="/onboarding?edit=1" style="text-decoration:none; background:rgba(255,255,255,0.08); color:#cbd5e1;">Profilimi düzenle</a>
+        <button class="btn-reset" id="btn-reset-app">Çıkış Yap ➔</button>
+      </div>
     </header>
 
     <div class="savings-banner">
