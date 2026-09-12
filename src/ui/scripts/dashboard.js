@@ -195,6 +195,44 @@ export const dashboardScript = `
       box.appendChild(link);
     }
 
+    // What a student can claim back is a chain of prerequisites, and the chain
+    // differs by passport: a non-EU student additionally needs a valid residence
+    // permit, and zorgtoeslag is impossible without Dutch health insurance —
+    // which a student who only studies usually does not have.
+    function renderClaimsChain() {
+      var list = document.getElementById('claims-chain');
+      if (!list) return;
+      list.innerHTML = '';
+
+      var isEU = Store.get('status', 'non_eu') === 'eu';
+      var states = readStepStates();
+      var hasBsn = states[0] === 'done';
+      var hasDigid = states[1] === 'done';
+      var isAdult = isAdultForAllowances();
+      var hasHousing = Store.get('housing', 'no') === 'yes';
+      var isWorking = Store.get('is_working', 'no') === 'yes';
+
+      function row(label, met, note) {
+        var li = document.createElement('li');
+        li.className = 'item';
+        var left = document.createElement('span');
+        left.textContent = (met ? '✓ ' : '○ ') + label;
+        var right = document.createElement('span');
+        right.className = 'tag ' + (met ? 'tag-mint' : 'tag-amber');
+        right.textContent = note;
+        li.appendChild(left); li.appendChild(right);
+        list.appendChild(li);
+      }
+
+      row('BSN from your municipal registration', hasBsn, hasBsn ? 'Done' : 'Needed for everything below');
+      row('DigiD to file anything yourself', hasDigid, hasDigid ? 'Done' : 'Needed to apply online');
+      row('18 or older', isAdult, isAdult ? 'Yes' : 'Allowances start at 18');
+      if (!isEU) row('Valid residence permit', false, 'Required for toeslagen — check yours');
+      row('Self-contained rented home', hasHousing, hasHousing ? 'You reported a contract' : 'Huurtoeslag needs a contract');
+      row('Dutch health insurance', isWorking, isWorking ? 'You reported paid work' : 'Zorgtoeslag is impossible without it');
+      row('Wage tax withheld from a job', isWorking, isWorking ? 'You reported paid work' : 'No job, nothing to reclaim');
+    }
+
     function renderAllowances() {
       var grid = document.getElementById('allowance-grid');
       if (!grid) return;
@@ -226,8 +264,16 @@ export const dashboardScript = `
         'tag-purple',
         '🩺 Zorgtoeslag (healthcare allowance)',
         'Check your current eligibility',
-        'Eligibility depends on your insurance, income, age and residence, and is decided by the Belastingdienst.',
+        'Eligibility depends on your insurance, income, age and residence, and is decided by the Belastingdienst. Without Dutch health insurance there is no zorgtoeslag, so if you only study and hold a private student policy this usually does not apply to you.',
         'https://www.belastingdienst.nl/wps/wcm/connect/nl/zorgtoeslag/content/hoe-moet-ik-zorgtoeslag-aanvragen'
+      ));
+
+      grid.appendChild(createSubCard(
+        'tag-mint',
+        '🧾 Income tax refund',
+        'Only if you worked for pay',
+        'Employers withhold wage tax (loonheffing) as if you earned the same amount every month. Students who work irregularly — a summer job, a few hours a week — often pay too much over the year, and filing an income tax return is how you get it back. The wage tax credit (loonheffingskorting) can only be applied at one employer at a time, so with two jobs at once you may owe rather than reclaim. You file with DigiD.',
+        'https://www.belastingdienst.nl/wps/wcm/connect/nl/aangifte-inkomstenbelasting/content/hoe-doe-ik-aangifte'
       ));
     }
 
@@ -667,6 +713,7 @@ export const dashboardScript = `
       }
 
       renderDocuments();
+      renderClaimsChain();
       renderNextAction(states, guidance, focus);
 
       if (focus === -1) {
@@ -963,6 +1010,7 @@ export const dashboardScript = `
         renderAllowances();
         renderPerks();
         renderDocuments();
+        renderClaimsChain();
         renderTransport();
         renderBikes();
         renderInsuranceTree();

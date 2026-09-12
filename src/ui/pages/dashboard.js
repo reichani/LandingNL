@@ -209,8 +209,9 @@ export function renderDashboardPage(releaseLabel = 'v1.0.6', buildMeta = '') {
         </div>
 
         <div class="card col-3" style="border-left: 4px solid var(--amber);">
-          <div class="card-title">🏛️ Government allowances (toeslagen)</div>
-          <p style="font-size:0.82rem; color:var(--muted); margin-bottom:12px;">The Belastingdienst decides eligibility and amounts. LandingNL never applies on your behalf and guarantees no amount. Check your own situation with the official calculator:</p>
+          <div class="card-title">🏛️ Money you may be able to claim back</div>
+          <p style="font-size:0.82rem; color:var(--muted); margin-bottom:12px;">Each of these has conditions you have to meet first, and they come in a fixed order. The Belastingdienst decides eligibility and amounts; LandingNL never applies on your behalf and guarantees nothing.</p>
+          <ul class="list" id="claims-chain" style="margin-bottom:14px;"></ul>
           <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:12px;" id="allowance-grid">
           </div>
         </div>

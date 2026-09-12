@@ -37,7 +37,7 @@ const PAGE_HASHES = new Map([
   ['/', '066013fc9c34a55b10228ad6868ddf397418e8acad4245f1d8ee11bdad0ee785'],
   ['/login', '3cafba3453a201269063aaea12c5af15e6b193dab7957b2aa43e6e1309f4f676'],
   ['/onboarding', '202ee18456fce810dee0ce4f676ee241eb53c066cce97e6b319958f1ea668cf4'],
-  ['/dashboard', '00d6ae9f17c108f3dd7046dbf05d68122005b10a2d543ada6a998a80d1c79ee8'],
+  ['/dashboard', 'aba4d117409c61196e29c94588b516a66c7f26257dc7deaa1e84903dc986cbf6'],
 ]);
 
 test('returning Google users are updated by scalar user id', async () => {
@@ -694,4 +694,23 @@ test('the appointment document pitfalls are spelled out', async () => {
   assert.match(docs, /Slots fill up at the start of a semester/);
   // Proof of lawful stay differs by passport.
   assert.match(docs, /Store\.get\('status', 'non_eu'\) === 'eu'/);
+});
+
+test('what a student can claim back is shown as a prerequisite chain that branches by passport', async () => {
+  const html = await (await legacyUi.fetch(new Request('https://example.test/dashboard'), env)).text();
+  assert.match(html, /id="claims-chain"/);
+  assert.match(html, /Money you may be able to claim back/);
+
+  const source = await readFile(new URL('../src/ui/scripts/dashboard.js', import.meta.url), 'utf8');
+  const chain = source.slice(source.indexOf('function renderClaimsChain'), source.indexOf('function renderAllowances'));
+  // The permit row only appears on the non-EU route.
+  assert.match(chain, /if \(!isEU\) row\('Valid residence permit'/);
+  // The two conditions students most often miss.
+  assert.match(chain, /Zorgtoeslag is impossible without it/);
+  assert.match(chain, /row\('BSN from your municipal registration'/);
+  assert.match(chain, /row\('DigiD to file anything yourself'/);
+
+  const allowances = source.slice(source.indexOf('function renderAllowances'), source.indexOf('function renderDocuments'));
+  assert.match(allowances, /Income tax refund/);
+  assert.match(allowances, /loonheffingskorting\) can only be applied at one employer at a time/);
 });
