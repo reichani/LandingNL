@@ -75,7 +75,7 @@ export const dashboardScript = `
         var link = document.createElement('a');
         link.className = 'btn-act';
         link.style.cssText = 'width:100%; padding:6px; font-size:0.75rem; background:rgba(255,255,255,0.08); color:#cbd5e1; text-align:center; text-decoration:none; box-sizing:border-box;';
-        link.innerText = 'Kaynağı Aç ↗';
+        link.innerText = 'Open source ↗';
         link.href = actionUrl;
         link.target = '_blank';
         link.rel = 'noopener noreferrer';
@@ -113,9 +113,9 @@ export const dashboardScript = `
       var isEU = (status === 'eu');
       var isAdult = age >= 21;
 
-      grid.appendChild(createSubCard('tag-purple', '📌 Özet Profil', city + ' • ' + age + ' Yaş', program));
-      grid.appendChild(createSubCard(isEU ? 'tag-mint' : 'tag-amber', isEU ? 'AB/AEA çalışma statüsü' : 'Çalışma izni kontrolü gerekli', isEU ? 'Genellikle TWV gerekmez' : 'İşveren ve izin koşullarını doğrula', 'Güncel hakkını resmi IND ve hükümet kaynaklarından doğrula.'));
-      grid.appendChild(createSubCard('tag-mint', '💶 Asgari Ücret Skalası', isAdult ? 'Tam Asgari Ücret Skalası' : age + ' Yaş Jeugdloon Skalası', '21 yaş altı öğrenciler için yaşa bağlı resmi kademeli ücret uygulanır.'));
+      grid.appendChild(createSubCard('tag-purple', '📌 Profile', city + ' • age ' + age, program));
+      grid.appendChild(createSubCard(isEU ? 'tag-mint' : 'tag-amber', isEU ? 'EU/EEA work status' : 'Work permit check needed', isEU ? 'A TWV is usually not required' : 'Verify the employer and permit conditions', 'Confirm what you are entitled to with IND and official government sources.'));
+      grid.appendChild(createSubCard('tag-mint', '💶 Minimum wage bracket', isAdult ? 'Full statutory minimum wage' : 'Youth minimum wage (jeugdloon), age ' + age, 'Below 21 the statutory minimum wage is set in age-based brackets.'));
     }
 
     // Non-EU/EEA and EU/EEA students enter the Dutch system through different doors:
@@ -129,21 +129,21 @@ export const dashboardScript = `
 
       var title = document.createElement('div');
       title.className = 'card-title';
-      title.textContent = isEU ? '🇪🇺 AB/AEA veya İsviçre rotası' : '🛂 AB/AEA dışı rota';
+      title.textContent = isEU ? '🇪🇺 EU/EEA or Swiss route' : '🛂 Non-EU/EEA route';
       box.appendChild(title);
 
       var lead = document.createElement('p');
       lead.style.cssText = 'font-size:0.82rem; color:var(--muted); margin:0 0 12px 0;';
       lead.textContent = isEU
-        ? 'Oturum izni başvurusu gerekmez. Hollanda’da dört aydan uzun kalacaksan belediyeye (BRP) kaydolman gerekir; kısa kalışlarda RNI kaydı yapılır. Aşağıdaki adımlarla doğrudan başlayabilirsin.'
-        : 'Belediyeye kaydolmadan önce oturum iznin (VVR) tamamlanmalı. Başvuruyu genellikle okulun IND nezdinde senin adına yapar; gerekiyorsa önce giriş vizesi (MVV) alınır. İzin kartını aldıktan sonra aşağıdaki adımlara geç.';
+        ? 'You do not apply for a residence permit. If you stay longer than four months you register with your municipality (BRP); for shorter stays you are registered in the RNI. You can start with the steps below straight away.'
+        : 'Your residence permit (VVR) has to be sorted before you register with the municipality. Your school usually files the application with the IND on your behalf, and an entry visa (MVV) may be needed first. Move on to the steps below once you have your permit card.';
       box.appendChild(lead);
 
       var list = document.createElement('ul');
       list.className = 'list';
       var items = isEU
-        ? [['Oturum izni', 'Gerekmez'], ['Çalışma izni (TWV)', 'Genellikle gerekmez'], ['İlk adım', 'Belediye / RNI kaydı']]
-        : [['Oturum izni (VVR)', 'Gerekir – okulun ve IND ile takip et'], ['Giriş vizesi (MVV)', 'Ülkene göre değişir'], ['Çalışma izni (TWV)', 'İşveren başvurur – saat sınırı olabilir'], ['İlk adım', 'İzin kartı, sonra belediye kaydı']];
+        ? [['Residence permit', 'Not required'], ['Work permit (TWV)', 'Usually not required'], ['First step', 'Municipal or RNI registration']]
+        : [['Residence permit (VVR)', 'Required – track it with your school and IND'], ['Entry visa (MVV)', 'Depends on your nationality'], ['Work permit (TWV)', 'Employer applies – hour limits may apply'], ['First step', 'Permit card, then municipal registration']];
       items.forEach(function(pair) {
         var li = document.createElement('li');
         li.className = 'item';
@@ -165,7 +165,7 @@ export const dashboardScript = `
       link.rel = 'noopener noreferrer';
       link.className = 'btn-act btn-act-full';
       link.style.cssText = 'display:block; margin-top:10px; text-align:center; text-decoration:none;';
-      link.textContent = 'IND resmi sayfası ↗';
+      link.textContent = 'Official IND page ↗';
       box.appendChild(link);
     }
 
@@ -177,9 +177,9 @@ export const dashboardScript = `
       if (!isAdultForAllowances()) {
         grid.appendChild(createSubCard(
           'tag-amber',
-          '\u{1F553} 18 ya\u015F\u0131n\u0131 doldurmadan',
-          'Toeslag ba\u015Fvurusu hen\u00FCz m\u00FCmk\u00FCn de\u011Fil',
-          'Huurtoeslag ve zorgtoeslag i\u00E7in kural olarak 18 ya\u015F\u0131n\u0131 doldurmu\u015F olman gerekir (\u00E7ok dar istisnalar var). 18\u2019ine girdi\u011Fin ayda kurulumdaki ya\u015F\u0131n\u0131 g\u00FCncelle; kartlar a\u00E7\u0131lacak.',
+          '🕓 Under 18',
+          'Allowances are not available yet',
+          'As a rule you must be 18 to claim huurtoeslag or zorgtoeslag; only narrow exceptions exist. Update your age in your profile the month you turn 18 and these cards will open up.',
           'https://www.belastingdienst.nl/wps/wcm/connect/nl/jongeren/content/vanaf-18-jaar-kun-je-toeslagen-krijgen'
         ));
         return;
@@ -190,17 +190,17 @@ export const dashboardScript = `
 
       grid.appendChild(createSubCard(
         isHouseReady ? 'tag-mint' : 'tag-amber',
-        '\u{1F3E0} Huurtoeslag (Kira Deste\u011Fi)',
-        isHouseReady ? 'S\u00F6zle\u015Fmen var \u2013 uygunlu\u011Funu kontrol et' : '\u00D6nce kira s\u00F6zle\u015Fmesi gerekir',
-        'Genellikle kendi giri\u015Fi, mutfa\u011F\u0131 ve tuvaleti olan ba\u011F\u0131ms\u0131z bir konut gerekir; ya\u015F, kira ve gelir ko\u015Fullar\u0131 da vard\u0131r. Sonucu Belastingdienst belirler.',
+        '🏠 Huurtoeslag (rent allowance)',
+        isHouseReady ? 'You have a contract – check your eligibility' : 'A rental contract comes first',
+        'It normally requires self-contained housing with its own entrance, kitchen and toilet, plus age, rent and income conditions. The Belastingdienst decides.',
         'https://www.belastingdienst.nl/wps/wcm/connect/nl/huurtoeslag/content/hoe-moet-ik-huurtoeslag-aanvragen'
       ));
 
       grid.appendChild(createSubCard(
         'tag-purple',
-        '\u{1FA7A} Zorgtoeslag (Sigorta Deste\u011Fi)',
-        'G\u00FCncel uygunlu\u011Funu kontrol et',
-        'Uygunluk; sigorta, gelir, ya\u015F ve ikamet durumuna g\u00F6re resmi kurum taraf\u0131ndan belirlenir.',
+        '🩺 Zorgtoeslag (healthcare allowance)',
+        'Check your current eligibility',
+        'Eligibility depends on your insurance, income, age and residence, and is decided by the Belastingdienst.',
         'https://www.belastingdienst.nl/wps/wcm/connect/nl/zorgtoeslag/content/hoe-moet-ik-zorgtoeslag-aanvragen'
       ));
     }
@@ -212,17 +212,17 @@ export const dashboardScript = `
 
       grid.appendChild(createSubCard(
         'tag-mint',
-        '💻 SURFspot İndirimleri',
-        "Adobe, Microsoft, Apple & Laptop (%80'e varan)",
-        'Üniversite mail login bilgilerin ile SURFspot.nl adresine girerek lisans indirimlerini kullan.',
+        '💻 SURFspot discounts',
+        'Software and hardware for students',
+        'Sign in at SURFspot.nl with your university account to see the licence discounts available to you.',
         'https://www.surfspot.nl/'
       ));
 
       grid.appendChild(createSubCard(
         'tag-purple',
-        '🎟️ Student Card Deals',
-        'Müze, Sinema & Mağazalar',
-        'Öğrenci kartınla gittiğin her yerde sor: "Do you have a student discount?" Güncel fırsatları açmadan önce koşulları kontrol et.',
+        '🎟️ Student card deals',
+        'Museums, cinemas and shops',
+        'Ask “do you have a student discount?” wherever you go, and check the conditions before you count on one.',
         'https://www.isic.nl/en'
       ));
     }
@@ -233,8 +233,7 @@ export const dashboardScript = `
       container.innerHTML = '';
 
       var isWorking = Store.get('is_working', 'no') === 'yes';
-      var status = Store.get('status', 'non_eu');
-      var isEU = (status === 'eu');
+      var isEU = Store.get('status', 'non_eu') === 'eu';
 
       var btnNo = document.getElementById('btn-work-no');
       var btnYes = document.getElementById('btn-work-yes');
@@ -250,30 +249,30 @@ export const dashboardScript = `
       }
 
       if (!isAdultForAllowances()) {
-        container.appendChild(createSubCard('tag-purple', '🏥 18 yaş altı', 'Genellikle ebeveynin üzerinden sigortalısın', 'Hollanda’da 18 yaşına kadar kendi temel sağlık sigortanı yaptırman gerekmez; prim ödemediğin için zorgtoeslag da alamazsın. Yurt dışından geldiysen mevcut poliçenin Hollanda’daki kapsamını sigortacınla doğrula.', 'https://www.studyinnl.org/plan-your-stay/healthcare-insurance'));
-        container.appendChild(createSubCard('tag-amber', '⚠️ 18’ine girdiğinde', 'Kendi sigortanı yaptırman gerekir', '18. yaş gününden sonra kendi temel sağlık sigortanı (basisverzekering) yaptırman ve prim ödemen gerekir; aynı anda zorgtoeslag başvurusu da açılır. Kurulumdaki yaşını güncellemeyi unutma.', 'https://www.belastingdienst.nl/wps/wcm/connect/nl/jongeren/content/vanaf-18-jaar-kun-je-toeslagen-krijgen'));
+        container.appendChild(createSubCard('tag-purple', '🏥 Under 18', 'Usually insured through a parent', 'Until you turn 18 you do not need your own Dutch basic health insurance, and because you pay no premium you cannot claim zorgtoeslag. If you moved from abroad, confirm your existing policy’s cover in the Netherlands with your insurer.', 'https://www.studyinnl.org/plan-your-stay/healthcare-insurance'));
+        container.appendChild(createSubCard('tag-amber', '⚠️ When you turn 18', 'You will need your own insurance', 'From your 18th birthday you must take out Dutch basic health insurance (basisverzekering) and pay the premium; at that point you can also apply for zorgtoeslag. Remember to update your age in your profile.', 'https://www.belastingdienst.nl/wps/wcm/connect/nl/jongeren/content/vanaf-18-jaar-kun-je-toeslagen-krijgen'));
         return;
       }
 
       if (!isWorking) {
-        container.appendChild(createSubCard('tag-purple', '🏥 Yalnızca öğrenciysen', isEU ? 'EHIC veya özel sigorta genellikle yeterli' : 'Özel öğrenci sigortası genellikle gerekir', 'Sadece okuyorsan Hollanda temel sağlık sigortası (basisverzekering) genellikle zorunlu değildir; kendi durumunu resmi kaynaktan doğrula.', 'https://www.studyinnl.org/plan-your-stay/healthcare-insurance'));
-        container.appendChild(createSubCard('tag-mint', '💶 Sigorta Durumu', 'Poliçeni ve kapsamını doğrula', 'Mevcut özel/öğrenci sigortanın Hollanda’daki kapsamını sigortacı ve resmi kaynaklarla doğrula.'));
-        container.appendChild(createSubCard('tag-amber', '⚠️ Karar Uyarısı', 'Ücretli işe başlarsan değişir', 'Ücretli bir işe veya maaşlı staja başladığında Hollanda temel sağlık sigortası genellikle zorunlu hale gelir. Süreyi ve koşulları resmi kaynaktan kontrol et.'));
+        container.appendChild(createSubCard('tag-purple', '🏥 If you only study', isEU ? 'An EHIC or private policy is usually enough' : 'Private student insurance is usually needed', 'If you only study, Dutch basic health insurance is usually not compulsory. Verify your own situation with an official source.', 'https://www.studyinnl.org/plan-your-stay/healthcare-insurance'));
+        container.appendChild(createSubCard('tag-mint', '💶 Your policy', 'Check what it actually covers', 'Confirm the Dutch cover of your current private or student policy with your insurer and official sources.'));
+        container.appendChild(createSubCard('tag-amber', '⚠️ This changes if you work', 'Paid work usually makes it compulsory', 'Once you start paid work or a paid internship, Dutch basic health insurance usually becomes compulsory. Check the timing and conditions with an official source.'));
       } else {
-        container.appendChild(createSubCard('tag-mint', '🚨 STATÜ KONTROLÜ', 'Basiszorgverzekering gerekebilir', 'Ücretli çalışmaya başladığında Hollanda temel sağlık sigortası yükümlülüğünü resmi SVB ve hükümet kaynaklarından kontrol et.', 'https://www.svb.nl/en/the-wlz-scheme/insurance-under-the-wlz-scheme/you-are-a-student-or-doing-an-internship'));
-        container.appendChild(createSubCard('tag-purple', '💶 DEVLET DESTEĞİ', 'Zorgtoeslag uygunluğunu kontrol et', 'Gelir, yaş, ikamet ve sigorta durumuna göre destek hakkın doğabilir. Güncel sonucu Belastingdienst hesaplar.', 'https://www.belastingdienst.nl/wps/wcm/connect/nl/zorgtoeslag/content/hoe-moet-ik-zorgtoeslag-aanvragen'));
-        container.appendChild(createSubCard('tag-mint', '🩺 Aile Hekimi (Huisarts)', 'Sigorta değişince hekimine bildir', 'Yeni sigorta bilgilerini kayıtlı olduğun huisarts pratiğiyle paylaş.'));
+        container.appendChild(createSubCard('tag-mint', '🚨 Check your status', 'Basic insurance may now be compulsory', 'Now that you work for pay, check your Dutch basic health insurance obligation with the SVB and official government sources.', 'https://www.svb.nl/en/the-wlz-scheme/insurance-under-the-wlz-scheme/you-are-a-student-or-doing-an-internship'));
+        container.appendChild(createSubCard('tag-purple', '💶 Allowance', 'Check your zorgtoeslag eligibility', 'Depending on income, age, residence and insurance you may be entitled to support. The Belastingdienst calculates the result.', 'https://www.belastingdienst.nl/wps/wcm/connect/nl/zorgtoeslag/content/hoe-moet-ik-zorgtoeslag-aanvragen'));
+        container.appendChild(createSubCard('tag-mint', '🩺 Huisarts (GP)', 'Tell your practice about the change', 'Share your new insurance details with the huisarts practice you are registered with.'));
       }
     }
 
     // Each Settle milestone has three honest states, because "marked" hid the
     // difference between not started, waiting on an institution, and finished.
     var STATES = ['todo', 'doing', 'done'];
-    var STEP_NAMES = ['Belediye kaydı & BSN', 'DigiD', 'Banka hesabı', 'Huisarts'];
+    var STEP_NAMES = ['Municipality & BSN', 'DigiD', 'Bank account', 'Huisarts'];
     var STATE_LABELS = {
-      todo: 'Başlamadım',
-      doing: 'Başladım, bekliyorum',
-      done: 'Tamamlandı'
+      todo: 'Not started',
+      doing: 'Applied, waiting',
+      done: 'Done'
     };
 
     function readStepStates() {
@@ -309,7 +308,7 @@ export const dashboardScript = `
     function setStepState(index, value) {
       var states = readStepStates();
       if (!stepUnlocked(states, index)) {
-        return alert('Önce “' + STEP_NAMES[index - 1] + '” adımını tamamlandı olarak işaretle.');
+        return alert('Mark “' + STEP_NAMES[index - 1] + '” as done first.');
       }
       if (states[index] !== 'done' && value !== 'done') {
         states[index] = value;
@@ -319,7 +318,7 @@ export const dashboardScript = `
       // Stepping back from done also clears the later steps: the journey is sequential.
       if (states[index] === 'done' && value !== 'done') {
         var laterStarted = states.slice(index + 1).some(function(state) { return state !== 'todo'; });
-        if (laterStarted && !confirm('Bu adımı geri alırsan sonraki adımların durumu da sıfırlanır. Devam edilsin mi?')) {
+        if (laterStarted && !confirm('Moving this step back also resets the steps after it. Continue?')) {
           return render();
         }
         states[index] = value;
@@ -348,7 +347,7 @@ export const dashboardScript = `
           select.value = states[index];
           select.disabled = !unlocked;
           select.style.opacity = unlocked ? '1' : '0.45';
-          select.title = unlocked ? '' : 'Önce önceki adımı tamamla';
+          select.title = unlocked ? '' : 'Finish the previous step first';
           select.onchange = function() { setStepState(index, this.value); };
         })(i);
       }
@@ -373,8 +372,8 @@ export const dashboardScript = `
       setActionState(button, !enabled);
       button.style.opacity = enabled ? '1' : '0.55';
       button.innerText = completed
-        ? (changed ? 'Değişikliği Kaydet ➔' : '✓ Tarih Kaydedildi')
-        : 'Randevu Tarihini Kaydet ➔';
+        ? (changed ? 'Save change ➔' : '✓ Date saved')
+        : 'Save appointment date ➔';
     }
 
     function render() {
@@ -393,7 +392,7 @@ export const dashboardScript = `
       var fillElem = document.getElementById('bar-fill');
       if (percentElem) {
         percentElem.innerText = doingCount
-          ? '%' + score + ' · ' + doingCount + ' adım sürüyor'
+          ? '%' + score + ' · ' + doingCount + ' in progress'
           : '%' + score;
       }
       if (fillElem) fillElem.style.width = score + '%';
@@ -402,21 +401,21 @@ export const dashboardScript = `
       var hasHousing = Store.get('housing', 'no') === 'yes';
       var bVisa = document.getElementById('b-visa');
       var bHousing = document.getElementById('b-housing');
-      if (bVisa) { bVisa.className = isEU ? 'badge active' : 'badge'; bVisa.innerText = isEU ? 'AB/AEA: oturum izni gerekmez' : 'Oturum izni: IND ile doğrula'; }
-      if (bHousing) { bHousing.className = hasHousing ? 'badge active' : 'badge'; bHousing.innerText = hasHousing ? '✓ Konut (beyan)' : '⏳ Konut arıyorsun'; }
+      if (bVisa) { bVisa.className = isEU ? 'badge active' : 'badge'; bVisa.innerText = isEU ? 'EU/EEA: no permit needed' : 'Residence permit: verify with IND'; }
+      if (bHousing) { bHousing.className = hasHousing ? 'badge active' : 'badge'; bHousing.innerText = hasHousing ? '✓ Housing (self-reported)' : '⏳ Looking for housing'; }
 
       var badgeIds = ['b-bsn', 'b-digid', 'b-bank', 'b-gp'];
-      var badgeNames = ['Belediye kaydı & BSN', 'DigiD', 'Banka hesabı', 'Huisarts'];
+      var badgeNames = ['Municipality & BSN', 'DigiD', 'Bank account', 'Huisarts'];
       for (var i = 0; i < 4; i++) {
         var badge = document.getElementById(badgeIds[i]);
         if (!badge) continue;
         var order = (i + 1) + '. ';
         if (states[i] === 'done') {
           badge.className = 'badge active';
-          badge.innerText = '✓ ' + badgeNames[i] + ' (beyan)';
+          badge.innerText = '✓ ' + badgeNames[i] + ' (self-reported)';
         } else if (states[i] === 'doing') {
           badge.className = 'badge';
-          badge.innerText = '⏳ ' + order + badgeNames[i] + ' · sürüyor';
+          badge.innerText = '⏳ ' + order + badgeNames[i] + ' · in progress';
         } else if (stepUnlocked(states, i)) {
           badge.className = 'badge';
           badge.innerText = '○ ' + order + badgeNames[i];
@@ -432,7 +431,7 @@ export const dashboardScript = `
       if (tagIng) {
         var bsnDone = states[0] === 'done';
         tagIng.className = bsnDone ? 'tag tag-mint' : 'tag tag-amber';
-        tagIng.innerText = bsnDone ? 'BSN hazır' : 'Genellikle BSN ister';
+        tagIng.innerText = bsnDone ? 'You have a BSN' : 'Usually ask for a BSN';
       }
 
       var info = document.getElementById('status-info');
@@ -442,25 +441,25 @@ export const dashboardScript = `
       var guidance = [
         {
           todo: savedDate
-            ? 'Belediye randevun kayıtlı (' + savedDate + '). Randevuya gittiysen adımı “Başladım, bekliyorum” yap; BSN numaran geldiğinde “Tamamlandı” olarak işaretle.'
+            ? 'Your appointment is saved (' + savedDate + '). Once you have been, set this step to “Applied, waiting”; mark it “Done” when your BSN arrives.'
             : (isEU
-                ? 'İlk adım: belediye (BRP) veya RNI kaydı. Randevu al, tarihini kaydet ve adımı “Başladım, bekliyorum” olarak işaretle.'
-                : 'İlk adım: oturum izni kartın (VVR) hazır olduğunda belediye kaydı. Randevu al, tarihini kaydet ve adımı “Başladım, bekliyorum” olarak işaretle.'),
-          doing: 'Belediye kaydını yaptın, BSN numaranı bekliyorsun. Numara geldiğinde adımı “Tamamlandı” yap.'
+                ? 'First step: register with your municipality (BRP) or in the RNI. Book an appointment, save the date and set this step to “Applied, waiting”.'
+                : 'First step: register with your municipality once your residence permit card (VVR) is ready. Book an appointment, save the date and set this step to “Applied, waiting”.'),
+          doing: 'You have registered and are waiting for your BSN. Mark this step “Done” once the number arrives.'
         },
         {
-          todo: 'Sıradaki adım DigiD: BSN ve kayıtlı adresinle digid.nl üzerinden başvur, sonra adımı “Başladım, bekliyorum” yap.',
-          doing: 'DigiD başvurun yapıldı; aktivasyon kodu posta ile adresine gelir. Kodu girip hesabını aktifleştirdiğinde “Tamamlandı” yap.'
+          todo: 'Next: DigiD. Apply at digid.nl with your BSN and registered address, then set this step to “Applied, waiting”.',
+          doing: 'Your DigiD application is in; the activation code comes by post. Mark this “Done” once you have activated your account.'
         },
         {
           todo: (isEU
-            ? 'Sıradaki adım banka hesabı: kimlik ve BSN ile başvurabilirsin; bankanın istediği belgeleri kendi sitesinden kontrol et.'
-            : 'Sıradaki adım banka hesabı: kimliğin yanında oturum izni kartın da istenebilir; bankanın koşullarını kendi sitesinden kontrol et.'),
-          doing: 'Banka başvurun sürüyor. Hesap numaran (IBAN) ve kartın eline geçtiğinde adımı “Tamamlandı” yap.'
+            ? 'Next: a bank account. You can apply with your ID and BSN; check the required documents on the bank’s own site.'
+            : 'Next: a bank account. Besides your ID you may be asked for your residence permit card; check the bank’s conditions on its own site.'),
+          doing: 'Your bank application is in progress. Mark this “Done” once you have your IBAN and card.'
         },
         {
-          todo: 'Sıradaki adım huisarts: yakınındaki pratikleri ara ve yeni hasta kabul edip etmediklerini doğrudan sor. Merkezi bir kapasite listesi yoktur.',
-          doing: 'Huisarts kaydın için başvurdun, onay bekliyorsun. Pratik kaydını onayladığında adımı “Tamamlandı” yap.'
+          todo: 'Next: a huisarts (GP). Call practices near you and ask directly whether they accept new patients — there is no central capacity list.',
+          doing: 'You have asked to register and are waiting for confirmation. Mark this “Done” once the practice confirms.'
         }
       ];
 
@@ -472,8 +471,8 @@ export const dashboardScript = `
       if (focus === -1) {
         renderNextPhase(isEU);
         setInfo(isEU
-          ? 'Settle adımlarının dördünü de tamamladın. Çalışmaya veya staja başlarsan Phase 2 sekmesinden sigorta durumunu yeniden kontrol et.'
-          : 'Settle adımlarının dördünü de tamamladın. Çalışmaya başlamadan önce oturum iznindeki çalışma koşullarını ve işverenin TWV yükümlülüğünü doğrula; sigorta durumunu Phase 2 sekmesinden kontrol et.');
+          ? 'All four settling-in steps are done. If you start work or an internship, re-check your insurance under “Daily life & insurance”.'
+          : 'All four settling-in steps are done. Before you start working, verify the work conditions on your residence permit and your employer’s TWV obligation, and re-check your insurance under “Daily life & insurance”.');
       } else {
         setInfo(guidance[focus][states[focus] === 'doing' ? 'doing' : 'todo']);
       }
@@ -493,22 +492,22 @@ export const dashboardScript = `
 
       var title = document.createElement('div');
       title.className = 'card-title';
-      title.textContent = '➡️ Sırada ne var: Phase 2 · Living';
+      title.textContent = '➡️ What’s next: daily life';
       box.appendChild(title);
 
       var lead = document.createElement('p');
       lead.style.cssText = 'font-size:0.82rem; color:var(--muted); margin:0 0 12px 0;';
-      lead.textContent = 'Settle adımlarını bitirdin. Yerleşme sonrası işler burada devam ediyor:';
+      lead.textContent = 'You have finished settling in. Here is what comes next:';
       box.appendChild(lead);
 
       var list = document.createElement('ul');
       list.className = 'list';
       var items = [
-        ['Sağlık sigortası', 'Çalışma durumunu seç, yükümlülüğünü gör'],
-        ['Devlet destekleri', 'Huurtoeslag ve zorgtoeslag uygunluğunu kontrol et'],
-        ['Öğrenci indirimleri', 'SURFspot ve öğrenci kartı fırsatlarına bak']
+        ['Health insurance', 'Set your work status and see your obligation'],
+        ['Allowances', 'Check your huurtoeslag and zorgtoeslag eligibility'],
+        ['Student discounts', 'Look at SURFspot and student card deals']
       ];
-      if (!isEU) items.push(['Çalışma koşulları', 'İzin kartındaki saat sınırını ve TWV yükümlülüğünü doğrula']);
+      if (!isEU) items.push(['Work conditions', 'Verify the hour limit on your permit and the TWV obligation']);
       items.forEach(function(pair) {
         var li = document.createElement('li');
         li.className = 'item';
@@ -525,7 +524,7 @@ export const dashboardScript = `
       var button = document.createElement('button');
       button.className = 'btn-act btn-act-full';
       button.style.marginTop = '10px';
-      button.textContent = 'Phase 2 sekmesine geç ➔';
+      button.textContent = 'Go to daily life & insurance ➔';
       button.onclick = function() {
         var tab = document.getElementById('t2');
         if (tab) { tab.click(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
@@ -534,9 +533,9 @@ export const dashboardScript = `
     }
 
     var defaultPosts = [
-      { id: 1, cat: '🍝 Food Exchange', title: '3 Porsiyon İtalyan Makarnası', offer: 'Bulaşıkları yıkayacak ev arkadaşı', tagClass: 'tag-purple', sample: true },
-      { id: 2, cat: '🎹 Skill Swap', title: 'Piyano Dersi / Pratik Eşliği', offer: 'NT2 Temel Hollandaca konuşma pratiği', tagClass: 'tag-mint', sample: true },
-      { id: 3, cat: '🚲 Gear & Tools', title: 'Swapfiets Anahtarı & Yağlama Seti', offer: '1 Bardak Filtre Kahve', tagClass: 'tag-amber', sample: true }
+      { id: 1, cat: '🍝 Food', title: 'Three portions of pasta', offer: 'A flatmate who does the dishes', tagClass: 'tag-purple', sample: true },
+      { id: 2, cat: '🎹 Skills', title: 'Piano lesson or practice session', offer: 'Basic Dutch conversation practice', tagClass: 'tag-mint', sample: true },
+      { id: 3, cat: '🚲 Gear', title: 'Bike keys and a lubrication kit', offer: 'One filter coffee', tagClass: 'tag-amber', sample: true }
     ];
 
     function renderSwaps() {
@@ -555,13 +554,13 @@ export const dashboardScript = `
         var content = document.createElement('div');
         var category = document.createElement('span');
         category.className = 'swap-tag ' + (post.tagClass || 'tag-mint');
-        category.textContent = String(post.cat || '') + (post.sample ? ' · Örnek' : ' · Taslağın');
+        category.textContent = String(post.cat || '') + (post.sample ? ' · Sample' : ' · Your draft');
         var title = document.createElement('h4');
         title.style.cssText = 'margin:2px 0; font-size:0.9rem; color:#fff;';
         title.textContent = String(post.title || '');
         var offer = document.createElement('p');
         offer.style.cssText = 'margin:0; font-size:0.78rem; color:var(--muted);';
-        offer.appendChild(document.createTextNode('Karşılığında: '));
+        offer.appendChild(document.createTextNode('In return: '));
         var offerStrong = document.createElement('strong');
         offerStrong.style.color = '#cbd5e1';
         offerStrong.textContent = String(post.offer || '');
@@ -574,13 +573,13 @@ export const dashboardScript = `
         var btnConn = document.createElement('button');
         btnConn.className = 'btn-act';
         btnConn.style.cssText = 'background:rgba(16,185,129,0.15); color:#34d399; min-width:auto;';
-        btnConn.innerText = 'İletişim ➔';
+        btnConn.innerText = 'Contact ➔';
         (function(t) {
           btnConn.onclick = function() {
             document.getElementById('modal-title').innerText = '"' + t + '"';
-            document.getElementById('modal-msg').innerText = 'Hoi! LandingNL kampüs panosundaki "' + t + '" ilanını gördüm. Takas yapmak ister misin?';
+            document.getElementById('modal-msg').innerText = 'Hoi! I saw your "' + t + '" post on the LandingNL board. Would you like to swap?';
             var wa = document.getElementById('btn-modal-wa');
-            if (wa) wa.innerText = 'Mesajı Kopyala';
+            if (wa) wa.innerText = 'Copy message';
             document.getElementById('modal-box').classList.remove('hidden');
           };
         })(post.title);
@@ -594,8 +593,8 @@ export const dashboardScript = `
     function triggerBsnSave() {
       var dateInput = document.getElementById('bsn-date');
       var val = cleanIsoDate(dateInput ? dateInput.value : '');
-      if (!val) return alert('Randevu tarihini seç.');
-      if (val < todayIso()) return alert('Geçmiş bir tarih seçilemez. Randevu tarihini kontrol et.');
+      if (!val) return alert('Choose an appointment date.');
+      if (val < todayIso()) return alert('A past date cannot be used. Please check the appointment date.');
       Store.set('bsn_date', val);
       render();
     }
@@ -607,7 +606,7 @@ export const dashboardScript = `
       var progElem = document.getElementById('prog-text');
       var cityElem = document.getElementById('city-board-title');
 
-      if (progElem) progElem.innerText = 'Seçilen Okul / Bölüm: ' + program;
+      if (progElem) progElem.innerText = 'School and programme: ' + program;
       if (cityElem) cityElem.innerText = city;
 
       var dateInput = document.getElementById('bsn-date');
@@ -658,7 +657,7 @@ export const dashboardScript = `
           var title = document.getElementById('swap-title');
           var offer = document.getElementById('swap-offer');
           if (category) category.value = '🎁 Give Away';
-          if (offer) { offer.value = ''; offer.placeholder = 'Karşılık gerekmez'; }
+          if (offer) { offer.value = ''; offer.placeholder = 'Nothing in return'; }
           if (title) title.focus();
         };
       }
@@ -668,9 +667,9 @@ export const dashboardScript = `
           var title = document.getElementById('swap-title').value;
           var offer = document.getElementById('swap-offer').value;
 
-          if (cat === '🎁 Give Away' && !offer) offer = 'Ücretsiz – karşılık beklemiyorum';
+          if (cat === '🎁 Give away' && !offer) offer = 'Free — nothing expected in return';
 
-          if (!title || !offer) return alert('Lütfen tüm alanları doldurun.');
+          if (!title || !offer) return alert('Please fill in every field.');
 
           var userPosts = [];
           try { userPosts = JSON.parse(Store.get('user_swaps', '[]')); } catch(e) {}
@@ -681,7 +680,7 @@ export const dashboardScript = `
           document.getElementById('swap-offer').value = '';
 
           renderSwaps();
-          alert('Taslağın kaydedildi. Topluluk panosu açılana kadar yalnızca sen görebilirsin.');
+          alert('Draft saved. Only you can see it until the community board opens.');
         };
       }
 
@@ -690,11 +689,11 @@ export const dashboardScript = `
         btnWa.onclick = function() {
           var msg = document.getElementById('modal-msg');
           var text = msg ? msg.innerText : '';
-          var done = function() { btnWa.innerText = '✓ Kopyalandı'; };
+          var done = function() { btnWa.innerText = '✓ Copied'; };
           if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(text).then(done, function() { alert('Kopyalanamadı; metni elle seçip kopyala.'); });
+            navigator.clipboard.writeText(text).then(done, function() { alert('Could not copy — select the text and copy it manually.'); });
           } else {
-            alert('Kopyalanamadı; metni elle seçip kopyala.');
+            alert('Could not copy — select the text and copy it manually.');
           }
         };
       }

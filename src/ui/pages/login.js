@@ -1,18 +1,18 @@
 export function renderLoginPage(googleClientId, releaseLabel = 'v1.0.6', options = {}) {
   const { emailLoginEnabled = false, closedBeta = true, buildMeta = '' } = options;
   const betaNotice = closedBeta
-    ? '<p class="notice" id="beta-notice">LandingNL kapalı beta aşamasında. Şu an yalnızca davet edilen hesaplar giriş yapabilir; kayıtlar gizlilik bildirimi yayımlandığında açılacak.</p>'
+    ? '<p class="notice" id="beta-notice">LandingNL is in closed beta. Only invited accounts can sign in at the moment.</p>'
     : '';
   const emailForm = emailLoginEnabled
-    ? `<input type="email" id="email" placeholder="ornek@student.uva.nl" required />
-    <button class="btn" id="btn-email-login">E-posta ile Devam Et</button>`
+    ? `<input type="email" id="email" placeholder="you@student.uva.nl" required />
+    <button class="btn" id="btn-email-login">Continue with email</button>`
     : '';
   return `<!DOCTYPE html>
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LandingNL • Giriş</title>
+  <title>LandingNL • Sign in</title>
   ${buildMeta}
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
@@ -31,15 +31,15 @@ export function renderLoginPage(googleClientId, releaseLabel = 'v1.0.6', options
 </head>
 <body>
   <div class="card">
-    <h2>Giriş Yap</h2>
-    <p>Profilini oluştur veya mevcut hesabına eriş.</p>
+    <h2>Sign in</h2>
+    <p>Create your profile or pick up where you left off.</p>
     ${betaNotice}
 
     <div id="g_id_onload" data-client_id="${googleClientId}" data-context="signin" data-ux_mode="popup" data-callback="handleGoogleCredential" data-auto_prompt="false"></div>
     <div class="g_id_signin" data-type="standard" data-size="large" data-theme="filled_blue" data-shape="rectangular" style="margin-bottom:16px; display:flex; justify-content:center;"></div>
 
     ${emailForm}
-    <p class="legal" id="privacy-link">Giriş yaparak hesabının oluşturulacağını kabul edersin. Verilerinin nasıl işlendiğini <a href="/privacy">Gizlilik Bildirimi</a>'nde okuyabilirsin.</p>
+    <p class="legal" id="privacy-link">Signing in creates your account. Read how your data is handled in the <a href="/privacy">Privacy Notice</a>.</p>
   </div>
 
   <script>
@@ -51,7 +51,7 @@ export function renderLoginPage(googleClientId, releaseLabel = 'v1.0.6', options
         body: JSON.stringify(body)
       });
       var result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'Giriş işlemi tamamlanamadı.');
+      if (!response.ok) throw new Error(result.error || 'Sign-in could not be completed.');
       return result;
     }
     async function handleGoogleCredential(response) {
@@ -67,7 +67,7 @@ export function renderLoginPage(googleClientId, releaseLabel = 'v1.0.6', options
       if (btn) {
         btn.onclick = async function() {
           var email = document.getElementById('email').value;
-          if (!email || !email.includes('@')) return alert('Geçerli bir e-posta girin.');
+          if (!email || !email.includes('@')) return alert('Enter a valid email address.');
           btn.disabled = true;
           try {
             var result = await postLogin('/api/auth/email/start', { email: email });

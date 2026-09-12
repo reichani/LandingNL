@@ -34,10 +34,10 @@ const env = { DB: createDb(), GOOGLE_CLIENT_ID: 'test-client-id.apps.googleuserc
 
 // Approved v1.0.6 baselines (journey truth-language release, see docs/adr/0007).
 const PAGE_HASHES = new Map([
-  ['/', '22230962a19e602c5eb6837e1e847613c0365245b46bba136ad7a772785775a6'],
-  ['/login', '4ecf4cc9ec94b105e293addaa3f8ecef074f4d150dd35921b89e1603d466f45f'],
-  ['/onboarding', '0d0111c19f5a7b0627084a7cfd2c38cf178a75aec85730e45371d2e36942da31'],
-  ['/dashboard', '2f237080bcd3f71e0f0b19baf81d42201f956eea2ed5b9cd657c1d581b8613fc'],
+  ['/', '40432863d3490d40fc1827386d598fa2ea8b94674e87f52152bd44ddb3f312c1'],
+  ['/login', '27e05c1faee18d9449e02bda4a4731882e2da67c787e3212ff69229666be8626'],
+  ['/onboarding', '90585cba381e797b6be3d605745aeb3b85222305ffaef635e653b117badfb6f5'],
+  ['/dashboard', '5de729656227f35ee3954738834dda8f6da6da91f1ef381e60a040907484e417'],
 ]);
 
 test('returning Google users are updated by scalar user id', async () => {
@@ -102,13 +102,13 @@ test('the build id stays machine-readable while pages stay free of developer lab
     assert.doesNotMatch(visible, /<title>[^<]*v1\.0\.6/, path);
   }
   const dashboard = await (await legacyUi.fetch(new Request('https://example.test/dashboard'), versionedEnv)).text();
-  assert.match(dashboard, /<span title="Sürüm">v1\.0\.6<\/span>/);
+  assert.match(dashboard, /<span title="Version">v1\.0\.6<\/span>/);
 });
 
 test('welcome page has one resilient journey entry and no header login action', async () => {
   const response = await legacyUi.fetch(new Request('https://example.test/'), env);
   const html = await response.text();
-  assert.match(html, /<a class="cta" id="journey-start" href="\/login">Yolculuğu Başlat ➔<\/a>/);
+  assert.match(html, /<a class="cta" id="journey-start" href="\/login">Start — sign in with Google ➔<\/a>/);
   assert.doesNotMatch(html, /btn-nav-login|btn-hero-login/);
 });
 
@@ -132,9 +132,9 @@ test('dashboard resource actions use real links instead of simulated redirect al
 test('exchange board supports no-return Give Away listings', async () => {
   const response = await legacyUi.fetch(new Request('https://example.test/dashboard'), env);
   const html = await response.text();
-  assert.match(html, /<option value="🎁 Give Away">🎁 Give Away \(Ücretsiz Ver\)<\/option>/);
+  assert.match(html, /<option value="🎁 Give away">🎁 Give away \(free\)<\/option>/);
   assert.match(html, /id="btn-give-away"/);
-  assert.match(html, /Ücretsiz – karşılık beklemiyorum/);
+  assert.match(html, /Free — nothing expected in return/);
 });
 
 test('completed journey actions are disabled until an editable value changes', async () => {
@@ -143,7 +143,7 @@ test('completed journey actions are disabled until an editable value changes', a
   // Sequential locking now lives in the step selects rather than in action buttons.
   assert.match(source, /select\.disabled = !unlocked;/);
   assert.match(source, /function stepUnlocked\(states, index\) \{/);
-  assert.match(source, /changed \? 'Değişikliği Kaydet ➔' : '✓ Tarih Kaydedildi'/);
+  assert.match(source, /changed \? 'Save change ➔' : '✓ Date saved'/);
   assert.doesNotMatch(source, /dateInput\.addEventListener\('change', function\(\) \{\s*triggerBsnSave\(\)/);
 });
 
@@ -394,8 +394,8 @@ test('dashboard makes no simulated completion, integration or community claims',
     /kampüs panosuna eklendi/, /yönlendiriliyorsunuz/, /Huisarts Kaydınız Geçerli/, /badge active">✓ Vize/, /2026-08-19/]) {
     assert.doesNotMatch(html, claim, String(claim));
   }
-  assert.match(html, /\(beyan\)/);
-  assert.match(html, /Önizleme/);
+  assert.match(html, /self-reported/);
+  assert.match(html, /preview/i);
 });
 
 test('saving the registration appointment date does not mark the BSN step complete', async () => {
@@ -417,7 +417,7 @@ test('privacy notice is public and linked before sign-in', async () => {
   const privacy = await worker.fetch(new Request('https://example.test/privacy'), env);
   assert.equal(privacy.status, 200);
   const body = await privacy.text();
-  assert.match(body, /Veri sorumlusu/);
+  assert.match(body, /Who is responsible/);
   assert.match(body, /Autoriteit Persoonsgegevens/);
   for (const path of ['/', '/login']) {
     const page = await (await worker.fetch(new Request(`https://example.test${path}`), env)).text();
@@ -471,7 +471,7 @@ test('allowances and own health insurance are gated on the Dutch 18+ rule', asyn
   assert.doesNotMatch(guard, /Huurtoeslag|Zorgtoeslag/);
   const insurance = source.slice(source.indexOf('function renderInsuranceTree'), source.indexOf('function completeStep'));
   assert.ok(insurance.indexOf('!isAdultForAllowances()') < insurance.indexOf('if (!isWorking) {'));
-  assert.match(insurance, /ebeveynin/);
+  assert.match(insurance, /insured through a parent/);
 });
 
 test('the registration appointment cannot be set in the past', async () => {
@@ -533,22 +533,22 @@ test('each Settle step tracks three states, not a single marked flag', async () 
 
   const source = await readFile(new URL('../src/ui/scripts/dashboard.js', import.meta.url), 'utf8');
   assert.match(source, /var STATES = \['todo', 'doing', 'done'\];/);
-  assert.match(source, /todo: 'Başlamadım'/);
-  assert.match(source, /doing: 'Başladım, bekliyorum'/);
-  assert.match(source, /done: 'Tamamlandı'/);
+  assert.match(source, /todo: 'Not started'/);
+  assert.match(source, /doing: 'Applied, waiting'/);
+  assert.match(source, /done: 'Done'/);
   // Legacy accounts that only stored a completed-step counter still read correctly.
   const read = source.slice(source.indexOf('function readStepStates'), source.indexOf('function writeStepStates'));
   assert.match(read, /var legacy = parseInt\(Store\.get\('step', '0'\), 10\)/);
   // Stepping back from done clears the later steps after a confirmation.
   const setter = source.slice(source.indexOf('function setStepState'), source.indexOf('function renderStepControls'));
   assert.match(setter, /for \(var i = index \+ 1; i < 4; i\+\+\) states\[i\] = 'todo';/);
-  assert.match(setter, /confirm\('Bu adımı geri alırsan/);
+  assert.match(setter, /confirm\('Moving this step back/);
 });
 
 test('progress counts only finished steps and names the ones in progress', async () => {
   const source = await readFile(new URL('../src/ui/scripts/dashboard.js', import.meta.url), 'utf8');
   assert.match(source, /var score = doneCount \* 25;/);
-  assert.match(source, /adım sürüyor/);
+  assert.match(source, /in progress/);
 });
 
 test('finishing the Settle steps opens a concrete next-phase panel', async () => {
@@ -556,7 +556,7 @@ test('finishing the Settle steps opens a concrete next-phase panel', async () =>
   assert.match(html, /<div class="card hidden" id="next-phase"/);
   const source = await readFile(new URL('../src/ui/scripts/dashboard.js', import.meta.url), 'utf8');
   const next = source.slice(source.indexOf('function renderNextPhase'), source.indexOf('var defaultPosts'));
-  for (const item of ['Sağlık sigortası', 'Devlet destekleri', 'Öğrenci indirimleri']) {
+  for (const item of ['Health insurance', 'Allowances', 'Student discounts']) {
     assert.ok(next.includes(item), item);
   }
   // The non-EU route gets the extra work-permit reminder.
@@ -566,7 +566,7 @@ test('finishing the Settle steps opens a concrete next-phase panel', async () =>
 
 test('pilot users have a feedback route and sign-up stays open', async () => {
   const html = await (await legacyUi.fetch(new Request('https://example.test/dashboard'), env)).text();
-  assert.match(html, /Geri bildirim gönder/);
+  assert.match(html, /Send feedback/);
   assert.match(html, /mailto:reichani@gmail\.com\?subject=LandingNL/);
   const config = await readFile(new URL('../wrangler.jsonc', import.meta.url), 'utf8');
   const production = config.slice(config.indexOf('"production"'));

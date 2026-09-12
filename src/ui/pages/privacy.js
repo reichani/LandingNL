@@ -1,4 +1,4 @@
-export const PRIVACY_NOTICE_VERSION = '1.0 · 10 Eylül 2026';
+export const PRIVACY_NOTICE_VERSION = '1.0 · 10 September 2026';
 
 export function renderPrivacyPage(releaseLabel = 'v1.0.6', buildMeta = '') {
   return `<!DOCTYPE html>
@@ -6,7 +6,7 @@ export function renderPrivacyPage(releaseLabel = 'v1.0.6', buildMeta = '') {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LandingNL • Gizlilik Bildirimi</title>
+  <title>LandingNL • Privacy Notice</title>
   ${buildMeta}
   <style>
     :root { --bg: #080c14; --card: #111827; --text: #f8fafc; --muted: #94a3b8; --border: rgba(255,255,255,0.08); }
@@ -22,40 +22,40 @@ export function renderPrivacyPage(releaseLabel = 'v1.0.6', buildMeta = '') {
 </head>
 <body>
   <main>
-    <h1>Gizlilik Bildirimi</h1>
-    <p class="meta">Bildirim sürümü ${PRIVACY_NOTICE_VERSION}</p>
+    <h1>Privacy Notice</h1>
+    <p class="meta">Notice version ${PRIVACY_NOTICE_VERSION}</p>
 
-    <h2>Veri sorumlusu</h2>
-    <p>LandingNL, Reyhan Açar tarafından işletilir. Gizlilikle ilgili tüm talepler için: <a href="mailto:reichani@gmail.com">reichani@gmail.com</a></p>
+    <h2>Who is responsible</h2>
+    <p>LandingNL is operated by Reyhan Açar. For any privacy request: <a href="mailto:reichani@gmail.com">reichani@gmail.com</a></p>
 
-    <h2>Hangi verileri işliyoruz</h2>
+    <h2>What we process</h2>
     <ul>
-      <li>Google ile girişte: e-posta adresin, adın ve Google hesap kimliğin.</li>
-      <li>Kurulumda verdiğin bilgiler: yaşın, AB/AEA statün, şehrin, okulun/programın ve konut durumun.</li>
-      <li>Yolculuk kayıtların: işaretlediğin adımlar, belediye randevu tarihin ve takas taslakların. BSN numaranı istemeyiz; lütfen hiçbir alana yazma.</li>
-      <li>Oturum bilgisi: girişini açık tutan zorunlu bir çerez. Sunucuda yalnızca bu çerezin şifrelenmiş (hash) değeri saklanır.</li>
-      <li>Teknik kayıtlar: güvenlik ve hata tespiti için barındırma altyapısının tuttuğu IP adresi, tarayıcı bilgisi ve istek zamanı.</li>
+      <li>When you sign in with Google: your email address, your name and your Google account id.</li>
+      <li>What you enter during setup: your age, whether you hold an EU/EEA or Swiss passport, your city, your school or programme and your housing situation.</li>
+      <li>Your journey records: the status you set for each step, your municipal appointment date and your swap drafts. We never ask for your BSN — please do not enter it anywhere.</li>
+      <li>Session data: one strictly necessary cookie that keeps you signed in. Only a hashed value of that cookie is stored on the server.</li>
+      <li>Technical logs: the IP address, browser information and request time kept by our hosting provider for security and troubleshooting.</li>
     </ul>
 
-    <h2>Neden ve hangi hukuki dayanakla</h2>
-    <p>Hesabını oluşturmak ve sana kişisel yolculuk planını göstermek için verilerini, senin istediğin hizmeti sunmak amacıyla işleriz (GDPR m. 6/1-b). Güvenlik, kötüye kullanımın önlenmesi ve hata giderme için teknik kayıtları meşru menfaate dayanarak işleriz (GDPR m. 6/1-f). Verilerini satmayız, reklam veya profil çıkarma için kullanmayız.</p>
+    <h2>Why, and on what legal basis</h2>
+    <p>We process your data to create your account and show you your personal journey, in order to provide the service you asked for (GDPR art. 6(1)(b)). Technical logs are processed on the basis of legitimate interests, for security, abuse prevention and troubleshooting (GDPR art. 6(1)(f)). We do not sell your data and we do not use it for advertising or profiling.</p>
 
-    <h2>Kimlerle paylaşılır</h2>
-    <p>Barındırma ve veritabanı için Cloudflare, giriş için Google hizmet sağlayıcı olarak kullanılır. Bu şirketler verileri Avrupa Ekonomik Alanı dışında da işleyebilir; bu aktarımlar AB standart sözleşme maddeleri veya AB-ABD Veri Gizliliği Çerçevesi gibi güvencelere dayanır. Google ile giriş yaptığında Google kendi gizlilik politikasına göre çerez kullanabilir.</p>
+    <h2>Who it is shared with</h2>
+    <p>Cloudflare is used for hosting and the database, and Google for sign-in, both acting as processors. These companies may process data outside the European Economic Area; such transfers rely on safeguards such as the EU Standard Contractual Clauses or the EU–US Data Privacy Framework. When you sign in with Google, Google may set cookies under its own privacy policy.</p>
 
-    <h2>Ne kadar süre saklanır</h2>
-    <p>Hesap verilerin, hesabın açık olduğu sürece saklanır. Oturumlar en fazla 30 gün, e-posta giriş bağlantıları 15 dakika geçerlidir. Hesabının silinmesini istediğinde verilerin 30 gün içinde silinir.</p>
+    <h2>How long it is kept</h2>
+    <p>Your account data is kept for as long as your account exists. Sessions last at most 30 days and email sign-in links expire after 15 minutes. If you ask us to delete your account, your data is deleted within 30 days.</p>
 
-    <h2>Hakların</h2>
-    <p>Verilerine erişme, düzeltme, silme, işlemeye itiraz etme ve verilerini taşınabilir biçimde alma hakların vardır. Talebini kayıtlı e-posta adresinden <a href="mailto:reichani@gmail.com">reichani@gmail.com</a> adresine gönder. Hollanda'da veri koruma otoritesi Autoriteit Persoonsgegevens'e şikayette bulunma hakkın da vardır.</p>
+    <h2>Your rights</h2>
+    <p>You have the right to access, rectify and erase your data, to object to processing and to receive your data in a portable format. Send your request from your registered email address to <a href="mailto:reichani@gmail.com">reichani@gmail.com</a>. You also have the right to lodge a complaint with the Dutch data protection authority, Autoriteit Persoonsgegevens.</p>
 
-    <h2>Yaş sınırı</h2>
-    <p>LandingNL 16 yaş ve üzeri öğrenciler içindir.</p>
+    <h2>Age limit</h2>
+    <p>LandingNL is intended for students aged 16 and over.</p>
 
-    <h2>Çerezler</h2>
-    <p>Yalnızca girişin için zorunlu olan oturum çerezini kullanırız. İzleme veya reklam çerezi kullanmayız.</p>
+    <h2>Cookies</h2>
+    <p>We only use the session cookie that is strictly necessary to keep you signed in. We use no tracking or advertising cookies.</p>
 
-    <p class="meta"><a href="/">← Ana sayfa</a> · <a href="/login">Giriş</a></p>
+    <p class="meta"><a href="/">← Home</a> · <a href="/login">Sign in</a></p>
   </main>
 </body>
 </html>`;

@@ -64,7 +64,7 @@ export async function signupAllowed(env, email) {
 
 async function assertSignupAllowed(env, email) {
   if (!(await signupAllowed(env, email))) {
-    throw new HttpError(403, 'LandingNL şu an kapalı beta aşamasında. Kayıtlar gizlilik bildirimi yayımlandığında açılacak.');
+    throw new HttpError(403, 'LandingNL is currently in closed beta and sign-ups are limited to invited accounts.');
   }
 }
 
@@ -89,7 +89,7 @@ async function startEmailLogin(request, env) {
     'SELECT COUNT(*) AS count FROM email_login_tokens WHERE email = ?1 AND expires_at > ?2',
   ).bind(email, now).first('count');
   if (Number(recent || 0) >= EMAIL_MAX_PER_WINDOW) {
-    throw new HttpError(429, 'Çok fazla giriş bağlantısı istendi. 15 dakika sonra tekrar deneyin.');
+    throw new HttpError(429, 'Too many sign-in links requested. Please try again in 15 minutes.');
   }
   const token = randomToken();
   await env.DB.prepare(
@@ -97,7 +97,7 @@ async function startEmailLogin(request, env) {
   ).bind(await sha256(token), email, now + EMAIL_WINDOW_SECONDS, new Date().toISOString()).run();
   const baseUrl = env.APP_BASE_URL || new URL(request.url).origin;
   await sendMagicLink(env, email, `${baseUrl}/api/auth/email/verify?token=${encodeURIComponent(token)}`);
-  return json({ ok: true, message: 'Giriş bağlantısı e-posta adresine gönderildi.' }, 202);
+  return json({ ok: true, message: 'A sign-in link has been sent to your email address.' }, 202);
 }
 
 async function verifyEmailLogin(request, env) {
@@ -136,7 +136,7 @@ async function apiRoute(request, env, session) {
   if (pathname === '/api/onboarding/complete' && request.method === 'PUT') {
     assertSameOrigin(request);
     const state = validateOnboardingState(await readJson(request));
-    if (!state) throw new HttpError(400, 'Profil bilgileri geçersiz: 16 yaş ve üzeri olmalı, tüm alanlar doldurulmalı.');
+    if (!state) throw new HttpError(400, 'Invalid profile: you must be 16 or over and every field is required.');
     await patchUserState(env, session.userId, state);
     const completedAt = await markOnboardingComplete(env, session.userId);
     return json({ ok: true, next: '/dashboard', completedAt });

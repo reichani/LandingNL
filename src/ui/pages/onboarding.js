@@ -4,7 +4,7 @@ export function renderOnboardingPage(releaseLabel = 'v1.0.6', buildMeta = '') {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LandingNL • Kurulum</title>
+  <title>LandingNL • Setup</title>
   ${buildMeta}
   <style>
     :root { --primary: #3b82f6; --bg: #080c14; --card: #111827; --text: #f8fafc; --muted: #94a3b8; --border: rgba(255,255,255,0.08); }
@@ -23,36 +23,36 @@ export function renderOnboardingPage(releaseLabel = 'v1.0.6', buildMeta = '') {
 <body>
   <div class="card">
     <div id="edit-banner" class="hidden" style="background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.3); color:#93c5fd; border-radius:10px; padding:10px 12px; font-size:0.8rem; margin-bottom:16px;">
-      Profilini güncelliyorsun. İşaretlediğin adımlar ve kayıtlı tarihin korunur.
-      <a href="/dashboard" style="color:#93c5fd; display:inline-block; margin-top:4px;">Vazgeç, panele dön</a>
+      You are updating your profile. Your step statuses and saved date are kept.
+      <a href="/dashboard" style="color:#93c5fd; display:inline-block; margin-top:4px;">Cancel and go back</a>
     </div>
     <div id="step-1">
-      <div class="step">Adım 1 / 4</div>
-      <h2>Doğum Tarihin</h2>
-      <p>Hollanda'da yaşa bağlı kurallar (ör. asgari ücret kademesi) için gerekir. LandingNL 16 yaş ve üzeri öğrenciler içindir.</p>
-      <label for="dob">Doğum Tarihi</label>
+      <div class="step">Step 1 of 4</div>
+      <h2>Date of birth</h2>
+      <p>Some Dutch rules depend on your age, such as the minimum wage bracket and allowances. We store your age only, not your date of birth. LandingNL is for students aged 16 and over.</p>
+      <label for="dob">Date of birth</label>
       <input type="date" id="dob" required />
-      <button class="btn" id="btn-ob-1">Devam ➔</button>
-      <p style="font-size:0.72rem; margin:12px 0 0 0;"><a href="/privacy" style="color:#94a3b8;">Gizlilik Bildirimi</a></p>
+      <button class="btn" id="btn-ob-1">Continue ➔</button>
+      <p style="font-size:0.72rem; margin:12px 0 0 0;"><a href="/privacy" style="color:#94a3b8;">Privacy Notice</a></p>
     </div>
 
     <div id="step-2" class="hidden">
-      <div class="step">Adım 2 / 4</div>
-      <h2>Vatandaşlık Statün</h2>
-      <p>Hollanda'ya giriş, oturum izni ve çalışma izni kuralları pasaportuna göre değişir. Bu seçim yolculuk adımlarını belirler.</p>
-      <label for="status">Pasaport</label>
+      <div class="step">Step 2 of 4</div>
+      <h2>Your passport</h2>
+      <p>Entry, residence and work permit rules depend on your passport. This choice shapes the steps you see.</p>
+      <label for="status">Passport</label>
       <select id="status">
-        <option value="non_eu">AB/AEA veya İsviçre dışı pasaport (oturum izni gerekir)</option>
-        <option value="eu">AB/AEA veya İsviçre pasaportu (oturum izni gerekmez)</option>
+        <option value="non_eu">Non-EU/EEA or non-Swiss passport (residence permit required)</option>
+        <option value="eu">EU/EEA or Swiss passport (no residence permit needed)</option>
       </select>
-      <button class="btn" id="btn-ob-2">Devam ➔</button>
+      <button class="btn" id="btn-ob-2">Continue ➔</button>
     </div>
 
     <div id="step-3" class="hidden">
-      <div class="step">Adım 3 / 4</div>
-      <h2>Eğitim Şehri & Okul</h2>
-      <p>Şehrini ve okulunu seç. Listede yoksa "Diğer" seçip kendin yazabilirsin.</p>
-      <label for="city">Şehir</label>
+      <div class="step">Step 3 of 4</div>
+      <h2>City &amp; school</h2>
+      <p>Pick your city and school. If yours is not listed, choose “Other” and type it in.</p>
+      <label for="city">City</label>
       <select id="city">
         <option value="Amsterdam">Amsterdam</option>
         <option value="Rotterdam">Rotterdam</option>
@@ -72,34 +72,34 @@ export function renderOnboardingPage(releaseLabel = 'v1.0.6', buildMeta = '') {
         <option value="Zwolle">Zwolle</option>
         <option value="Haarlem">Haarlem</option>
         <option value="Leeuwarden">Leeuwarden</option>
-        <option value="__other__">Diğer şehir…</option>
+        <option value="__other__">Other city…</option>
       </select>
-      <input type="text" id="city-other" class="hidden" placeholder="Şehrini yaz" />
-      <label for="school">Okul</label>
+      <input type="text" id="city-other" class="hidden" placeholder="Type your city" />
+      <label for="school">School</label>
       <select id="school"></select>
-      <input type="text" id="school-other" class="hidden" placeholder="Okulunun adını yaz" />
-      <label for="program">Bölüm / Program <span style="color:#94a3b8; font-weight:400;">(istersen)</span></label>
-      <input type="text" id="program" placeholder="Ör. Computer Science" />
-      <button class="btn" id="btn-ob-3">Devam ➔</button>
+      <input type="text" id="school-other" class="hidden" placeholder="Type your school" />
+      <label for="program">Programme <span style="color:#94a3b8; font-weight:400;">(optional)</span></label>
+      <input type="text" id="program" placeholder="e.g. Computer Science" />
+      <button class="btn" id="btn-ob-3">Continue ➔</button>
     </div>
 
     <div id="step-4" class="hidden">
-      <div class="step">Adım 4 / 4</div>
-      <h2>Konaklama Statün</h2>
-      <p>Kalacak yeriniz hazır mı?</p>
-      <label>Durum</label>
+      <div class="step">Step 4 of 4</div>
+      <h2>Housing</h2>
+      <p>Do you already have a place to live?</p>
+      <label for="housing">Status</label>
       <select id="housing">
-        <option value="yes">Evet, evim hazır (Kira Sözleşmem var)</option>
-        <option value="no">Henüz bulamadım / Geçici konaklama</option>
+        <option value="yes">Yes, I have a rental contract</option>
+        <option value="no">Not yet / temporary accommodation</option>
       </select>
-      <button class="btn" id="btn-ob-finish">Panele Git ➔</button>
+      <button class="btn" id="btn-ob-finish">Go to my dashboard ➔</button>
     </div>
   </div>
 
   <script>
-    // Hollanda'daki başlıca araştırma üniversiteleri (WO) ve uygulamalı bilimler
-    // üniversiteleri (HBO). Liste kapsayıcı değildir; bu yüzden her şehirde
-    // "Diğer" seçeneğiyle öğrenci okulunu kendisi yazabilir.
+    // The main Dutch research universities (WO) and universities of applied
+    // sciences (HBO). The list is not exhaustive, so every city also offers a
+    // free-text "Other" option.
     var schoolsMap = {
       'Amsterdam': ['Universiteit van Amsterdam (UvA)', 'Vrije Universiteit Amsterdam (VU)', 'Hogeschool van Amsterdam (HvA)', 'Amsterdam University College', 'Hogeschool Inholland Amsterdam', 'Gerrit Rietveld Academie', 'Amsterdamse Hogeschool voor de Kunsten'],
       'Rotterdam': ['Erasmus Universiteit Rotterdam (EUR)', 'Hogeschool Rotterdam', 'Hogeschool Inholland Rotterdam', 'Codarts Rotterdam', 'Erasmus University College'],
@@ -146,7 +146,7 @@ export function renderOnboardingPage(releaseLabel = 'v1.0.6', buildMeta = '') {
       }
       var other = document.createElement('option');
       other.value = OTHER;
-      other.textContent = list.length ? 'Diğer (listede yok)…' : 'Okulumu yazacağım…';
+      other.textContent = list.length ? 'Other (not listed)…' : 'I will type my school…';
       schoolSelect.appendChild(other);
       if (!list.length) schoolSelect.value = OTHER;
       toggleOtherInput('school-other', schoolSelect.value === OTHER);
@@ -214,14 +214,14 @@ export function renderOnboardingPage(releaseLabel = 'v1.0.6', buildMeta = '') {
 
       document.getElementById('btn-ob-1').onclick = function() {
         var dob = document.getElementById('dob').value;
-        if (!dob) return alert('Doğum tarihini seçin.');
+        if (!dob) return alert('Please choose your date of birth.');
         var birth = new Date(dob + 'T00:00:00Z');
         var today = new Date();
         var age = today.getUTCFullYear() - birth.getUTCFullYear();
         var hadBirthday = (today.getUTCMonth() > birth.getUTCMonth()) ||
           (today.getUTCMonth() === birth.getUTCMonth() && today.getUTCDate() >= birth.getUTCDate());
         if (!hadBirthday) age -= 1;
-        if (!(age >= 16 && age <= 100)) return alert('LandingNL 16 yaş ve üzeri öğrenciler içindir. Doğum tarihini kontrol et.');
+        if (!(age >= 16 && age <= 100)) return alert('LandingNL is for students aged 16 and over. Please check your date of birth.');
         localStorage.setItem('landingnl_age', age);
         document.getElementById('step-1').classList.add('hidden');
         document.getElementById('step-2').classList.remove('hidden');
@@ -238,13 +238,13 @@ export function renderOnboardingPage(releaseLabel = 'v1.0.6', buildMeta = '') {
         var city = citySelect.value === OTHER
           ? document.getElementById('city-other').value.trim()
           : citySelect.value;
-        if (!city) return alert('Şehrini yaz.');
+        if (!city) return alert('Please enter your city.');
 
         var schoolSelect = document.getElementById('school');
         var school = schoolSelect.value === OTHER
           ? document.getElementById('school-other').value.trim()
           : schoolSelect.value;
-        if (!school) return alert('Okulunun adını yaz.');
+        if (!school) return alert('Please enter your school.');
 
         var program = document.getElementById('program').value.trim();
         localStorage.setItem('landingnl_city', city);
@@ -271,12 +271,12 @@ export function renderOnboardingPage(releaseLabel = 'v1.0.6', buildMeta = '') {
           });
           if (!response.ok) {
             var failure = await response.json().catch(function() { return {}; });
-            throw new Error(failure.error || 'Profil kaydedilemedi.');
+            throw new Error(failure.error || 'Your profile could not be saved.');
           }
           var result = await response.json();
           location.href = result.next || '/dashboard';
         } catch (error) {
-          alert(error.message || 'Profil kaydedilemedi. Lütfen tekrar deneyin.');
+          alert(error.message || 'Your profile could not be saved. Please try again.');
         }
       };
     });

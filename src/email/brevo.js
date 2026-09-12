@@ -18,9 +18,9 @@ export async function sendMagicLink(env, recipient, link) {
     body: JSON.stringify({
       sender: { name: 'LandingNL', email: env.AUTH_FROM_EMAIL },
       to: [{ email: recipient }],
-      subject: 'LandingNL giriş bağlantın',
-      textContent: `LandingNL hesabına giriş yapmak için bu bağlantıyı 15 dakika içinde aç: ${link}`,
-      htmlContent: `<p>LandingNL hesabına giriş yapmak için aşağıdaki bağlantıyı 15 dakika içinde aç:</p><p><a href="${link}">LandingNL’ye giriş yap</a></p><p>Bu isteği siz yapmadıysanız e-postayı yok sayabilirsiniz.</p>`,
+      subject: 'Your LandingNL sign-in link',
+      textContent: `Open this link within 15 minutes to sign in to LandingNL: ${link}`,
+      htmlContent: `<p>Open the link below within 15 minutes to sign in to LandingNL:</p><p><a href="${link}">Sign in to LandingNL</a></p><p>If you did not request this, you can ignore this email.</p>`,
     }),
   });
   if (!response.ok) throw new HttpError(503, 'Email could not be sent');

@@ -4,7 +4,7 @@ export function renderWelcomePage(releaseLabel = 'v1.0.6', buildMeta = '') {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LandingNL • Hollanda Öğrenci Yolculuğu</title>
+  <title>LandingNL • Your first months in the Netherlands</title>
   ${buildMeta}
   <style>
     :root { --primary: #3b82f6; --bg: #080c14; --card: #111827; --text: #f8fafc; --muted: #94a3b8; --border: rgba(255,255,255,0.08); }
@@ -27,12 +27,19 @@ export function renderWelcomePage(releaseLabel = 'v1.0.6', buildMeta = '') {
   </nav>
 
   <section class="hero">
-    <span class="badge">Sürdürülebilir Kampüs Ekosistemi</span>
-    <h1>Hollanda Öğrenci Yolculuğunu Minimalist Yönet</h1>
-    <p>Landing, Living ve Parasız Dayanışma Paneli (Student Exchange) tek bir sade platformda.</p>
-    <a class="cta" id="journey-start" href="/login">Yolculuğu Başlat ➔</a>
+    <span class="badge">For students moving to the Netherlands</span>
+    <h1>Land in the Netherlands without missing a step</h1>
+    <p>Municipal registration and your BSN, DigiD, a bank account, a huisarts — the four things every new student has to sort out, in the right order, with the official source behind each one.</p>
+    <ul style="list-style:none; padding:0; margin:0 0 32px 0; display:flex; flex-wrap:wrap; gap:10px; justify-content:center; font-size:0.9rem; color:#cbd5e1;">
+      <li style="background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:10px; padding:8px 14px;">1 · Municipality &amp; BSN</li>
+      <li style="background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:10px; padding:8px 14px;">2 · DigiD</li>
+      <li style="background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:10px; padding:8px 14px;">3 · Bank account</li>
+      <li style="background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:10px; padding:8px 14px;">4 · Huisarts (GP)</li>
+    </ul>
+    <p style="font-size:0.95rem;">Your route differs depending on whether you hold an EU/EEA or Swiss passport. LandingNL does not file anything on your behalf.</p>
+    <a class="cta" id="journey-start" href="/login">Start — sign in with Google ➔</a>
   </section>
-  <footer style="text-align:center; padding:0 20px 40px; font-size:0.8rem;"><a href="/privacy" style="color:#94a3b8;">Gizlilik Bildirimi</a></footer>
+  <footer style="text-align:center; padding:0 20px 40px; font-size:0.8rem;"><a href="/privacy" style="color:#94a3b8;">Privacy Notice</a></footer>
 </body>
 </html>`;
 }
