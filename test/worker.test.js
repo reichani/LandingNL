@@ -37,7 +37,7 @@ const PAGE_HASHES = new Map([
   ['/', '22230962a19e602c5eb6837e1e847613c0365245b46bba136ad7a772785775a6'],
   ['/login', '4ecf4cc9ec94b105e293addaa3f8ecef074f4d150dd35921b89e1603d466f45f'],
   ['/onboarding', '98cea19d642fa29d84686d86e6b581824df744118545b9166d2eb83331c7bef8'],
-  ['/dashboard', '2958e8433bcd65196551369ee33c7b2aa234acfd779c558e4405c053ab5e2e7e'],
+  ['/dashboard', '5daaf5a2bca4c1d136674940c921ff9295ed965de968f43b74f5d6ed3ebe5bf2'],
 ]);
 
 test('returning Google users are updated by scalar user id', async () => {
@@ -458,4 +458,29 @@ test('the school step covers real institutions and always allows a free-text fal
   assert.doesNotMatch(html, /UvA\) - PPLE/);
   const cityCount = (html.match(/<option value="(?!__other__)[^"]+">/g) || []).length;
   assert.ok(cityCount >= 18, `expected the full city list, saw ${cityCount}`);
+});
+
+test('allowances and own health insurance are gated on the Dutch 18+ rule', async () => {
+  const source = await readFile(new URL('../src/ui/scripts/dashboard.js', import.meta.url), 'utf8');
+  assert.match(source, /var ALLOWANCE_MIN_AGE = 18;/);
+  const allowances = source.slice(source.indexOf('function renderAllowances'), source.indexOf('function renderPerks'));
+  assert.match(allowances, /if \(!isAdultForAllowances\(\)\) \{/);
+  // The under-18 branch returns before any huurtoeslag or zorgtoeslag card is built.
+  const guard = allowances.slice(0, allowances.indexOf('return;'));
+  assert.doesNotMatch(guard, /Huurtoeslag|Zorgtoeslag/);
+  const insurance = source.slice(source.indexOf('function renderInsuranceTree'), source.indexOf('function completeStep'));
+  assert.ok(insurance.indexOf('!isAdultForAllowances()') < insurance.indexOf('if (!isWorking) {'));
+  assert.match(insurance, /ebeveynin/);
+});
+
+test('the registration appointment cannot be set in the past', async () => {
+  const source = await readFile(new URL('../src/ui/scripts/dashboard.js', import.meta.url), 'utf8');
+  assert.match(source, /dateInput\.min = todayIso\(\);/);
+  assert.match(source, /if \(val < todayIso\(\)\) return alert/);
+});
+
+test('list tags wrap instead of overlapping their label', async () => {
+  const html = await (await legacyUi.fetch(new Request('https://example.test/dashboard'), env)).text();
+  assert.doesNotMatch(html, /\.tag \{[^}]*min-width: 105px/);
+  assert.match(html, /\.item > span:first-child \{ flex: 1 1 auto; min-width: 0; \}/);
 });

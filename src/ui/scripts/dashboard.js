@@ -39,6 +39,10 @@ export const dashboardScript = `
       }
     };
 
+    function todayIso() {
+      return new Date().toISOString().slice(0, 10);
+    }
+
     function cleanIsoDate(val) {
       if (!val) return '';
       var match = val.match(/^\\d{4}-\\d{2}-\\d{2}/);
@@ -79,6 +83,21 @@ export const dashboardScript = `
       }
 
       return box;
+    }
+
+    // Dutch allowances (huurtoeslag, zorgtoeslag) and the duty to hold your own
+    // basic health insurance start at 18. Under 18 a student is insured free via a
+    // parent, pays no premium and therefore cannot claim zorgtoeslag.
+    var ALLOWANCE_MIN_AGE = 18;
+
+    function studentAge() {
+      var age = parseInt(Store.get('age', ''), 10);
+      return isNaN(age) ? null : age;
+    }
+
+    function isAdultForAllowances() {
+      var age = studentAge();
+      return age === null || age >= ALLOWANCE_MIN_AGE;
     }
 
     function renderProfileGrid() {
@@ -155,22 +174,33 @@ export const dashboardScript = `
       if (!grid) return;
       grid.innerHTML = '';
 
+      if (!isAdultForAllowances()) {
+        grid.appendChild(createSubCard(
+          'tag-amber',
+          '\u{1F553} 18 ya\u015F\u0131n\u0131 doldurmadan',
+          'Toeslag ba\u015Fvurusu hen\u00FCz m\u00FCmk\u00FCn de\u011Fil',
+          'Huurtoeslag ve zorgtoeslag i\u00E7in kural olarak 18 ya\u015F\u0131n\u0131 doldurmu\u015F olman gerekir (\u00E7ok dar istisnalar var). 18\u2019ine girdi\u011Fin ayda kurulumdaki ya\u015F\u0131n\u0131 g\u00FCncelle; kartlar a\u00E7\u0131lacak.',
+          'https://www.belastingdienst.nl/wps/wcm/connect/nl/jongeren/content/vanaf-18-jaar-kun-je-toeslagen-krijgen'
+        ));
+        return;
+      }
+
       var housing = Store.get('housing', 'no');
       var isHouseReady = (housing === 'yes');
 
       grid.appendChild(createSubCard(
         isHouseReady ? 'tag-mint' : 'tag-amber',
-        '🏠 Huurtoeslag (Kira Desteği)',
-        isHouseReady ? 'Sözleşmen var – uygunluğunu kontrol et' : 'Önce kira sözleşmesi gerekir',
-        'Genellikle kendi girişi, mutfağı ve tuvaleti olan bağımsız bir konut gerekir; yaş, kira ve gelir koşulları da vardır. Sonucu Belastingdienst belirler.',
+        '\u{1F3E0} Huurtoeslag (Kira Deste\u011Fi)',
+        isHouseReady ? 'S\u00F6zle\u015Fmen var \u2013 uygunlu\u011Funu kontrol et' : '\u00D6nce kira s\u00F6zle\u015Fmesi gerekir',
+        'Genellikle kendi giri\u015Fi, mutfa\u011F\u0131 ve tuvaleti olan ba\u011F\u0131ms\u0131z bir konut gerekir; ya\u015F, kira ve gelir ko\u015Fullar\u0131 da vard\u0131r. Sonucu Belastingdienst belirler.',
         'https://www.belastingdienst.nl/wps/wcm/connect/nl/huurtoeslag/content/hoe-moet-ik-huurtoeslag-aanvragen'
       ));
 
       grid.appendChild(createSubCard(
         'tag-purple',
-        '🩺 Zorgtoeslag (Sigorta Desteği)',
-        'Güncel uygunluğunu kontrol et',
-        'Uygunluk; sigorta, gelir, yaş ve ikamet durumuna göre resmi kurum tarafından belirlenir.',
+        '\u{1FA7A} Zorgtoeslag (Sigorta Deste\u011Fi)',
+        'G\u00FCncel uygunlu\u011Funu kontrol et',
+        'Uygunluk; sigorta, gelir, ya\u015F ve ikamet durumuna g\u00F6re resmi kurum taraf\u0131ndan belirlenir.',
         'https://www.belastingdienst.nl/wps/wcm/connect/nl/zorgtoeslag/content/hoe-moet-ik-zorgtoeslag-aanvragen'
       ));
     }
@@ -217,6 +247,12 @@ export const dashboardScript = `
           btnNo.style.cssText = 'padding:10px 18px; font-size:0.85rem; background:var(--primary); color:white; font-weight:700;';
           btnYes.style.cssText = 'padding:10px 18px; font-size:0.85rem; opacity:0.6; background:rgba(255,255,255,0.08); color:var(--muted);';
         }
+      }
+
+      if (!isAdultForAllowances()) {
+        container.appendChild(createSubCard('tag-purple', '🏥 18 yaş altı', 'Genellikle ebeveynin üzerinden sigortalısın', 'Hollanda’da 18 yaşına kadar kendi temel sağlık sigortanı yaptırman gerekmez; prim ödemediğin için zorgtoeslag da alamazsın. Yurt dışından geldiysen mevcut poliçenin Hollanda’daki kapsamını sigortacınla doğrula.', 'https://www.studyinnl.org/plan-your-stay/healthcare-insurance'));
+        container.appendChild(createSubCard('tag-amber', '⚠️ 18’ine girdiğinde', 'Kendi sigortanı yaptırman gerekir', '18. yaş gününden sonra kendi temel sağlık sigortanı (basisverzekering) yaptırman ve prim ödemen gerekir; aynı anda zorgtoeslag başvurusu da açılır. Kurulumdaki yaşını güncellemeyi unutma.', 'https://www.belastingdienst.nl/wps/wcm/connect/nl/jongeren/content/vanaf-18-jaar-kun-je-toeslagen-krijgen'));
+        return;
       }
 
       if (!isWorking) {
@@ -427,6 +463,7 @@ export const dashboardScript = `
       var dateInput = document.getElementById('bsn-date');
       var val = cleanIsoDate(dateInput ? dateInput.value : '');
       if (!val) return alert('Randevu tarihini seç.');
+      if (val < todayIso()) return alert('Geçmiş bir tarih seçilemez. Randevu tarihini kontrol et.');
       Store.set('bsn_date', val);
       render();
     }
@@ -443,6 +480,7 @@ export const dashboardScript = `
 
       var dateInput = document.getElementById('bsn-date');
       if (dateInput) {
+        dateInput.min = todayIso();
         dateInput.value = cleanIsoDate(Store.get('bsn_date', ''));
         dateInput.addEventListener('input', updateBsnSaveButton);
         dateInput.addEventListener('change', updateBsnSaveButton);

@@ -64,8 +64,9 @@ export function renderDashboardPage(releaseLabel = 'v1.0.6', buildMeta = '') {
     .card-title { font-size: 1rem; font-weight: 700; margin: 0 0 12px 0; }
     .list { list-style: none; padding: 0; margin: 0; }
     .item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 0.85rem; }
+    .item > span:first-child { flex: 1 1 auto; min-width: 0; }
     
-    .tag { padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; white-space: nowrap; min-width: 105px; text-align: center; display: inline-flex; align-items: center; justify-content: center; }
+    .tag { padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; text-align: center; display: inline-flex; align-items: center; justify-content: center; flex: 0 1 auto; max-width: 55%; overflow-wrap: anywhere; }
     .tag-mint { background: rgba(16,185,129,0.15); color: #34d399; }
     .tag-amber { background: rgba(251,191,36,0.15); color: #fbbf24; }
     .tag-purple { background: rgba(192,132,252,0.15); color: #c084fc; }
@@ -196,7 +197,7 @@ export function renderDashboardPage(releaseLabel = 'v1.0.6', buildMeta = '') {
         </div>
 
         <div class="card col-3" style="border-left: 4px solid var(--purple);">
-          <div class="card-title">💼 Giriş Hakları & Genel Profil Özetin</div>
+          <div class="card-title">💼 Profilin ve Çalışma Koşulların</div>
           <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap:12px; margin-top:12px;" id="profile-grid">
           </div>
         </div>
