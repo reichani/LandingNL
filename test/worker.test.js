@@ -37,7 +37,7 @@ const PAGE_HASHES = new Map([
   ['/', '22230962a19e602c5eb6837e1e847613c0365245b46bba136ad7a772785775a6'],
   ['/login', '4ecf4cc9ec94b105e293addaa3f8ecef074f4d150dd35921b89e1603d466f45f'],
   ['/onboarding', '0d0111c19f5a7b0627084a7cfd2c38cf178a75aec85730e45371d2e36942da31'],
-  ['/dashboard', 'a5386adad46e2783281eae9cbe76476ff7ff4c93a55e398f765bec4c3e2a2625'],
+  ['/dashboard', '8abf1f37b3214c06f036cee91d64091bc7bd5f3c5966bc5db1ce3f26cb0c7b7d'],
 ]);
 
 test('returning Google users are updated by scalar user id', async () => {
@@ -140,8 +140,9 @@ test('exchange board supports no-return Give Away listings', async () => {
 test('completed journey actions are disabled until an editable value changes', async () => {
   const source = await readFile(new URL('../src/ui/scripts/dashboard.js', import.meta.url), 'utf8');
   assert.match(source, /button\.disabled = disabled/);
-  assert.match(source, /setActionState\(btn1, step >= 1\)/);
-  assert.match(source, /setActionState\(btn2, step < 1 \|\| step >= 2\)/);
+  // Sequential locking now lives in the step selects rather than in action buttons.
+  assert.match(source, /select\.disabled = !unlocked;/);
+  assert.match(source, /function stepUnlocked\(states, index\) \{/);
   assert.match(source, /changed \? 'Değişikliği Kaydet ➔' : '✓ Tarih Kaydedildi'/);
   assert.doesNotMatch(source, /dateInput\.addEventListener\('change', function\(\) \{\s*triggerBsnSave\(\)/);
 });
@@ -525,12 +526,29 @@ test('the edit form restores a stored school that is not in the list', async () 
   assert.match(helper, /select\.value = OTHER;/);
 });
 
-test('a marked step can be taken back and later steps are cleared with it', async () => {
+test('each Settle step tracks three states, not a single marked flag', async () => {
+  const html = await (await legacyUi.fetch(new Request('https://example.test/dashboard'), env)).text();
+  for (let i = 1; i <= 4; i += 1) assert.match(html, new RegExp(`id="step-state-${i}"`));
+  assert.doesNotMatch(html, /id="btn-step-\d"/);
+
   const source = await readFile(new URL('../src/ui/scripts/dashboard.js', import.meta.url), 'utf8');
-  const undo = source.slice(source.indexOf('function undoStep'), source.indexOf('function completeStep'));
-  assert.match(undo, /if \(!confirm\(message\)\) return;/);
-  assert.match(undo, /Store\.set\('step', String\(targetStep - 1\)\)/);
-  assert.match(source, /button\.onclick = function\(\) \{ undoStep\(index\); \};/);
+  assert.match(source, /var STATES = \['todo', 'doing', 'done'\];/);
+  assert.match(source, /todo: 'Başlamadım'/);
+  assert.match(source, /doing: 'Başladım, bekliyorum'/);
+  assert.match(source, /done: 'Tamamlandı'/);
+  // Legacy accounts that only stored a completed-step counter still read correctly.
+  const read = source.slice(source.indexOf('function readStepStates'), source.indexOf('function writeStepStates'));
+  assert.match(read, /var legacy = parseInt\(Store\.get\('step', '0'\), 10\)/);
+  // Stepping back from done clears the later steps after a confirmation.
+  const setter = source.slice(source.indexOf('function setStepState'), source.indexOf('function renderStepControls'));
+  assert.match(setter, /for \(var i = index \+ 1; i < 4; i\+\+\) states\[i\] = 'todo';/);
+  assert.match(setter, /confirm\('Bu adımı geri alırsan/);
+});
+
+test('progress counts only finished steps and names the ones in progress', async () => {
+  const source = await readFile(new URL('../src/ui/scripts/dashboard.js', import.meta.url), 'utf8');
+  assert.match(source, /var score = doneCount \* 25;/);
+  assert.match(source, /adım sürüyor/);
 });
 
 test('finishing the Settle steps opens a concrete next-phase panel', async () => {
@@ -543,5 +561,5 @@ test('finishing the Settle steps opens a concrete next-phase panel', async () =>
   }
   // The non-EU route gets the extra work-permit reminder.
   assert.match(next, /if \(!isEU\) items\.push/);
-  assert.match(source, /if \(nextBox && step < 4\) nextBox\.classList\.add\('hidden'\)/);
+  assert.match(source, /if \(nextBox && focus !== -1\) nextBox\.classList\.add\('hidden'\)/);
 });

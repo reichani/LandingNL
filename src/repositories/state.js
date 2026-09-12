@@ -2,7 +2,7 @@
 export const MIN_AGE = 16;
 
 const ALLOWED_KEYS = new Set([
-  'age', 'status', 'city', 'program', 'housing', 'step', 'bsn_date', 'is_working', 'user_swaps',
+  'age', 'status', 'city', 'program', 'housing', 'step', 'step_states', 'bsn_date', 'is_working', 'user_swaps',
 ]);
 
 const ONBOARDING_KEYS = ['age', 'status', 'city', 'program', 'housing'];

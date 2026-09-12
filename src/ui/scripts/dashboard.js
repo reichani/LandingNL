@@ -266,35 +266,92 @@ export const dashboardScript = `
       }
     }
 
-    // A step that was marked by mistake can be taken back; undoing a step also
-    // clears the ones after it, because the journey is sequential.
-    function undoStep(targetStep) {
-      var currentStep = parseInt(Store.get('step', '0'));
-      if (currentStep < targetStep) return;
-      var names = ['Belediye kaydı & BSN', 'DigiD', 'Banka hesabı', 'Huisarts'];
-      var message = currentStep > targetStep
-        ? 'Bu adımı geri alırsan sonraki adımların işareti de kalkar. Devam edilsin mi?'
-        : '“' + names[targetStep - 1] + '” işaretini geri al?';
-      if (!confirm(message)) return;
-      Store.set('step', String(targetStep - 1));
+    // Each Settle milestone has three honest states, because "marked" hid the
+    // difference between not started, waiting on an institution, and finished.
+    var STATES = ['todo', 'doing', 'done'];
+    var STEP_NAMES = ['Belediye kaydı & BSN', 'DigiD', 'Banka hesabı', 'Huisarts'];
+    var STATE_LABELS = {
+      todo: 'Başlamadım',
+      doing: 'Başladım, bekliyorum',
+      done: 'Tamamlandı'
+    };
+
+    function readStepStates() {
+      var states = ['todo', 'todo', 'todo', 'todo'];
+      var stored = Store.get('step_states', '');
+      if (stored) {
+        try {
+          var parsed = JSON.parse(stored);
+          for (var i = 0; i < 4; i++) {
+            if (STATES.indexOf(parsed[i]) !== -1) states[i] = parsed[i];
+          }
+          return states;
+        } catch (e) {}
+      }
+      // Legacy accounts stored a single completed-step counter.
+      var legacy = parseInt(Store.get('step', '0'), 10) || 0;
+      for (var j = 0; j < legacy && j < 4; j++) states[j] = 'done';
+      return states;
+    }
+
+    function writeStepStates(states) {
+      Store.set('step_states', JSON.stringify(states));
+      var done = 0;
+      while (done < 4 && states[done] === 'done') done += 1;
+      // Keep the legacy counter in sync so nothing else regresses.
+      Store.set('step', String(done));
+    }
+
+    function stepUnlocked(states, index) {
+      return index === 0 || states[index - 1] === 'done';
+    }
+
+    function setStepState(index, value) {
+      var states = readStepStates();
+      if (!stepUnlocked(states, index)) {
+        return alert('Önce “' + STEP_NAMES[index - 1] + '” adımını tamamlandı olarak işaretle.');
+      }
+      if (states[index] !== 'done' && value !== 'done') {
+        states[index] = value;
+        writeStepStates(states);
+        return render();
+      }
+      // Stepping back from done also clears the later steps: the journey is sequential.
+      if (states[index] === 'done' && value !== 'done') {
+        var laterStarted = states.slice(index + 1).some(function(state) { return state !== 'todo'; });
+        if (laterStarted && !confirm('Bu adımı geri alırsan sonraki adımların durumu da sıfırlanır. Devam edilsin mi?')) {
+          return render();
+        }
+        states[index] = value;
+        for (var i = index + 1; i < 4; i++) states[i] = 'todo';
+        writeStepStates(states);
+        return render();
+      }
+      states[index] = value;
+      writeStepStates(states);
       render();
     }
 
-    function completeStep(targetStep) {
-      var currentStep = parseInt(Store.get('step', '0'));
-      if (targetStep === 1) {
-        Store.set('step', '1');
-      } else if (targetStep === 2) {
-        if (currentStep < 1) return alert('Önce BSN adımını işaretle.');
-        Store.set('step', '2');
-      } else if (targetStep === 3) {
-        if (currentStep < 2) return alert('Önce DigiD adımını işaretle.');
-        Store.set('step', '3');
-      } else if (targetStep === 4) {
-        if (currentStep < 3) return alert('Önce banka hesabı adımını işaretle.');
-        Store.set('step', '4');
+    function renderStepControls(states) {
+      for (var i = 0; i < 4; i++) {
+        (function(index) {
+          var select = document.getElementById('step-state-' + (index + 1));
+          if (!select) return;
+          var unlocked = stepUnlocked(states, index);
+          select.innerHTML = '';
+          STATES.forEach(function(state) {
+            var option = document.createElement('option');
+            option.value = state;
+            option.textContent = STATE_LABELS[state];
+            select.appendChild(option);
+          });
+          select.value = states[index];
+          select.disabled = !unlocked;
+          select.style.opacity = unlocked ? '1' : '0.45';
+          select.title = unlocked ? '' : 'Önce önceki adımı tamamla';
+          select.onchange = function() { setStepState(index, this.value); };
+        })(i);
       }
-      render();
     }
 
     function setActionState(button, disabled) {
@@ -321,17 +378,24 @@ export const dashboardScript = `
     }
 
     function render() {
-      var step = parseInt(Store.get('step', '0'));
       var savedDate = cleanIsoDate(Store.get('bsn_date', ''));
 
       var dateElem = document.getElementById('bsn-date');
       if (dateElem && document.activeElement !== dateElem) dateElem.value = savedDate;
 
-      // Progress reflects the four user-confirmed Settle milestones only.
-      var score = step * 25;
+      var states = readStepStates();
+      var doneCount = states.filter(function(state) { return state === 'done'; }).length;
+      var doingCount = states.filter(function(state) { return state === 'doing'; }).length;
+
+      // Progress counts only finished milestones; steps in progress are shown separately.
+      var score = doneCount * 25;
       var percentElem = document.getElementById('percent-text');
       var fillElem = document.getElementById('bar-fill');
-      if (percentElem) percentElem.innerText = '%' + score;
+      if (percentElem) {
+        percentElem.innerText = doingCount
+          ? '%' + score + ' · ' + doingCount + ' adım sürüyor'
+          : '%' + score;
+      }
       if (fillElem) fillElem.style.width = score + '%';
 
       var isEU = Store.get('status', 'non_eu') === 'eu';
@@ -341,97 +405,82 @@ export const dashboardScript = `
       if (bVisa) { bVisa.className = isEU ? 'badge active' : 'badge'; bVisa.innerText = isEU ? 'AB/AEA: oturum izni gerekmez' : 'Oturum izni: IND ile doğrula'; }
       if (bHousing) { bHousing.className = hasHousing ? 'badge active' : 'badge'; bHousing.innerText = hasHousing ? '✓ Konut (beyan)' : '⏳ Konut arıyorsun'; }
 
-      var bBsn = document.getElementById('b-bsn');
-      var bDigid = document.getElementById('b-digid');
-      var bBank = document.getElementById('b-bank');
-      var bGp = document.getElementById('b-gp');
+      var badgeIds = ['b-bsn', 'b-digid', 'b-bank', 'b-gp'];
+      var badgeNames = ['Belediye kaydı & BSN', 'DigiD', 'Banka hesabı', 'Huisarts'];
+      for (var i = 0; i < 4; i++) {
+        var badge = document.getElementById(badgeIds[i]);
+        if (!badge) continue;
+        var order = (i + 1) + '. ';
+        if (states[i] === 'done') {
+          badge.className = 'badge active';
+          badge.innerText = '✓ ' + badgeNames[i] + ' (beyan)';
+        } else if (states[i] === 'doing') {
+          badge.className = 'badge';
+          badge.innerText = '⏳ ' + order + badgeNames[i] + ' · sürüyor';
+        } else if (stepUnlocked(states, i)) {
+          badge.className = 'badge';
+          badge.innerText = '○ ' + order + badgeNames[i];
+        } else {
+          badge.className = 'badge';
+          badge.innerText = '🔒 ' + order + badgeNames[i];
+        }
+      }
 
-      var btn1 = document.getElementById('btn-step-1');
-      var btn2 = document.getElementById('btn-step-2');
-      var btn3 = document.getElementById('btn-step-3');
-      var btn4 = document.getElementById('btn-step-4');
-
-      setActionState(btn1, step >= 1);
-      setActionState(btn2, step < 1 || step >= 2);
-      setActionState(btn3, step < 2 || step >= 3);
-      setActionState(btn4, step < 3 || step >= 4);
+      renderStepControls(states);
 
       var tagIng = document.getElementById('tag-ing');
+      if (tagIng) {
+        var bsnDone = states[0] === 'done';
+        tagIng.className = bsnDone ? 'tag tag-mint' : 'tag tag-amber';
+        tagIng.innerText = bsnDone ? 'BSN hazır' : 'Genellikle BSN ister';
+      }
+
       var info = document.getElementById('status-info');
       if (info) info.style.display = 'block';
-
       function setInfo(text) { if (info) info.textContent = text; }
 
-      if (step >= 1) {
-        if (bBsn) { bBsn.className = 'badge active'; bBsn.innerText = '✓ BSN (beyan)'; }
-        if (btn1) { btn1.className = 'tag tag-mint'; btn1.innerText = '✓ İşaretlendi'; }
-        if (tagIng) { tagIng.className = 'tag tag-mint'; tagIng.innerText = 'BSN hazır – şartları kontrol et'; }
-        if (btn2) { btn2.style.opacity = '1'; btn2.innerText = 'Aktifleştirdim ➔'; }
-        setInfo('Sıradaki adım DigiD: BSN ve kayıtlı adresinle digid.nl üzerinden başvur. Aktivasyon mektubu posta ile adresine gelir; aktifleştirdiğinde işaretle.');
-      } else {
-        if (bBsn) { bBsn.className = 'badge'; bBsn.innerText = '⏳ 1. Belediye kaydı & BSN'; }
-        if (btn1) { btn1.className = 'btn-act'; btn1.innerText = "BSN'imi aldım ➔"; }
-        if (tagIng) { tagIng.className = 'tag tag-amber'; tagIng.innerText = 'Genellikle BSN ister'; }
-        if (btn2) { btn2.style.opacity = '0.5'; btn2.innerText = '🔒 Önce BSN'; }
-        var firstStep = isEU
-          ? 'İlk adım: belediye (BRP) veya RNI kaydı. Randevu tarihini kaydet; BSN verildiğinde adımı işaretle.'
-          : 'İlk adım: oturum izni kartın (VVR) hazır olduğunda belediye kaydı. Randevu tarihini kaydet; BSN verildiğinde adımı işaretle.';
-        setInfo(savedDate
-          ? 'Belediye randevun kayıtlı (' + savedDate + '). BSN numaran verildiğinde “BSN’imi aldım” adımını işaretle.'
-          : firstStep);
+      var guidance = [
+        {
+          todo: savedDate
+            ? 'Belediye randevun kayıtlı (' + savedDate + '). Randevuya gittiysen adımı “Başladım, bekliyorum” yap; BSN numaran geldiğinde “Tamamlandı” olarak işaretle.'
+            : (isEU
+                ? 'İlk adım: belediye (BRP) veya RNI kaydı. Randevu al, tarihini kaydet ve adımı “Başladım, bekliyorum” olarak işaretle.'
+                : 'İlk adım: oturum izni kartın (VVR) hazır olduğunda belediye kaydı. Randevu al, tarihini kaydet ve adımı “Başladım, bekliyorum” olarak işaretle.'),
+          doing: 'Belediye kaydını yaptın, BSN numaranı bekliyorsun. Numara geldiğinde adımı “Tamamlandı” yap.'
+        },
+        {
+          todo: 'Sıradaki adım DigiD: BSN ve kayıtlı adresinle digid.nl üzerinden başvur, sonra adımı “Başladım, bekliyorum” yap.',
+          doing: 'DigiD başvurun yapıldı; aktivasyon kodu posta ile adresine gelir. Kodu girip hesabını aktifleştirdiğinde “Tamamlandı” yap.'
+        },
+        {
+          todo: (isEU
+            ? 'Sıradaki adım banka hesabı: kimlik ve BSN ile başvurabilirsin; bankanın istediği belgeleri kendi sitesinden kontrol et.'
+            : 'Sıradaki adım banka hesabı: kimliğin yanında oturum izni kartın da istenebilir; bankanın koşullarını kendi sitesinden kontrol et.'),
+          doing: 'Banka başvurun sürüyor. Hesap numaran (IBAN) ve kartın eline geçtiğinde adımı “Tamamlandı” yap.'
+        },
+        {
+          todo: 'Sıradaki adım huisarts: yakınındaki pratikleri ara ve yeni hasta kabul edip etmediklerini doğrudan sor. Merkezi bir kapasite listesi yoktur.',
+          doing: 'Huisarts kaydın için başvurdun, onay bekliyorsun. Pratik kaydını onayladığında adımı “Tamamlandı” yap.'
+        }
+      ];
+
+      var focus = -1;
+      for (var k = 0; k < 4; k++) {
+        if (states[k] !== 'done') { focus = k; break; }
       }
 
-      if (step >= 2) {
-        if (bDigid) { bDigid.className = 'badge active'; bDigid.innerText = '✓ DigiD (beyan)'; }
-        if (btn2) { btn2.className = 'tag tag-mint'; btn2.innerText = '✓ İşaretlendi'; }
-        if (btn3) { btn3.style.opacity = '1'; btn3.innerText = 'Hesabımı açtım ➔'; }
-        setInfo(isEU
-          ? 'Sıradaki adım banka hesabı: kimlik ve BSN ile başvurabilirsin; bankanın istediği belgeleri kendi sitesinden kontrol et.'
-          : 'Sıradaki adım banka hesabı: kimliğin yanında oturum izni kartın da istenebilir; bankanın koşullarını kendi sitesinden kontrol et.');
-      } else {
-        if (bDigid) { bDigid.className = 'badge'; bDigid.innerText = '🔒 2. DigiD'; }
-        if (btn3) { btn3.style.opacity = '0.5'; btn3.innerText = '🔒 Önce DigiD'; }
-      }
-
-      if (step >= 3) {
-        if (bBank) { bBank.className = 'badge active'; bBank.innerText = '✓ Banka hesabı (beyan)'; }
-        if (btn3) { btn3.className = 'tag tag-mint'; btn3.innerText = '✓ İşaretlendi'; }
-        if (btn4) { btn4.style.opacity = '1'; btn4.innerText = 'Kaydoldum ➔'; }
-        setInfo('Sıradaki adım huisarts: yakınındaki pratikleri ara ve yeni hasta kabul edip etmediklerini doğrudan sor. Merkezi bir kapasite listesi yoktur. Kaydın onaylandığında işaretle.');
-      } else {
-        if (bBank) { bBank.className = 'badge'; bBank.innerText = '🔒 3. Banka'; }
-        if (btn4) { btn4.style.opacity = '0.5'; btn4.innerText = '🔒 Önce banka'; }
-      }
-
-      if (step >= 4) {
-        if (bGp) { bGp.className = 'badge active'; bGp.innerText = '✓ Huisarts (beyan)'; }
-        if (btn4) { btn4.className = 'tag tag-mint'; btn4.innerText = '✓ İşaretlendi'; }
+      if (focus === -1) {
         renderNextPhase(isEU);
         setInfo(isEU
-          ? 'Settle adımlarının dördünü de işaretledin. Çalışmaya veya staja başlarsan Phase 2 sekmesinden sigorta durumunu yeniden kontrol et.'
-          : 'Settle adımlarının dördünü de işaretledin. Çalışmaya başlamadan önce oturum iznindeki çalışma koşullarını ve işverenin TWV yükümlülüğünü doğrula; sigorta durumunu Phase 2 sekmesinden kontrol et.');
+          ? 'Settle adımlarının dördünü de tamamladın. Çalışmaya veya staja başlarsan Phase 2 sekmesinden sigorta durumunu yeniden kontrol et.'
+          : 'Settle adımlarının dördünü de tamamladın. Çalışmaya başlamadan önce oturum iznindeki çalışma koşullarını ve işverenin TWV yükümlülüğünü doğrula; sigorta durumunu Phase 2 sekmesinden kontrol et.');
       } else {
-        if (bGp) { bGp.className = 'badge'; bGp.innerText = '🔒 4. Huisarts'; }
+        setInfo(guidance[focus][states[focus] === 'doing' ? 'doing' : 'todo']);
       }
-      updateBsnSaveButton();
-      wireUndoButtons();
-      var nextBox = document.getElementById('next-phase');
-      if (nextBox && step < 4) nextBox.classList.add('hidden');
-    }
 
-    function wireUndoButtons() {
-      var step = parseInt(Store.get('step', '0'));
-      for (var i = 1; i <= 4; i++) {
-        (function(index) {
-          var button = document.getElementById('btn-step-' + index);
-          if (!button || step < index) return;
-          setActionState(button, false);
-          button.style.opacity = '1';
-          button.title = 'İşareti geri almak için tıkla';
-          button.innerText = '✓ İşaretlendi ↺';
-          button.onclick = function() { undoStep(index); };
-        })(i);
-      }
+      updateBsnSaveButton();
+      var nextBox = document.getElementById('next-phase');
+      if (nextBox && focus !== -1) nextBox.classList.add('hidden');
     }
 
     // After the four Settle milestones the journey continues in Phase 2; spell the
@@ -575,18 +624,6 @@ export const dashboardScript = `
           triggerBsnSave();
         };
       }
-
-      var b1 = document.getElementById('btn-step-1');
-      if (b1) b1.onclick = function() { completeStep(1); };
-
-      var b2 = document.getElementById('btn-step-2');
-      if (b2) b2.onclick = function() { completeStep(2); };
-
-      var b3 = document.getElementById('btn-step-3');
-      if (b3) b3.onclick = function() { completeStep(3); };
-
-      var b4 = document.getElementById('btn-step-4');
-      if (b4) b4.onclick = function() { completeStep(4); };
 
       var btnWorkNo = document.getElementById('btn-work-no');
       if (btnWorkNo) {

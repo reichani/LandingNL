@@ -89,6 +89,9 @@ export function renderDashboardPage(releaseLabel = 'v1.0.6', buildMeta = '') {
     }
     .btn-act:hover { background: #1d4ed8; }
 
+    .step-state { background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.14); color: #e2e8f0; border-radius: 8px; padding: 6px 8px; font-size: 0.78rem; font-weight: 600; max-width: 58%; cursor: pointer; }
+    .step-state:disabled { cursor: not-allowed; }
+
     .btn-act-full {
       width: 100%;
       padding: 10px 14px;
@@ -162,23 +165,23 @@ export function renderDashboardPage(releaseLabel = 'v1.0.6', buildMeta = '') {
 
         <div class="card" style="border-left: 4px solid var(--primary);">
           <div class="card-title">🏛️ İdari Adımlar (Phase 1 · Settle)</div>
-          <p style="font-size:0.75rem; color:var(--muted); margin:0 0 8px 0;">LandingNL bu adımları senin yerine tamamlamaz veya doğrulamaz; her adımı resmi kurumda bitirdiğinde işaretle.</p>
+          <p style="font-size:0.75rem; color:var(--muted); margin:0 0 8px 0;">LandingNL bu adımları senin yerine tamamlamaz veya doğrulamaz. Her adımın durumunu kendin seç: başlamadın, başvurdun ve bekliyorsun, ya da tamamlandı.</p>
           <ul class="list">
             <li class="item">
               <span>1. Belediye kaydı & BSN</span>
-              <button class="btn-act" id="btn-step-1">BSN'imi aldım ➔</button>
+              <select class="step-state" id="step-state-1" aria-label="Belediye kaydı ve BSN durumu"></select>
             </li>
             <li class="item">
               <span>2. DigiD</span>
-              <button class="btn-act" id="btn-step-2" style="opacity:0.5;">🔒 Kilitli</button>
+              <select class="step-state" id="step-state-2" aria-label="DigiD durumu"></select>
             </li>
             <li class="item">
               <span>3. Banka hesabı</span>
-              <button class="btn-act" id="btn-step-3" style="opacity:0.5;">🔒 Kilitli</button>
+              <select class="step-state" id="step-state-3" aria-label="Banka hesabı durumu"></select>
             </li>
             <li class="item">
               <span>4. Huisarts (aile hekimi)</span>
-              <button class="btn-act" id="btn-step-4" style="opacity:0.5;">🔒 Kilitli</button>
+              <select class="step-state" id="step-state-4" aria-label="Huisarts durumu"></select>
             </li>
           </ul>
           <div id="status-info" style="display:none; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); padding:10px; border-radius:8px; margin-top:12px; font-size:0.78rem; color:#34d399;"></div>
