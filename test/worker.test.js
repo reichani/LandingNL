@@ -37,7 +37,7 @@ const PAGE_HASHES = new Map([
   ['/', '22230962a19e602c5eb6837e1e847613c0365245b46bba136ad7a772785775a6'],
   ['/login', '4ecf4cc9ec94b105e293addaa3f8ecef074f4d150dd35921b89e1603d466f45f'],
   ['/onboarding', '0d0111c19f5a7b0627084a7cfd2c38cf178a75aec85730e45371d2e36942da31'],
-  ['/dashboard', 'd8210cd676b808cd953fbd35f220664a37df35d90ec6ad5cc9ef3f7e1afe6198'],
+  ['/dashboard', 'a5386adad46e2783281eae9cbe76476ff7ff4c93a55e398f765bec4c3e2a2625'],
 ]);
 
 test('returning Google users are updated by scalar user id', async () => {
@@ -523,4 +523,25 @@ test('the edit form restores a stored school that is not in the list', async () 
   // An unknown value falls back to the free-text input rather than being dropped.
   const helper = source.slice(source.indexOf('function selectOrOther'), source.indexOf('async function prefillFromServer'));
   assert.match(helper, /select\.value = OTHER;/);
+});
+
+test('a marked step can be taken back and later steps are cleared with it', async () => {
+  const source = await readFile(new URL('../src/ui/scripts/dashboard.js', import.meta.url), 'utf8');
+  const undo = source.slice(source.indexOf('function undoStep'), source.indexOf('function completeStep'));
+  assert.match(undo, /if \(!confirm\(message\)\) return;/);
+  assert.match(undo, /Store\.set\('step', String\(targetStep - 1\)\)/);
+  assert.match(source, /button\.onclick = function\(\) \{ undoStep\(index\); \};/);
+});
+
+test('finishing the Settle steps opens a concrete next-phase panel', async () => {
+  const html = await (await legacyUi.fetch(new Request('https://example.test/dashboard'), env)).text();
+  assert.match(html, /<div class="card hidden" id="next-phase"/);
+  const source = await readFile(new URL('../src/ui/scripts/dashboard.js', import.meta.url), 'utf8');
+  const next = source.slice(source.indexOf('function renderNextPhase'), source.indexOf('var defaultPosts'));
+  for (const item of ['Sağlık sigortası', 'Devlet destekleri', 'Öğrenci indirimleri']) {
+    assert.ok(next.includes(item), item);
+  }
+  // The non-EU route gets the extra work-permit reminder.
+  assert.match(next, /if \(!isEU\) items\.push/);
+  assert.match(source, /if \(nextBox && step < 4\) nextBox\.classList\.add\('hidden'\)/);
 });

@@ -266,6 +266,20 @@ export const dashboardScript = `
       }
     }
 
+    // A step that was marked by mistake can be taken back; undoing a step also
+    // clears the ones after it, because the journey is sequential.
+    function undoStep(targetStep) {
+      var currentStep = parseInt(Store.get('step', '0'));
+      if (currentStep < targetStep) return;
+      var names = ['Belediye kaydı & BSN', 'DigiD', 'Banka hesabı', 'Huisarts'];
+      var message = currentStep > targetStep
+        ? 'Bu adımı geri alırsan sonraki adımların işareti de kalkar. Devam edilsin mi?'
+        : '“' + names[targetStep - 1] + '” işaretini geri al?';
+      if (!confirm(message)) return;
+      Store.set('step', String(targetStep - 1));
+      render();
+    }
+
     function completeStep(targetStep) {
       var currentStep = parseInt(Store.get('step', '0'));
       if (targetStep === 1) {
@@ -392,6 +406,7 @@ export const dashboardScript = `
       if (step >= 4) {
         if (bGp) { bGp.className = 'badge active'; bGp.innerText = '✓ Huisarts (beyan)'; }
         if (btn4) { btn4.className = 'tag tag-mint'; btn4.innerText = '✓ İşaretlendi'; }
+        renderNextPhase(isEU);
         setInfo(isEU
           ? 'Settle adımlarının dördünü de işaretledin. Çalışmaya veya staja başlarsan Phase 2 sekmesinden sigorta durumunu yeniden kontrol et.'
           : 'Settle adımlarının dördünü de işaretledin. Çalışmaya başlamadan önce oturum iznindeki çalışma koşullarını ve işverenin TWV yükümlülüğünü doğrula; sigorta durumunu Phase 2 sekmesinden kontrol et.');
@@ -399,6 +414,74 @@ export const dashboardScript = `
         if (bGp) { bGp.className = 'badge'; bGp.innerText = '🔒 4. Huisarts'; }
       }
       updateBsnSaveButton();
+      wireUndoButtons();
+      var nextBox = document.getElementById('next-phase');
+      if (nextBox && step < 4) nextBox.classList.add('hidden');
+    }
+
+    function wireUndoButtons() {
+      var step = parseInt(Store.get('step', '0'));
+      for (var i = 1; i <= 4; i++) {
+        (function(index) {
+          var button = document.getElementById('btn-step-' + index);
+          if (!button || step < index) return;
+          setActionState(button, false);
+          button.style.opacity = '1';
+          button.title = 'İşareti geri almak için tıkla';
+          button.innerText = '✓ İşaretlendi ↺';
+          button.onclick = function() { undoStep(index); };
+        })(i);
+      }
+    }
+
+    // After the four Settle milestones the journey continues in Phase 2; spell the
+    // next actions out instead of leaving the student on a finished checklist.
+    function renderNextPhase(isEU) {
+      var box = document.getElementById('next-phase');
+      if (!box) return;
+      box.classList.remove('hidden');
+      box.innerHTML = '';
+
+      var title = document.createElement('div');
+      title.className = 'card-title';
+      title.textContent = '➡️ Sırada ne var: Phase 2 · Living';
+      box.appendChild(title);
+
+      var lead = document.createElement('p');
+      lead.style.cssText = 'font-size:0.82rem; color:var(--muted); margin:0 0 12px 0;';
+      lead.textContent = 'Settle adımlarını bitirdin. Yerleşme sonrası işler burada devam ediyor:';
+      box.appendChild(lead);
+
+      var list = document.createElement('ul');
+      list.className = 'list';
+      var items = [
+        ['Sağlık sigortası', 'Çalışma durumunu seç, yükümlülüğünü gör'],
+        ['Devlet destekleri', 'Huurtoeslag ve zorgtoeslag uygunluğunu kontrol et'],
+        ['Öğrenci indirimleri', 'SURFspot ve öğrenci kartı fırsatlarına bak']
+      ];
+      if (!isEU) items.push(['Çalışma koşulları', 'İzin kartındaki saat sınırını ve TWV yükümlülüğünü doğrula']);
+      items.forEach(function(pair) {
+        var li = document.createElement('li');
+        li.className = 'item';
+        var left = document.createElement('span');
+        left.textContent = pair[0];
+        var right = document.createElement('span');
+        right.style.cssText = 'font-size:0.78rem; color:var(--muted); text-align:right;';
+        right.textContent = pair[1];
+        li.appendChild(left); li.appendChild(right);
+        list.appendChild(li);
+      });
+      box.appendChild(list);
+
+      var button = document.createElement('button');
+      button.className = 'btn-act btn-act-full';
+      button.style.marginTop = '10px';
+      button.textContent = 'Phase 2 sekmesine geç ➔';
+      button.onclick = function() {
+        var tab = document.getElementById('t2');
+        if (tab) { tab.click(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+      };
+      box.appendChild(button);
     }
 
     var defaultPosts = [

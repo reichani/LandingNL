@@ -150,6 +150,7 @@ export function renderDashboardPage(releaseLabel = 'v1.0.6', buildMeta = '') {
     <!-- PHASE 1 -->
     <div id="view-1">
       <div class="card" id="status-route" style="border-left: 4px solid var(--purple); margin-bottom:16px;"></div>
+      <div class="card hidden" id="next-phase" style="border-left: 4px solid var(--mint); margin-bottom:16px;"></div>
       <div class="grid">
         <div class="card" style="border-left: 4px solid var(--mint);">
           <div class="card-title">📄 Belediye Kayıt Randevusu</div>
