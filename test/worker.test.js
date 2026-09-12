@@ -714,3 +714,22 @@ test('what a student can claim back is shown as a prerequisite chain that branch
   assert.match(allowances, /Income tax refund/);
   assert.match(allowances, /loonheffingskorting\) can only be applied at one employer at a time/);
 });
+
+test('a deploy without --env has no database and fails closed', async () => {
+  const config = await readFile(new URL('../wrangler.jsonc', import.meta.url), 'utf8');
+  const topLevel = config.slice(0, config.indexOf('"env"'));
+  // No database binding outside an explicit environment: a bare `wrangler deploy`
+  // cannot write real users into the staging database.
+  assert.doesNotMatch(topLevel, /d1_databases/);
+  assert.doesNotMatch(topLevel, /"name": "landingnl"/);
+
+  const production = config.slice(config.indexOf('"production"'));
+  assert.match(production, /"database_name": "landingnl-db"/);
+  const staging = config.slice(config.indexOf('"staging"'), config.indexOf('"production"'));
+  assert.match(staging, /"database_name": "landingnl-db-staging"/);
+
+  // Without the binding the Worker refuses the request rather than serving a page.
+  const response = await worker.fetch(new Request('https://example.test/dashboard'), {});
+  assert.equal(response.status, 503);
+  assert.match((await response.json()).error, /Database binding is not configured/);
+});

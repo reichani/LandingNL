@@ -1,8 +1,11 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  // Top-level config is for local development only. It is deliberately NOT named
-  // "landingnl": a bare `wrangler deploy` must never overwrite the production Worker.
-  // Deploy with `npm run deploy:staging` or `npm run deploy:production`.
+  // Top-level config is a deliberately incomplete scaffold. It is NOT named
+  // "landingnl" and it carries NO database binding, so any deploy that forgets
+  // --env cannot quietly write real users into the staging database: the Worker
+  // fails closed with "Database binding is not configured" instead.
+  // Deploy with `npm run deploy:staging` or `npm run deploy:production`;
+  // for local work use `npm run dev`, which passes --env staging.
   "name": "landingnl-local",
   "main": "src/index.js",
   "workers_dev": false,
@@ -18,14 +21,6 @@
   "version_metadata": {
     "binding": "CF_VERSION_METADATA"
   },
-  "d1_databases": [
-    {
-      "binding": "DB",
-      "database_name": "landingnl-db-staging",
-      "database_id": "0bf83e5e-afe1-4fd1-ae16-dfd103d801da",
-      "migrations_dir": "migrations"
-    }
-  ],
   "vars": {
     "GOOGLE_CLIENT_ID": "400457048302-bks58p58mrf37cd5c52ifndr54shn8i1.apps.googleusercontent.com",
     "SIGNUP_MODE": "open",

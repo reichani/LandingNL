@@ -4,10 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev --local",
+    "dev": "wrangler dev --env staging --local",
     "test": "node --test",
-    "check": "npm test && wrangler deploy --dry-run --keep-vars",
-    "db:migrate:local": "wrangler d1 migrations apply DB --local",
+    "check": "npm test && wrangler deploy --dry-run --env production --keep-vars",
+    "db:migrate:local": "wrangler d1 migrations apply DB --env staging --local",
     "db:migrate:staging": "wrangler d1 migrations apply DB --env staging --remote",
     "db:migrate:production": "wrangler d1 migrations apply DB --env production --remote",
     "deploy:staging": "wrangler deploy --env staging --keep-vars",
