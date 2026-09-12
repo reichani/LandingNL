@@ -34,10 +34,10 @@ const env = { DB: createDb(), GOOGLE_CLIENT_ID: 'test-client-id.apps.googleuserc
 
 // Approved v1.0.6 baselines (journey truth-language release, see docs/adr/0007).
 const PAGE_HASHES = new Map([
-  ['/', '931cac8938f6de6aa812b3b1660ec1171d7b5665fb0b67f1c729af4d799d75c1'],
-  ['/login', 'ca0cdeeb5838cf0d4528b4b8e1415cbe321b7b9da2298f9a593227620a5df245'],
-  ['/onboarding', 'bd248e1cacb38b3cbe98409d4c695ad83aef75b39093da875f5d286c89647ce8'],
-  ['/dashboard', '1d396c2cd8039bf294a76bef6d5876c307bf12a9b670593f81a7bb1968a3b0a2'],
+  ['/', '22230962a19e602c5eb6837e1e847613c0365245b46bba136ad7a772785775a6'],
+  ['/login', '4ecf4cc9ec94b105e293addaa3f8ecef074f4d150dd35921b89e1603d466f45f'],
+  ['/onboarding', '98cea19d642fa29d84686d86e6b581824df744118545b9166d2eb83331c7bef8'],
+  ['/dashboard', '2958e8433bcd65196551369ee33c7b2aa234acfd779c558e4405c053ab5e2e7e'],
 ]);
 
 test('returning Google users are updated by scalar user id', async () => {
@@ -88,15 +88,21 @@ test('public landing and login routes remain available', async () => {
   }
 });
 
-test('every page exposes the semantic release and Cloudflare deployment id', async () => {
+test('the build id stays machine-readable while pages stay free of developer labels', async () => {
   const versionedEnv = {
     ...env,
     CF_VERSION_METADATA: { id: '12345678-90ab-cdef-1234-567890abcdef' },
   };
-  for (const path of ['/', '/login', '/onboarding', '/dashboard']) {
-    const response = await legacyUi.fetch(new Request(`https://example.test${path}`), versionedEnv);
-    assert.match(await response.text(), /v1\.0\.6 · 12345678/, path);
+  for (const path of ['/', '/login', '/onboarding', '/dashboard', '/privacy']) {
+    const html = await (await legacyUi.fetch(new Request(`https://example.test${path}`), versionedEnv)).text();
+    assert.match(html, /<meta name="landingnl-build" content="v1\.0\.6 · 12345678">/, path);
+    // The raw build id must never appear in visible copy, only in the meta tag.
+    const visible = html.replace(/<meta[^>]*>/g, '');
+    assert.doesNotMatch(visible, /12345678/, path);
+    assert.doesNotMatch(visible, /<title>[^<]*v1\.0\.6/, path);
   }
+  const dashboard = await (await legacyUi.fetch(new Request('https://example.test/dashboard'), versionedEnv)).text();
+  assert.match(dashboard, /<span title="Sürüm">v1\.0\.6<\/span>/);
 });
 
 test('welcome page has one resilient journey entry and no header login action', async () => {

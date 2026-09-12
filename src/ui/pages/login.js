@@ -1,5 +1,5 @@
-export function renderLoginPage(googleClientId, releaseLabel = 'v1.0.6 · local', options = {}) {
-  const { emailLoginEnabled = false, closedBeta = true } = options;
+export function renderLoginPage(googleClientId, releaseLabel = 'v1.0.6', options = {}) {
+  const { emailLoginEnabled = false, closedBeta = true, buildMeta = '' } = options;
   const betaNotice = closedBeta
     ? '<p class="notice" id="beta-notice">LandingNL kapalı beta aşamasında. Şu an yalnızca davet edilen hesaplar giriş yapabilir; kayıtlar gizlilik bildirimi yayımlandığında açılacak.</p>'
     : '';
@@ -12,7 +12,8 @@ export function renderLoginPage(googleClientId, releaseLabel = 'v1.0.6 · local'
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LandingNL • Giriş ${releaseLabel}</title>
+  <title>LandingNL • Giriş</title>
+  ${buildMeta}
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     :root { --primary: #3b82f6; --bg: #080c14; --card: #111827; --text: #f8fafc; --muted: #94a3b8; --border: rgba(255,255,255,0.08); }
@@ -30,7 +31,7 @@ export function renderLoginPage(googleClientId, releaseLabel = 'v1.0.6 · local'
 </head>
 <body>
   <div class="card">
-    <h2>Giriş Yap <span style="font-size:0.7rem; color:#94a3b8;">${releaseLabel}</span></h2>
+    <h2>Giriş Yap</h2>
     <p>Profilini oluştur veya mevcut hesabına eriş.</p>
     ${betaNotice}
 

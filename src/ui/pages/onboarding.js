@@ -1,10 +1,11 @@
-export function renderOnboardingPage(releaseLabel = 'v1.0.6 · local') {
+export function renderOnboardingPage(releaseLabel = 'v1.0.6', buildMeta = '') {
   return `<!DOCTYPE html>
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LandingNL • Kurulum ${releaseLabel}</title>
+  <title>LandingNL • Kurulum</title>
+  ${buildMeta}
   <style>
     :root { --primary: #3b82f6; --bg: #080c14; --card: #111827; --text: #f8fafc; --muted: #94a3b8; --border: rgba(255,255,255,0.08); }
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -21,7 +22,6 @@ export function renderOnboardingPage(releaseLabel = 'v1.0.6 · local') {
 </head>
 <body>
   <div class="card">
-    <div style="font-size:0.68rem; color:var(--muted); text-align:right; margin-bottom:8px;">${releaseLabel}</div>
     <div id="step-1">
       <div class="step">Adım 1 / 4</div>
       <h2>Doğum Tarihin</h2>

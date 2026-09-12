@@ -1,12 +1,13 @@
 import { dashboardScript } from '../scripts/dashboard.js';
 
-export function renderDashboardPage(releaseLabel = 'v1.0.6 · local') {
+export function renderDashboardPage(releaseLabel = 'v1.0.6', buildMeta = '') {
   return `<!DOCTYPE html>
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LandingNL • Dashboard ${releaseLabel}</title>
+  <title>LandingNL • Panelim</title>
+  ${buildMeta}
   <style>
     :root {
       --bg: #080c14;
@@ -106,7 +107,7 @@ export function renderDashboardPage(releaseLabel = 'v1.0.6 · local') {
 <body>
   <div class="container">
     <header>
-      <div class="brand">LandingNL • Student Journey <span class="v-badge">${releaseLabel}</span></div>
+      <div class="brand">LandingNL • Öğrenci Yolculuğum</div>
       <button class="btn-reset" id="btn-reset-app">Çıkış Yap ➔</button>
     </header>
 
@@ -266,7 +267,7 @@ export function renderDashboardPage(releaseLabel = 'v1.0.6 · local') {
     </div>
   </div>
 
-  <footer style="text-align:center; padding:8px 20px 32px; font-size:0.78rem;"><a href="/privacy" style="color:#94a3b8;">Gizlilik Bildirimi</a> · Hesabının silinmesi için: reichani@gmail.com</footer>
+  <footer style="text-align:center; padding:8px 20px 32px; font-size:0.78rem; color:#64748b;"><a href="/privacy" style="color:#94a3b8;">Gizlilik Bildirimi</a> · Hesabının silinmesi için: reichani@gmail.com · <span title="Sürüm">${releaseLabel}</span></footer>
 
   <div id="modal-box" class="modal hidden">
     <div class="modal-content">

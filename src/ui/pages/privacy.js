@@ -1,12 +1,13 @@
 export const PRIVACY_NOTICE_VERSION = '1.0 · 10 Eylül 2026';
 
-export function renderPrivacyPage(releaseLabel = 'v1.0.6 · local') {
+export function renderPrivacyPage(releaseLabel = 'v1.0.6', buildMeta = '') {
   return `<!DOCTYPE html>
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>LandingNL • Gizlilik Bildirimi</title>
+  ${buildMeta}
   <style>
     :root { --bg: #080c14; --card: #111827; --text: #f8fafc; --muted: #94a3b8; --border: rgba(255,255,255,0.08); }
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -22,7 +23,7 @@ export function renderPrivacyPage(releaseLabel = 'v1.0.6 · local') {
 <body>
   <main>
     <h1>Gizlilik Bildirimi</h1>
-    <p class="meta">Sürüm ${PRIVACY_NOTICE_VERSION} · ${releaseLabel}</p>
+    <p class="meta">Bildirim sürümü ${PRIVACY_NOTICE_VERSION}</p>
 
     <h2>Veri sorumlusu</h2>
     <p>LandingNL, Reyhan Açar tarafından işletilir. Gizlilikle ilgili tüm talepler için: <a href="mailto:reichani@gmail.com">reichani@gmail.com</a></p>

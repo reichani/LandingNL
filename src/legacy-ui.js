@@ -3,7 +3,7 @@ import { renderLoginPage } from './ui/pages/login.js';
 import { renderOnboardingPage } from './ui/pages/onboarding.js';
 import { renderWelcomePage } from './ui/pages/welcome.js';
 import { renderPrivacyPage } from './ui/pages/privacy.js';
-import { getReleaseLabel } from './version.js';
+import { buildMetaTag, getPublicVersion, getReleaseLabel } from './version.js';
 import { emailLoginConfigured } from './email/brevo.js';
 
 const HTML_HEADERS = {
@@ -18,7 +18,8 @@ function html(content) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    const releaseLabel = getReleaseLabel(env);
+    const releaseLabel = getPublicVersion();
+    const buildMeta = buildMetaTag(env);
 
     if (request.method === 'OPTIONS') {
       return new Response(null, { headers: HTML_HEADERS });
@@ -26,26 +27,27 @@ export default {
 
     // Session routing is decided by src/index.js; this module only renders pages.
     if (url.pathname === '/' || url.pathname === '') {
-      return html(renderWelcomePage(releaseLabel));
+      return html(renderWelcomePage(releaseLabel, buildMeta));
     }
 
     if (url.pathname === '/login') {
       return html(renderLoginPage(env.GOOGLE_CLIENT_ID || '', releaseLabel, {
         emailLoginEnabled: emailLoginConfigured(env),
         closedBeta: env.SIGNUP_MODE !== 'open',
+        buildMeta,
       }));
     }
 
     if (url.pathname === '/privacy') {
-      return html(renderPrivacyPage(releaseLabel));
+      return html(renderPrivacyPage(releaseLabel, buildMeta));
     }
 
     if (url.pathname === '/onboarding') {
-      return html(renderOnboardingPage(releaseLabel));
+      return html(renderOnboardingPage(releaseLabel, buildMeta));
     }
 
     if (url.pathname === '/dashboard') {
-      return html(renderDashboardPage(releaseLabel));
+      return html(renderDashboardPage(releaseLabel, buildMeta));
     }
 
     return new Response('Not Found', { status: 404 });
